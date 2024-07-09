@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti作業繳交檢核表</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f0f0f0;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #studentButtons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .student-button {
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+        .completed {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .incomplete {
+            background-color: #FFC107;
+            color: black;
+        }
+        .not-submitted {
+            background-color: #F44336;
+            color: white;
+        }
+        .output-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .quick-select-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            #studentButtons, .quick-select-buttons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Puti作業繳交檢核表</h1>
+    
+    <div class="section">
+        <h2>1. 輸入區</h2>
+        <label for="nameList">座號姓名清單:</label>
+        <textarea id="nameList" rows="5" placeholder="每行輸入一個學生座號和姓名，例如：01 王小明"></textarea>
+        <button onclick="saveNames()">保存名單</button>
+        
+        <label>快速選擇作業:</label>
+        <div class="quick-select-buttons">
+            <button onclick="quickSelectHomework('國習')">國習</button>
+            <button onclick="quickSelectHomework('數習')">數習</button>
+            <button onclick="quickSelectHomework('甲本')">甲本</button>
+            <button onclick="quickSelectHomework('乙本')">乙本</button>
+            <button onclick="quickSelectHomework('國作')">國作</button>
+            <button onclick="quickSelectHomework('數作')">數作</button>
+        </div>
+        <label for="homework">作業名稱和頁數:</label>
+        <input type="text" id="homework" placeholder="例：第三課作業 P.15-17">
+        <button onclick="setHomework()">確定</button>
+    </div>
+
+    <div class="section">
+        <h2>2. 檢查區</h2>
+        <div id="studentButtons"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. 輸出區</h2>
+        <div class="output-buttons">
+            <button onclick="generatePlainText()">輸出純文字</button>
+            <button onclick="copyToClipboard()">複製到剪貼簿</button>
+            <button onclick="generateCSV()">輸出.csv</button>
+            <button onclick="resetStatus()">重置繳交狀態</button>
+        </div>
+        <label for="output">輸出結果:</label>
+        <textarea id="output" rows="6" readonly></textarea>
+    </div>
+
+    <div class="section">
+        <h2>4. 郵寄區</h2>
+        <label for="recipientList">收件者清單:</label>
+        <textarea id="recipientList" rows="5" placeholder="每行輸入一個收件者郵箱地址"></textarea>
+        <button onclick="saveRecipients()">保存收件者</button>
+        <button onclick="sendEmail()">傳送到郵件</button>
+    </div>
+
+    <audio id="buttonSound" src="https://assets.mixkit.co/active_storage/sfx/3005/3005-preview.mp3"></audio>
+
+    <script>
+        let savedNames = [];
+        let submissions = [];
+        let homework = '';
+        let recipients = [];
+
+        function playButtonSound() {
+            document.getElementById('buttonSound').play();
+        }
+
+        function saveNames() {
+            playButtonSound();
+            const nameList = document.getElementById('nameList').value;
+            savedNames = nameList.split('\n').filter(name => name.trim() !== '');
+            localStorage.setItem('studentNames', JSON.stringify(savedNames));
+            updateSubmissions();
+        }
+
+        function quickSelectHomework(type) {
+            playButtonSound();
+            const homeworkInput = document.getElementById('homework');
+            const currentValue = homeworkInput.value.trim();
+            homeworkInput.value = currentValue ? `${currentValue} ${type}` : type;
+        }
+
+        function setHomework() {
+            playButtonSound();
+            homework = document.getElementById('homework').value;
+        }
+
+        function updateSubmissions() {
+            submissions = savedNames.map(name => ({ name, status: 'completed' }));
+            renderButtons();
+        }
+
+        function renderButtons() {
+            const container = document.getElementById('studentButtons');
+            container.innerHTML = '';
+            submissions.forEach((submission, index) => {
+                const button = document.createElement('button');
+                button.innerHTML = `${submission.name}<br>${getStatusText(submission.status)}`;
+                button.className = `student-button ${submission.status}`;
+                button.onclick = () => {
+                    playButtonSound();
+                    toggleStatus(index);
+                };
+                container.appendChild(button);
+            });
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'completed': return '完成';
+                case 'incomplete': return '待補';
+                case 'not-submitted': return '未交';
+            }
+        }
+
+        function toggleStatus(index) {
+            const statuses = ['completed', 'not-submitted', 'incomplete'];
+            const currentIndex = statuses.indexOf(submissions[index].status);
+            submissions[index].status = statuses[(currentIndex + 1) % statuses.length];
+            renderButtons();
+        }
+
+        function generatePlainText() {
+            playButtonSound();
+            const date = new Date();
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const incomplete = submissions.filter(s => s.status === 'incomplete').map(s => s.name).join('、');
+            const notSubmitted = submissions.filter(s => s.status === 'not-submitted').map(s => s.name).join('、');
+
+            const reportText = `日期：${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 星期${weekdays[date.getDay()]}\n` +
+                               `作業：${homework}\n` +
+                               `待補的學生：${incomplete || '無'}\n` +
+                               `未交的學生：${notSubmitted || '無'}`;
+
+            document.getElementById('output').value = reportText;
+        }
+
+        function copyToClipboard() {
+            playButtonSound();
+            const outputText = document.getElementById('output');
+            outputText.select();
+            document.execCommand('copy');
+            alert('已複製到剪貼簿');
+        }
+
+        function generateCSV() {
+            playButtonSound();
+            const csvContent = [
+                ['座號姓名', '狀態'],
+                ...submissions.map(s => [s.name, getStatusText(s.status)])
+            ].map(e => e.join(',')).join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                const now = new Date();
+                const dateString = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+                link.setAttribute("href", url);
+                link.setAttribute("download", `作業繳交狀況_${dateString}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function saveRecipients() {
+            playButtonSound();
+            const recipientList = document.getElementById('recipientList').value;
+            recipients = recipientList.split('\n').filter(email => email.trim() !== '');
+            localStorage.setItem('recipients', JSON.stringify(recipients));
+            alert('收件者已保存');
+        }
+
+        function sendEmail() {
+            playButtonSound();
+            if (recipients.length === 0) {
+                alert('請先添加收件者');
+                return;
+            }
+            const date = new Date();
+            const formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+            const subject = encodeURIComponent(`${formattedDate}-${homework}-檢核通知`);
+            const body = encodeURIComponent(document.getElementById('output').value);
+            const to = recipients.join(',');
+            window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+        }
+
+        function resetStatus() {
+            playButtonSound();
+            submissions.forEach(submission => submission.status = 'completed');
+            renderButtons();
+            alert('已重置所有學生的繳交狀態為"完成"');
+        }
+
+        // 初始化
+        const storedNames = localStorage.getItem('studentNames');
+        if (storedNames) {
+            savedNames = JSON.parse(storedNames);
+            document.getElementById('nameList').value = savedNames.join('\n');
+            updateSubmissions();
+        }
+
+        const storedRecipients = localStorage.getItem('recipients');
+        if (storedRecipients) {
+            recipients = JSON.parse(storedRecipients);
+            document.getElementById('recipientList').value = recipients.join('\n');
+        }
+
+        // 為所有按鈕添加音效
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', playButtonSound);
+        });
+    </script>
+<div class="section">
+        <h2>5. 說明區</h2>
+        <div style="white-space: pre-wrap;">
+**🌟 作業繳交檢核表小工具介紹 🌟**
+這是一個專為教師設計的網頁工具，旨在簡化作業繳交管理流程。它由我(屏東縣後庄國小黃老師)與 AI 助手 Claude 合作開發。
+
+**功能說明：**
+1. 學生名單管理：可輸入和保存學生的座號和姓名。
+2. 作業設定：快速選擇或自定義作業名稱和頁數。
+3. 繳交狀態追蹤：直觀的按鈕界面，輕鬆切換學生的作業繳交狀態。
+4. 報告生成：可生成純文字報告，或導出為 CSV 文件。
+5. 郵件通知：支持批量發送郵件通知給家長或其他教師。
+
+**貼心細節：**
+1. 本地存儲：學生名單和收件者清單會保存在瀏覽器中，下次使用無需重新輸入。
+2. 日期自動生成：CSV 文件名和郵件主題會自動包含當前日期，方便歸檔和查找。
+3. 按鈕音效：每次點擊按鈕都會有輕微的音效反饋，提升使用體驗。
+4. 響應式設計：適配各種設備螢幕大小，手機上也能方便使用。
+5. 簡潔美觀：界面經過精心設計，既美觀又易於使用。
+
+**使用方法：**
+1.  輸入區：
+   * 在文本框中輸入學生座號和姓名，每行一個，然後點擊"保存名單"。
+   * 使用快速選擇按鈕或直接輸入作業信息，點擊"確定"保存。
+2. 檢查區：
+   * 點擊學生按鈕切換繳交狀態（完成、待補、未交）。
+3. 輸出區：
+   * 點擊"輸出純文字"生成報告，可以複製或導出為 CSV 文件。
+   * 使用"重置繳交狀態"可將所有學生狀態恢復為"完成"。
+4.  郵寄區：
+   * 輸入收件者郵箱地址，每行一個，然後保存。
+   * 點擊"傳送到郵件"，將自動打開默認郵件程序，生成包含報告內容的新郵件。
+
+這個工具大大簡化了作業繳交的管理流程，幫助教師更高效地追蹤學生作業狀況，並方便地與家長或其他教師進行溝通。無論是日常作業管理還是定期彙報，都能派上用場
+        </div>
+    </div>
+
+    <footer style="text-align: center; margin-top: 20px; color: #666;">
+        屏東縣後庄國小黃老師與AI 助手 Claude 合作開發。<br>
+        更新日期：2024年7月5日
+    </footer>
+</body>
+</html>

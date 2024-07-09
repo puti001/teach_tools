@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生表現計分工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: #f5f5f5;
+            box-sizing: border-box;
+        }
+        .header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 800px;
+            background-color: #fff;
+            box-sizing: border-box;
+        }
+        .section h2 {
+            margin-top: 0;
+        }
+        .button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #add8e6;
+            border: none;
+            border-radius: 5px;
+            width: auto;
+        }
+        .add-button {
+            background-color: #4caf50;
+            color: white;
+        }
+        .subtract-button {
+            background-color: #f44336;
+            color: white;
+        }
+        .student-button {
+            background-color: #e0f7fa;
+            margin: 5px;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        .student-button:nth-child(odd) {
+            background-color: #ffebcd;
+        }
+        .student-button:nth-child(even) {
+            background-color: #e6e6fa;
+        }
+        .student-button.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 20px;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+        .popup-button {
+            margin: 10px;
+            padding: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 10px;
+            width: 80px;
+            height: 80px;
+            display: inline-block;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        .popup-add-button {
+            background-color: #4caf50;
+            color: white;
+        }
+        .popup-subtract-button {
+            background-color: #f44336;
+            color: white;
+        }
+        .popup-confirm-button {
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">學生表現計分工具</div>
+    <div class="section">
+        <h2>計分區</h2>
+        <textarea id="studentList" rows="4" style="width: 100%;"></textarea>
+        <button class="button" onclick="buttonClick(updateStudents)">更新學生</button>
+        <button class="button" onclick="buttonClick(addAllScores)">全部加分</button>
+        <button class="button" onclick="buttonClick(resetStudents)">重置分數</button>
+        <button class="button" onclick="buttonClick(recordHistory)">記錄歷史</button>
+        <div id="studentContainer" style="display: flex; flex-wrap: wrap; gap: 5px;"></div>
+    </div>
+
+    <div class="section">
+        <h2>歷史區</h2>
+        <textarea id="history-summary" rows="2" style="width: 100%;"></textarea>
+        <button class="button" onclick="buttonClick(calculateHistory)">結算歷史成績</button>
+        <button class="button" onclick="buttonClick(copyToClipboard)">複製到剪貼簿</button>
+        <button class="button" onclick="buttonClick(resetHistory)">重置歷史</button>
+        <div id="history-log" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="section">
+        <h2>郵寄區</h2>
+        <textarea id="recipients" rows="1" style="width: 100%;"></textarea>
+        <button class="button" onclick="buttonClick(sendEmail)">發送郵件</button>
+    </div>
+
+    <div class="section">
+        <h2>說明區</h2>
+        <p>功能介紹：此工具用於記錄學生在課堂上的表現和分數，並可結算歷史成績及發送郵件。</p>
+        <p>貼心設計：此工具提供簡單直觀的界面，讓教師能快速記錄和管理學生表現。</p>
+        <p>使用方法：</p>
+        <ol>
+            <li>在「計分區」輸入學生名單，並點擊「更新學生」按鈕。</li>
+            <li>點擊個別學生按鈕會出現彈出視窗，使用加分、扣分按鈕記錄學生表現，點擊「記錄歷史」保存記錄。</li>
+            <li>在「歷史區」結算歷史成績或重置歷史記錄。</li>
+            <li>在「郵寄區」輸入收件人地址，並發送郵件。</li>
+        </ol>
+        <p>此工具的設計理念是方便教師在課堂上快速、高效地管理學生的表現。每個學生的按鈕都有對應的顏色，讓教師能直觀地看到不同學生的表現狀態。彈出視窗讓教師可以詳細記錄個別學生的分數變動，而歷史記錄功能則可以幫助教師追踪每個學生的長期表現。</p>
+        <p>開發者：屏東縣後庄國小黃老師 + Claude + ChatGPT 4.0</p>
+        <p>更新日期：2024-07-08</p>
+    </div>
+
+    <div id="overlay" class="overlay" onclick="buttonClick(confirmPopup)"></div>
+    <div id="popup" class="popup">
+        <h3 id="popup-student-name"></h3>
+        <button class="popup-button popup-add-button" onclick="buttonClick(() => updatePopupScore(1))">+</button>
+        <button class="popup-button popup-subtract-button" onclick="buttonClick(() => updatePopupScore(-1))">-</button>
+        <button class="popup-button popup-confirm-button" onclick="buttonClick(confirmPopup)">確定</button>
+    </div>
+
+    <script>
+        let students = [];
+        let history = [];
+        let currentPopupStudent = null;
+
+        function playSound() {
+            const audio = new Audio('click-sound.mp3');
+            audio.play();
+        }
+
+        function buttonClick(callback) {
+            playSound();
+            callback();
+        }
+
+        function saveData() {
+            localStorage.setItem('students', JSON.stringify(students));
+            localStorage.setItem('history', JSON.stringify(history));
+        }
+
+        function loadData() {
+            const savedStudents = JSON.parse(localStorage.getItem('students') || '[]');
+            const savedHistory = JSON.parse(localStorage.getItem('history') || '[]');
+            if (savedStudents.length) students = savedStudents;
+            if (savedHistory.length) history = savedHistory;
+            renderStudents();
+            renderHistory();
+        }
+
+        function updateStudents() {
+            const studentList = document.getElementById('studentList').value.split('\n').filter(name => name.trim() !== '');
+            students = studentList.map(name => ({
+                name: name.trim(),
+                personalScore: 0
+            }));
+            renderStudents();
+            saveData();
+        }
+
+        function renderStudents() {
+            const container = document.getElementById('studentContainer');
+            container.innerHTML = '';
+            students.forEach((student, index) => {
+                const button = document.createElement('button');
+                button.className = 'student-button';
+                button.style.backgroundColor = index % 2 === 0 ? '#ffebcd' : '#e6e6fa';
+                button.innerText = `${student.name}\n${student.personalScore}`;
+                button.onclick = () => buttonClick(() => showPopup(student));
+                container.appendChild(button);
+            });
+        }
+
+        function showPopup(student) {
+            currentPopupStudent = student;
+            document.getElementById('popup-student-name').innerText = `${student.name}: ${student.personalScore}`;
+            document.getElementById('popup').style.display = 'block';
+            document.getElementById('overlay').style.display = 'block';
+        }
+
+        function updatePopupScore(amount) {
+            currentPopupStudent.personalScore += amount;
+            document.getElementById('popup-student-name').innerText = `${currentPopupStudent.name}: ${currentPopupStudent.personalScore}`;
+        }
+
+        function confirmPopup() {
+            document.getElementById('popup').style.display = 'none';
+            document.getElementById('overlay').style.display = 'none';
+            renderStudents();
+            saveData();
+        }
+
+        function addAllScores() {
+            students.forEach(student => student.personalScore += 1);
+            renderStudents();
+            saveData();
+        }
+
+        function resetStudents() {
+            students.forEach(student => student.personalScore = 0);
+            renderStudents();
+            saveData();
+        }
+
+        function recordHistory() {
+            const now = new Date();
+            const timestamp = now.toLocaleString();
+            history.push({
+                timestamp,
+                records: JSON.parse(JSON.stringify(students))
+            });
+            renderHistory();
+            saveData();
+        }
+
+        function renderHistory() {
+            const log = document.getElementById('history-log');
+            log.innerHTML = '';
+            history.slice().reverse().forEach(entry => {
+                const div = document.createElement('div');
+                div.innerText = `${entry.timestamp} - 學生得分：${entry.records.map(student => `${student.name}(${student.personalScore})`).join(', ')}`;
+                log.appendChild(div);
+            });
+        }
+
+        function calculateHistory() {
+            if (!history.length) return;
+
+            const startTime = history[0].timestamp;
+            const endTime = history[history.length - 1].timestamp;
+            const summary = students.map(student => {
+                const totalScore = history.reduce((sum, entry) => sum + entry.records.find(s => s.name === student.name).personalScore, 0);
+                return `${student.name}(${totalScore})`;
+            }).join(', ');
+
+            document.getElementById('history-summary').value = `${startTime}～${endTime}之學生總分：${summary}`;
+        }
+
+        function copyToClipboard() {
+            const summary = document.getElementById('history-summary').value;
+            navigator.clipboard.writeText(summary).then(() => alert('已複製到剪貼簿'));
+        }
+
+        function resetHistory() {
+            history = [];
+            document.getElementById('history-summary').value = '';
+            document.getElementById('history-log').innerHTML = '';
+            saveData();
+        }
+
+        function sendEmail() {
+            if (!history.length) return;
+
+            const startTime = history[0].timestamp;
+            const endTime = history[history.length - 1].timestamp;
+            const subject = `${startTime}～${endTime}之學生總分`;
+            const recipients = document.getElementById('recipients').value;
+            const body = `學生表現記錄：\n\n${document.getElementById('history-summary').value}`;
+            const mailto = `mailto:${recipients}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            window.location.href = mailto;
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>

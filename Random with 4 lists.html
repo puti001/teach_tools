@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4清單的隨機抽籤</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f8f9fa;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 800px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #343a40;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .list-buttons, .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .list-buttons button, .action-buttons button {
+            flex: 1;
+            margin: 5px;
+            padding: 15px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        .list-buttons button:hover, .action-buttons button:hover {
+            background-color: #218838;
+        }
+        .list-buttons button.active {
+            background-color: #006400;
+            color: white;
+            font-weight: bold;
+        }
+        #drawingEffect {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #333;
+            min-height: 100px;
+            text-align: center;
+            background-color: #ffc107;
+            color: #343a40;
+            border-radius: 5px;
+            white-space: pre-line;
+        }
+        .result-section {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .result-box {
+            width: 100%;
+            border: 1px solid #ccc;
+            padding: 15px;
+            min-height: 100px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            text-align: center;
+        }
+        #listModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .instructions {
+            margin-top: 30px;
+            border-top: 1px solid #ccc;
+            padding-top: 20px;
+        }
+        .instructions h3 {
+            color: #343a40;
+        }
+        .instructions ul, .instructions ol {
+            padding-left: 20px;
+            color: #495057;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        @media (min-width: 768px) {
+            .result-box {
+                width: 48%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>4清單的隨機抽籤</h1>
+        <div class="section">
+            <div class="list-buttons">
+                <button id="list1" onclick="selectList(1)">清單1</button>
+                <button id="list2" onclick="selectList(2)">清單2</button>
+                <button id="list3" onclick="selectList(3)">清單3</button>
+                <button id="list4" onclick="selectList(4)">清單4</button>
+            </div>
+        </div>
+        <div class="section">
+            <div class="action-buttons">
+                <button onclick="draw()">抽籤</button>
+                <button onclick="drawProbability()">機率</button>
+                <button onclick="reset()">重置</button>
+                <button onclick="editCurrentList()">編輯清單</button>
+            </div>
+        </div>
+        <div id="drawingEffect">抽籤結果將顯示在這裡</div>
+        <div class="result-section">
+            <div class="result-box">
+                <h3>未抽出的號碼</h3>
+                <div id="remainingItems"></div>
+            </div>
+            <div class="result-box">
+                <h3>已抽出的號碼</h3>
+                <div id="drawnItems"></div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h2>說明區</h2>
+            <h3>功能說明</h3>
+            <ul>
+                <li>提供4個獨立的清單供使用者輸入抽籤項目</li>
+                <li>可進行隨機抽籤、查看各項目出現機率</li>
+                <li>顯示已抽出和未抽出的項目</li>
+            </ul>
+            <h3>貼心細節</h3>
+            <ul>
+                <li>清單內容會自動保存，無需每次重新輸入</li>
+                <li>當前選擇的清單以深綠色背景突顯</li>
+                <li>抽籤過程有動畫和音效，增加趣味性</li>
+                <li>抽完所有項目後會自動提醒重置</li>
+            </ul>
+            <h3>使用方法</h3>
+            <ol>
+                <li>點擊清單1-4按鈕選擇要使用的清單</li>
+                <li>點擊「編輯清單」按鈕來修改當前清單</li>
+                <li>在編輯窗口中輸入抽籤項目，每行一個</li>
+                <li>點擊「抽籤」進行隨機抽取</li>
+                <li>點擊「機率」查看各項目的出現機率</li>
+                <li>點擊「重置」清空已抽出項目，重新開始</li>
+            </ol>
+        </div>
+
+        <div class="footer">
+            屏東縣後庄國小黃老師與AI 助手 Claude、ChatGPT-4o 合作開發，更新日期：2024/7/6
+        </div>
+    </div>
+
+    <div id="listModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeListModal()">&times;</span>
+            <h2 id="modalTitle">編輯清單</h2>
+            <textarea id="modalListInput" rows="10" cols="50"></textarea>
+            <br>
+            <button onclick="saveModalList()">確定</button>
+        </div>
+    </div>
+
+    <audio id="buttonSound" src="https://www.soundjay.com/buttons/sounds/button-16.mp3"></audio>
+    <audio id="drawingSound" src="https://www.soundjay.com/mechanical/sounds/roulette-wheel-spin-1.mp3"></audio>
+    <audio id="endDrawingSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+    <audio id="repeatSound" src="https://www.soundjay.com/button/sounds/beep-07.wav" loop></audio>
+
+    <script>
+        let items = [];
+        let drawnItems = [];
+        let currentListNumber = 1;
+        const drawingEffect = document.getElementById('drawingEffect');
+        const remainingItemsElement = document.getElementById('remainingItems');
+        const drawnItemsElement = document.getElementById('drawnItems');
+        const buttonSound = document.getElementById('buttonSound');
+        const drawingSound = document.getElementById('drawingSound');
+        const endDrawingSound = document.getElementById('endDrawingSound');
+        const repeatSound = document.getElementById('repeatSound');
+        const modalListInput = document.getElementById('modalListInput');
+        const listModal = document.getElementById('listModal');
+        const modalTitle = document.getElementById('modalTitle');
+
+        function selectList(listNumber) {
+            currentListNumber = listNumber;
+            buttonSound.play();
+            const savedList = localStorage.getItem(`drawList${listNumber}`);
+            if (savedList) {
+                items = savedList.split('\n').filter(item => item.trim() !== '');
+            } else {
+                items = [];
+            }
+            drawnItems = [];
+            updateLists();
+            document.querySelectorAll('.list-buttons button').forEach((btn, index) => {
+                btn.classList.toggle('active', index + 1 === listNumber);
+            });
+        }
+
+        function draw() {
+            if (items.length === 0) {
+                alert('清單中沒有項目可供抽籤');
+                return;
+            }
+            repeatSound.play();
+            let drawingTime = 5000; // 5 seconds
+            let interval = 100; // 0.1 second
+            let times = drawingTime / interval;
+            let randomDraw;
+            let intervalId = setInterval(() => {
+                randomDraw = items[Math.floor(Math.random() * items.length)];
+                drawingEffect.textContent = randomDraw;
+            }, interval);
+            setTimeout(() => {
+                clearInterval(intervalId);
+                repeatSound.pause();
+                repeatSound.currentTime = 0;
+                endDrawingSound.play();
+                drawnItems.push(randomDraw);
+                items = items.filter(item => item !== randomDraw);
+                updateLists();
+                drawingEffect.textContent = randomDraw;
+            }, drawingTime);
+        }
+
+        function drawProbability() {
+            if (items.length === 0) {
+                alert('清單中沒有項目可供抽籤');
+                return;
+            }
+            const totalDraws = items.length * 10;
+            const drawCounts = {};
+            items.forEach(item => {
+                drawCounts[item] = 0;
+            });
+
+            for (let i = 0; i < totalDraws; i++) {
+                const randomDraw = items[Math.floor(Math.random() * items.length)];
+                drawCounts[randomDraw]++;
+            }
+
+            let result = '';
+            items.forEach(item => {
+                result += `${item}: ${(drawCounts[item] / totalDraws * 100).toFixed(2)}%\n`;
+            });
+
+            drawingEffect.textContent = result;
+        }
+
+        function reset() {
+            if (confirm('確定要重置嗎？')) {
+                items = [];
+                drawnItems = [];
+                updateLists();
+                drawingEffect.textContent = '抽籤結果將顯示在這裡';
+            }
+        }
+
+        function editCurrentList() {
+            const savedList = localStorage.getItem(`drawList${currentListNumber}`);
+            modalListInput.value = savedList ? savedList : '';
+            modalTitle.textContent = `編輯清單${currentListNumber}`;
+            listModal.style.display = 'block';
+        }
+
+        function closeListModal() {
+            listModal.style.display = 'none';
+        }
+
+        function saveModalList() {
+            const newList = modalListInput.value.trim();
+            if (newList) {
+                localStorage.setItem(`drawList${currentListNumber}`, newList);
+                items = newList.split('\n').filter(item => item.trim() !== '');
+                drawnItems = [];
+                updateLists();
+                closeListModal();
+            }
+        }
+
+        function updateLists() {
+            remainingItemsElement.textContent = items.join('\n');
+            drawnItemsElement.textContent = drawnItems.join('\n');
+        }
+
+        // 初始化選擇第一個清單
+        selectList(1);
+
+        window.onclick = function(event) {
+            if (event.target == listModal) {
+                listModal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

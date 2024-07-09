@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生出缺席點名表</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: #f0f0f0;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #studentButtons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .student-button {
+            padding: 10px;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+            border-radius: 4px;
+        }
+        .出席 { background-color: #4CAF50; color: white; }
+        .病假 { background-color: #FFC107; color: black; }
+        .事假 { background-color: #2196F3; color: white; }
+        .尚未請假 { background-color: #F44336; color: white; }
+        .公假 { background-color: #9C27B0; color: white; }
+        .喪假 { background-color: #607D8B; color: white; }
+        .其他 { background-color: #FF5722; color: white; }
+        .output-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            #studentButtons {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>學生出缺席點名表</h1>
+    
+    <div class="section">
+        <h2>1. 輸入區</h2>
+        <label for="nameList">座號姓名清單:</label>
+        <textarea id="nameList" rows="5" placeholder="每行輸入一個學生座號和姓名，例如：01 王小明"></textarea>
+        <button onclick="saveNames()">保存名單</button>
+    </div>
+
+    <div class="section">
+        <h2>2. 點名區</h2>
+        <div id="studentButtons"></div>
+    </div>
+
+    <div class="section">
+        <h2>3. 輸出區</h2>
+        <div class="output-buttons">
+            <button onclick="generatePlainText()">輸出純文字</button>
+            <button onclick="copyToClipboard()">複製到剪貼簿</button>
+            <button onclick="generateCSV()">輸出.csv</button>
+            <button onclick="resetStatus()">重置出席狀態</button>
+        </div>
+        <label for="output">輸出結果:</label>
+        <textarea id="output" rows="6" readonly></textarea>
+    </div>
+
+    <div class="section">
+        <h2>4. 郵寄區</h2>
+        <label for="recipientList">收件者清單:</label>
+        <textarea id="recipientList" rows="5" placeholder="每行輸入一個收件者郵箱地址"></textarea>
+        <button onclick="saveRecipients()">保存收件者</button>
+        <button onclick="sendEmail()">傳送到郵件</button>
+    </div>
+
+    <audio id="buttonSound" src="https://assets.mixkit.co/active_storage/sfx/3005/3005-preview.mp3"></audio>
+
+    <script>
+        let savedNames = [];
+        let attendanceStatus = [];
+        let recipients = [];
+
+        function playButtonSound() {
+            document.getElementById('buttonSound').play();
+        }
+
+        function saveNames() {
+            playButtonSound();
+            const nameList = document.getElementById('nameList').value;
+            savedNames = nameList.split('\n').filter(name => name.trim() !== '');
+            localStorage.setItem('studentNames', JSON.stringify(savedNames));
+            updateAttendanceStatus();
+        }
+
+        function updateAttendanceStatus() {
+            attendanceStatus = savedNames.map(name => ({ name, status: '出席' }));
+            renderButtons();
+        }
+
+        function renderButtons() {
+            const container = document.getElementById('studentButtons');
+            container.innerHTML = '';
+            attendanceStatus.forEach((student, index) => {
+                const button = document.createElement('button');
+                button.innerHTML = `${student.name}<br>${student.status}`;
+                button.className = `student-button ${student.status}`;
+                button.onclick = () => {
+                    playButtonSound();
+                    toggleStatus(index);
+                };
+                container.appendChild(button);
+            });
+        }
+
+        function toggleStatus(index) {
+            const statuses = ['出席', '病假', '事假', '尚未請假', '公假', '喪假', '其他'];
+            const currentIndex = statuses.indexOf(attendanceStatus[index].status);
+            attendanceStatus[index].status = statuses[(currentIndex + 1) % statuses.length];
+            renderButtons();
+        }
+
+        function generatePlainText() {
+            playButtonSound();
+            const date = new Date();
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const statusCounts = attendanceStatus.reduce((acc, student) => {
+                acc[student.status] = (acc[student.status] || []).concat(student.name.split(' ')[0]);
+                return acc;
+            }, {});
+
+            let reportText = `日期：${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日 星期${weekdays[date.getDay()]}\n` +
+                             `應到人數：${attendanceStatus.length}\n` +
+                             `出席人數：${statusCounts['出席'] ? statusCounts['出席'].length : 0}\n`;
+
+            const absenceTypes = ['病假', '事假', '尚未請假', '公假', '喪假', '其他'];
+            absenceTypes.forEach(type => {
+                if (statusCounts[type] && statusCounts[type].length > 0) {
+                    reportText += `${type}人數：${statusCounts[type].length} (${statusCounts[type].join('、')})\n`;
+                }
+            });
+
+            document.getElementById('output').value = reportText.trim();
+        }
+
+        function generateCSV() {
+            playButtonSound();
+            const csvContent = [
+                ['座號姓名', '出席狀態'],
+                ...attendanceStatus.map(s => [s.name, s.status])
+            ].map(e => e.join(',')).join('\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                const now = new Date();
+                const dateString = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+                link.setAttribute("href", url);
+                link.setAttribute("download", `出缺席狀況_${dateString}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        function saveRecipients() {
+            playButtonSound();
+            const recipientList = document.getElementById('recipientList').value;
+            recipients = recipientList.split('\n').filter(email => email.trim() !== '');
+            localStorage.setItem('recipients', JSON.stringify(recipients));
+            alert('收件者已保存');
+        }
+
+        function sendEmail() {
+            playButtonSound();
+            if (recipients.length === 0) {
+                alert('請先添加收件者');
+                return;
+            }
+            const date = new Date();
+            const formattedDate = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+            const subject = encodeURIComponent(`${formattedDate}-學生出缺席通知`);
+            const body = encodeURIComponent(document.getElementById('output').value);
+            const to = recipients.join(',');
+            window.location.href = `mailto:${to}?subject=${subject}&body=${body}`;
+        }
+
+        function resetStatus() {
+            playButtonSound();
+            attendanceStatus.forEach(student => student.status = '出席');
+            renderButtons();
+            alert('已重置所有學生的出席狀態為"出席"');
+        }
+
+        function copyToClipboard() {
+            playButtonSound();
+            const outputText = document.getElementById('output').value;
+            if (outputText) {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    // 现代浏览器方法
+                    navigator.clipboard.writeText(outputText).then(() => {
+                        alert('已复制到剪贴板');
+                    }).catch(err => {
+                        console.error('使用 navigator.clipboard 复制失败: ', err);
+                        fallbackCopyTextToClipboard(outputText);
+                    });
+                } else {
+                    // 备选方法
+                    fallbackCopyTextToClipboard(outputText);
+                }
+            } else {
+                alert('没有可复制的内容');
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // 避免滚动到底部
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                const msg = successful ? '已复制到剪贴板' : '复制失败，请手动复制';
+                alert(msg);
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                alert('复制失败，请手动复制');
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        // 初始化
+        const storedNames = localStorage.getItem('studentNames');
+        if (storedNames) {
+            savedNames = JSON.parse(storedNames);
+            document.getElementById('nameList').value = savedNames.join('\n');
+            updateAttendanceStatus();
+        }
+
+        const storedRecipients = localStorage.getItem('recipients');
+        if (storedRecipients) {
+            recipients = JSON.parse(storedRecipients);
+            document.getElementById('recipientList').value = recipients.join('\n');
+        }
+
+        // 为所有按钮添加音效
+        document.querySelectorAll('button').forEach(button => {
+            button.addEventListener('click', playButtonSound);
+        });
+    </script>
+    
+    <div class="section">
+        <h2>5. 說明區</h2>
+        <div style="white-space: pre-wrap;">
+**🌟 學生出缺席點名表小工具介紹 🌟**
+這是一個為教師設計的網頁工具，旨在簡化學生出缺席管理流程。它由屏東縣後庄國小黃老師與 AI 助手 Claude 合作開發。
+
+**功能說明：**
+1. 學生名單管理：可輸入和保存學生的座號和姓名。
+2. 出缺席狀態追蹤：直觀的按鈕界面，輕鬆切換學生的出缺席狀態。
+3. 報告生成：可生成純文字報告，或導出為 CSV 文件。
+4. 郵件通知：支持批量發送郵件通知給家長或其他教師。
+
+**貼心細節：**
+1. 本地存儲：學生名單和收件者清單會保存在瀏覽器中，下次使用無需重新輸入。
+2. 日期自動生成：CSV 文件名和郵件主題會自動包含當前日期，方便歸檔和查找。
+3. 按鈕音效：每次點擊按鈕都會有輕微的音效反饋，提升使用體驗。
+4. 響應式設計：適配各種設備螢幕大小，手機上也能方便使用。
+5. 簡潔美觀：界面經過精心設計，既美觀又易於使用。
+
+**使用方法：**
+1. 輸入區：
+   * 在文本框中輸入學生座號和姓名，每行一個，然後點擊"保存名單"。
+2. 點名區：
+   * 點擊學生按鈕切換出缺席狀態（出席、病假、事假、尚未請假、公假、喪假、其他）。
+3. 輸出區：
+   * 點擊"輸出純文字"生成報告，可以複製或導出為 CSV 文件。
+   * 使用"重置出席狀態"可將所有學生狀態恢復為"出席"。
+4. 郵寄區：
+   * 輸入收件者郵箱地址，每行一個，然後保存。
+   * 點擊"傳送到郵件"，將自動打開默認郵件程序，生成包含報告內容的新郵件。
+
+這個工具大大簡化了學生出缺席的管理流程，幫助教師更高效地追蹤學生出勤狀況，並方便地與家長或其他教師進行溝通。無論是日常點名還是定期彙報，都能派上用場。
+        </div>
+    </div>
+
+    <footer style="text-align: center; margin-top: 20px; color: #666;">
+        屏東縣後庄國小黃老師與AI 助手 Claude 合作開發。<br>
+        更新日期：2024年7月5日
+    </footer>
+</body>
+</html>
