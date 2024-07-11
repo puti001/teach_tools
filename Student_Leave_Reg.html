@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學生請假登記系統</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
+    h1 { text-align: center; color: #333; }
+    #student-list, #students, #records { margin-bottom: 20px; }
+    #student-list textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    #student-list button { display: block; margin: 10px auto; padding: 10px 20px; background-color: #337ab7; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .student-btn { margin: 5px; padding: 10px 20px; border-radius: 5px; background-color: #d9edf7; border: 1px solid #bce8f1; cursor: pointer; display: inline-block; }
+    .student-btn.selected { background-color: #31708f; color: white; font-weight: bold; }
+    #controls { margin-bottom: 20px; font-size: 14px; text-align: center; }
+    #controls select, #controls button, #controls input { margin: 5px; padding: 10px 20px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc; }
+    #controls button { cursor: pointer; background-color: #5cb85c; color: white; border: none; }
+    #records { font-size: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .record-table { border: 1px solid #ddd; padding: 10px; background-color: white; border-radius: 5px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    .record-table ul { list-style-type: none; padding: 0; margin: 0; }
+    .record-table ul li { padding: 2px 0; }
+    #outputs { margin-bottom: 20px; text-align: center; }
+    #outputs button, #outputs input, #outputs textarea { display: block; margin: 10px auto; padding: 10px 20px; font-size: 14px; width: 100%; max-width: 300px; box-sizing: border-box; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; }
+    #outputs button { background-color: #5bc0de; color: white; border: none; }
+    #description { border-top: 1px solid #ccc; padding-top: 10px; }
+    #calendar { margin-top: 20px; }
+    #calendar input { display: block; margin: 10px 0; padding: 10px; font-size: 14px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+    .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+    .modal-content { background-color: white; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 300px; border-radius: 5px; }
+    .modal-header, .modal-footer { padding: 10px; text-align: center; }
+    .modal-footer { display: flex; justify-content: space-between; }
+    .modal-footer button { padding: 10px 20px; font-size: 14px; border-radius: 5px; border: none; cursor: pointer; }
+    .modal-footer .cancel-btn { background-color: #5cb85c; color: white; }
+    .modal-footer .confirm-btn { background-color: #d9534f; color: white; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>學生請假登記系統</h1>
+  
+  <div id="student-list">
+    <textarea id="student-input" placeholder="請輸入學生名稱，每行一個"></textarea>
+    <button id="confirm-students">確定</button>
+  </div>
+  
+  <div id="students"></div>
+  
+  <div id="controls">
+    <label for="leave-date">選擇請假日期</label>
+    <input type="date" id="leave-date">
+    <select id="leave-type">
+      <option value="病假">病假</option>
+      <option value="事假">事假</option>
+      <option value="公假">公假</option>
+      <option value="喪假">喪假</option>
+      <option value="曠課">曠課</option>
+      <option value="其他">其他</option>
+    </select>
+    
+    <select id="leave-duration">
+      <option value="1天">1天</option>
+      <option value="0.5天">0.5天</option>
+      <option value="1節">1節</option>
+      <option value="2節">2節</option>
+      <option value="3節">3節</option>
+      <option value="5節">5節</option>
+      <option value="6節">6節</option>
+    </select>
+    
+    <button id="register-leave">登記</button>
+  </div>
+  
+  <div id="records"></div>
+  <button id="reset-records">重置學生請假記錄</button>
+  
+  <div id="outputs">
+    <button id="copy-monthly-report">輸出報表</button>
+    <textarea id="report-preview" readonly></textarea>
+    
+    <input type="text" id="recipient-email" placeholder="收件人郵箱">
+    <button id="send-email">Email</button>
+  </div>
+
+  <div id="description">
+    <h2>設計說明</h2>
+    <p>本網頁提供學生請假登記功能，使用者可依以下步驟操作：</p>
+    <ol>
+      <li>在「學生清單」輸入框中輸入學生姓名，每行一個。</li>
+      <li>點擊「確定」按鈕，生成學生按鈕。</li>
+      <li>選擇學生，並選擇假別和節數。</li>
+      <li>點擊「登記」按鈕，將請假信息記錄到學生表格中。</li>
+      <li>可使用「輸出報表」按鈕生成報表，並使用「Email」按鈕發送報表。</li>
+    </ol>
+    <p>開發者：屏東縣後庄國小黃老師 + ChatGPT-4o</p>
+    <p>更新日期：2024年7月11日</p>
+  </div>
+
+  <div id="reset-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>警示</h2>
+      </div>
+      <div class="modal-body">
+        <p>您確定要重置記錄？</p>
+      </div>
+      <div class="modal-footer">
+        <button class="cancel-btn">取消</button>
+        <button class="confirm-btn">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let students = [];
+    let selectedStudent = null;
+    let studentRecords = JSON.parse(localStorage.getItem('studentRecords')) || {};
+
+    document.getElementById('confirm-students').addEventListener('click', () => {
+      playSound();
+      const studentInput = document.getElementById('student-input').value;
+      localStorage.setItem('studentInput', studentInput);
+      students = studentInput.split('\n').filter(name => name.trim() !== '');
+      renderStudentButtons();
+      renderStudentRecords();
+    });
+
+    function renderStudentButtons() {
+      const studentsDiv = document.getElementById('students');
+      studentsDiv.innerHTML = '';
+      students.forEach(name => {
+        const button = document.createElement('button');
+        button.innerText = name;
+        button.className = 'student-btn';
+        button.addEventListener('click', () => selectStudent(button, name));
+        studentsDiv.appendChild(button);
+      });
+    }
+
+    function renderStudentRecords() {
+      const recordsDiv = document.getElementById('records');
+      recordsDiv.innerHTML = '';
+      students.forEach(name => {
+        if (!studentRecords[name]) {
+          studentRecords[name] = [];
+        }
+        const recordTable = document.createElement('div');
+        recordTable.className = 'record-table';
+        const ul = document.createElement('ul');
+        const studentTitle = document.createElement('li');
+        studentTitle.innerText = name;
+        studentTitle.style.fontWeight = 'bold';
+        ul.appendChild(studentTitle);
+        studentRecords[name].forEach(record => {
+          const li = document.createElement('li');
+          li.innerText = `${record.date} - ${record.leaveType} - ${record.leaveDuration}`;
+          ul.appendChild(li);
+        });
+        if (studentRecords[name].length > 0) {
+          recordTable.appendChild(ul);
+          recordsDiv.appendChild(recordTable);
+        }
+      });
+      localStorage.setItem('studentRecords', JSON.stringify(studentRecords));
+    }
+
+    function selectStudent(button, name) {
+      if (selectedStudent) {
+        selectedStudent.classList.remove('selected');
+      }
+      selectedStudent = button;
+      selectedStudent.classList.add('selected');
+    }
+
+    document.getElementById('register-leave').addEventListener('click', () => {
+      playSound();
+      if (selectedStudent) {
+        const leaveDate = document.getElementById('leave-date').value;
+        const leaveType = document.getElementById('leave-type').value;
+        const leaveDuration = document.getElementById('leave-duration').value;
+        studentRecords[selectedStudent.innerText].push({ date: leaveDate, leaveType, leaveDuration });
+        renderStudentRecords();
+        selectedStudent.classList.remove('selected');
+        selectedStudent = null;
+      } else {
+        alert('請先選擇學生');
+      }
+    });
+
+    document.getElementById('reset-records').addEventListener('click', () => {
+      playSound();
+      const modal = document.getElementById('reset-modal');
+      modal.style.display = 'block';
+    });
+
+    document.querySelector('.cancel-btn').addEventListener('click', () => {
+      playSound();
+      const modal = document.getElementById('reset-modal');
+      modal.style.display = 'none';
+    });
+
+    document.querySelector('.confirm-btn').addEventListener('click', () => {
+      playSound();
+      studentRecords = {};
+      renderStudentRecords();
+      const modal = document.getElementById('reset-modal');
+      modal.style.display = 'none';
+    });
+
+    document.getElementById('copy-monthly-report').addEventListener('click', () => {
+      playSound();
+      const report = generateReport();
+      copyToClipboard(report);
+      document.getElementById('report-preview').value = report;
+    });
+
+    function generateReport() {
+      let report = '學生請假記錄（';
+      const dates = [];
+      for (const student in studentRecords) {
+        studentRecords[student].forEach(record => dates.push(record.date));
+      }
+      if (dates.length > 0) {
+        dates.sort();
+        report += `${dates[0]}～${dates[dates.length - 1]}）\n\n`;
+      } else {
+        report += '無記錄）\n\n';
+      }
+      for (const student in studentRecords) {
+        if (studentRecords[student].length > 0) {
+          report += `${student}:\n`;
+          studentRecords[student].forEach(record => {
+            report += `  ${record.date} - ${record.leaveType} - ${record.leaveDuration}\n`;
+          });
+        }
+      }
+      return report;
+    }
+
+    function copyToClipboard(text) {
+      const tempInput = document.createElement('textarea');
+      tempInput.value = text;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      alert('已複製到剪貼簿');
+    }
+
+    document.getElementById('send-email').addEventListener('click', () => {
+      playSound();
+      const email = document.getElementById('recipient-email').value;
+      localStorage.setItem('recipientEmail', email);
+      const report = generateReport();
+      window.location.href = `mailto:${email}?subject=學生請假報表&body=${encodeURIComponent(report)}`;
+    });
+
+    function playSound() {
+      new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YQAAAAA=').play();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('student-input').value = localStorage.getItem('studentInput') || '';
+      document.getElementById('recipient-email').value = localStorage.getItem('recipientEmail') || '';
+      students = document.getElementById('student-input').value.split('\n').filter(name => name.trim() !== '');
+      renderStudentButtons();
+      renderStudentRecords();
+    });
+  </script>
+</body>
+</html>
