@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>學生請假登記系統</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; color: #333; }
+    h1 { text-align: center; color: #333; }
+    #login-area, #main-system, #admin-panel { display: none; }
+    #student-list, #students, #records { margin-bottom: 20px; }
+    #student-list textarea { width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    #student-list button { display: block; margin: 10px auto; padding: 10px 20px; background-color: #337ab7; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .student-btn { margin: 5px; padding: 10px 20px; border-radius: 5px; background-color: #d9edf7; border: 1px solid #bce8f1; cursor: pointer; display: inline-block; }
+    .student-btn.selected { background-color: #31708f; color: white; font-weight: bold; }
+    #controls { margin-bottom: 20px; font-size: 14px; text-align: center; }
+    #controls select, #controls button, #controls input { margin: 5px; padding: 10px 20px; font-size: 14px; border-radius: 5px; border: 1px solid #ccc; }
+    #controls button { cursor: pointer; background-color: #5cb85c; color: white; border: none; }
+    #records { font-size: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .record-table { border: 1px solid #ddd; padding: 10px; background-color: white; border-radius: 5px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
+    .record-table ul { list-style-type: none; padding: 0; margin: 0; }
+    .record-table ul li { padding: 2px 0; }
+    #outputs { margin-bottom: 20px; text-align: center; }
+    #outputs button, #outputs input, #outputs textarea { display: block; margin: 10px auto; padding: 10px 20px; font-size: 14px; width: 100%; max-width: 300px; box-sizing: border-box; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; }
+    #outputs button { background-color: #5bc0de; color: white; border: none; }
+    #description { border-top: 1px solid #ccc; padding-top: 10px; }
+    #calendar { margin-top: 20px; }
+    #calendar input { display: block; margin: 10px 0; padding: 10px; font-size: 14px; width: 100%; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+    .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+    .modal-content { background-color: white; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 300px; border-radius: 5px; }
+    .modal-header, .modal-footer { padding: 10px; text-align: center; }
+    .modal-footer { display: flex; justify-content: space-between; }
+    .modal-footer button { padding: 10px 20px; font-size: 14px; border-radius: 5px; border: none; cursor: pointer; }
+    .modal-footer .cancel-btn { background-color: #5cb85c; color: white; }
+    .modal-footer .confirm-btn { background-color: #d9534f; color: white; font-weight: bold; }
+    #login-area { text-align: center; }
+    #login-area input { padding: 10px; margin: 10px; }
+    #admin-user-list { margin-top: 20px; }
+    .user-row { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .user-row input { margin-right: 10px; padding: 5px; border: 1px solid #ccc; border-radius: 5px; }
+    .user-row button { padding: 5px 10px; background-color: #d9534f; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .user-row button.edit-btn { background-color: #5bc0de; }
+    .user-row button.save-btn { background-color: #5cb85c; }
+    #admin-user-management { display: flex; flex-direction: column; align-items: center; }
+    #admin-user-management input { margin: 5px 0; padding: 10px; width: 100%; max-width: 300px; }
+    #admin-user-management button { margin: 10px 0; padding: 10px 20px; background-color: #5bc0de; color: white; border: none; border-radius: 5px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>學生請假登記系統</h1>
+  
+  <div id="login-area">
+    <h2>歡迎使用，請先登入</h2>
+    <input type="text" id="account" placeholder="帳號">
+    <input type="password" id="password" placeholder="密碼">
+    <button id="login-button">登入</button>
+  </div>
+  
+  <div id="main-system">
+    <button id="logout-button">登出</button>
+    <div id="student-list">
+      <textarea id="student-input" placeholder="請輸入學生名稱，每行一個"></textarea>
+      <button id="confirm-students">確定</button>
+    </div>
+    <div id="students"></div>
+    <div id="controls">
+      <label for="leave-date">選擇請假日期</label>
+      <input type="date" id="leave-date">
+      <select id="leave-type">
+        <option value="病假">病假</option>
+        <option value="事假">事假</option>
+        <option value="公假">公假</option>
+        <option value="喪假">喪假</option>
+        <option value="曠課">曠課</option>
+        <option value="其他">其他</option>
+      </select>
+      <select id="leave-duration">
+        <option value="1天">1天</option>
+        <option value="0.5天">0.5天</option>
+        <option value="1節">1節</option>
+        <option value="2節">2節</option>
+        <option value="3節">3節</option>
+        <option value="5節">5節</option>
+        <option value="6節">6節</option>
+      </select>
+      <button id="register-leave">登記</button>
+    </div>
+    <div id="records"></div>
+    <button id="reset-records">重置學生請假記錄</button>
+    <div id="outputs">
+      <input type="text" id="recipient-email" placeholder="收件人 Email" value="">
+      <button id="copy-monthly-report">輸出報表</button>
+      <button id="email-report">Email</button>
+      <textarea id="report-preview" readonly></textarea>
+    </div>
+  </div>
+
+  <div id="admin-panel">
+    <button id="logout-admin-button">登出</button>
+    <h2>管理頁面</h2>
+    <div id="admin-user-management">
+      <input type="text" id="new-account" placeholder="帳號">
+      <input type="password" id="new-password" placeholder="密碼">
+      <button id="add-user">新增使用者</button>
+    </div>
+    <div id="admin-user-list"></div>
+  </div>
+
+  <div id="reset-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>確認重置</h2>
+      </div>
+      <div class="modal-footer">
+        <button class="cancel-btn">取消</button>
+        <button class="confirm-btn">確認重置</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const users = JSON.parse(localStorage.getItem('users')) || [
+      { account: 'admin', password: 'a2024', isAdmin: true },
+      { account: '001', password: 'u1111', isAdmin: false },
+      { account: '002', password: 'u2222', isAdmin: false }
+    ];
+    const students = JSON.parse(localStorage.getItem('students')) || [];
+    const records = JSON.parse(localStorage.getItem('records')) || [];
+    const loginArea = document.getElementById('login-area');
+    const mainSystem = document.getElementById('main-system');
+    const adminPanel = document.getElementById('admin-panel');
+    const studentListArea = document.getElementById('student-list');
+    const studentInput = document.getElementById('student-input');
+    const studentsDiv = document.getElementById('students');
+    const leaveDateInput = document.getElementById('leave-date');
+    const leaveTypeSelect = document.getElementById('leave-type');
+    const leaveDurationSelect = document.getElementById('leave-duration');
+    const recordsDiv = document.getElementById('records');
+    const resetRecordsButton = document.getElementById('reset-records');
+    const resetModal = document.getElementById('reset-modal');
+    const resetCancelButton = resetModal.querySelector('.cancel-btn');
+    const resetConfirmButton = resetModal.querySelector('.confirm-btn');
+    const reportPreview = document.getElementById('report-preview');
+    const accountInput = document.getElementById('account');
+    const passwordInput = document.getElementById('password');
+    const loginButton = document.getElementById('login-button');
+    const logoutButton = document.getElementById('logout-button');
+    const copyMonthlyReportButton = document.getElementById('copy-monthly-report');
+    const confirmStudentsButton = document.getElementById('confirm-students');
+    const registerLeaveButton = document.getElementById('register-leave');
+    const logoutAdminButton = document.getElementById('logout-admin-button');
+    const addUserButton = document.getElementById('add-user');
+    const newAccountInput = document.getElementById('new-account');
+    const newPasswordInput = document.getElementById('new-password');
+    const adminUserList = document.getElementById('admin-user-list');
+    const recipientEmailInput = document.getElementById('recipient-email');
+    const emailReportButton = document.getElementById('email-report');
+    let loggedInUser = null;
+
+    function showLoginArea() {
+      loginArea.style.display = 'block';
+      mainSystem.style.display = 'none';
+      adminPanel.style.display = 'none';
+    }
+
+    function showMainSystem() {
+      loginArea.style.display = 'none';
+      mainSystem.style.display = 'block';
+      adminPanel.style.display = 'none';
+      renderStudentButtons();
+      renderRecords();
+    }
+
+    function showAdminPanel() {
+      loginArea.style.display = 'none';
+      mainSystem.style.display = 'none';
+      adminPanel.style.display = 'block';
+      renderAdminUserList();
+    }
+
+    function renderStudentButtons() {
+      studentsDiv.innerHTML = '';
+      students.forEach((student, index) => {
+        const studentButton = document.createElement('button');
+        studentButton.textContent = student;
+        studentButton.classList.add('student-btn');
+        studentButton.dataset.index = index;
+        studentButton.addEventListener('click', () => {
+          const selectedButtons = studentsDiv.querySelectorAll('.student-btn.selected');
+          selectedButtons.forEach(button => button.classList.remove('selected'));
+          studentButton.classList.add('selected');
+        });
+        studentsDiv.appendChild(studentButton);
+      });
+    }
+
+    function renderRecords() {
+      recordsDiv.innerHTML = '';
+      students.forEach((student, index) => {
+        const studentRecords = records.filter(record => record.studentIndex === index);
+        if (studentRecords.length > 0) {
+          const recordTable = document.createElement('div');
+          recordTable.classList.add('record-table');
+          const recordList = document.createElement('ul');
+          studentRecords.forEach(record => {
+            const recordItem = document.createElement('li');
+            recordItem.textContent = `${record.date} - ${record.type} - ${record.duration}`;
+            recordList.appendChild(recordItem);
+          });
+          recordTable.innerHTML = `<h3>${student}</h3>`;
+          recordTable.appendChild(recordList);
+          recordsDiv.appendChild(recordTable);
+        }
+      });
+    }
+
+    function saveToLocalStorage() {
+      localStorage.setItem('users', JSON.stringify(users));
+      localStorage.setItem('students', JSON.stringify(students));
+      localStorage.setItem('records', JSON.stringify(records));
+      localStorage.setItem('recipientEmail', recipientEmailInput.value.trim());
+    }
+
+    loginButton.addEventListener('click', () => {
+      const account = accountInput.value.trim();
+      const password = passwordInput.value.trim();
+      const user = users.find(user => user.account === account && user.password === password);
+      if (user) {
+        loggedInUser = user;
+        if (user.isAdmin) {
+          showAdminPanel();
+        } else {
+          showMainSystem();
+        }
+      } else {
+        alert('帳號或密碼錯誤');
+      }
+    });
+
+    logoutButton.addEventListener('click', () => {
+      loggedInUser = null;
+      showLoginArea();
+    });
+
+    logoutAdminButton.addEventListener('click', () => {
+      loggedInUser = null;
+      showLoginArea();
+    });
+
+    confirmStudentsButton.addEventListener('click', () => {
+      const studentNames = studentInput.value.trim().split('\n').map(name => name.trim()).filter(name => name !== '');
+      students.length = 0;
+      students.push(...studentNames);
+      saveToLocalStorage();
+      renderStudentButtons();
+    });
+
+    registerLeaveButton.addEventListener('click', () => {
+      const selectedButton = studentsDiv.querySelector('.student-btn.selected');
+      if (!selectedButton) {
+        alert('請選擇一位學生');
+        return;
+      }
+      const studentIndex = parseInt(selectedButton.dataset.index, 10);
+      const date = leaveDateInput.value;
+      const type = leaveTypeSelect.value;
+      const duration = leaveDurationSelect.value;
+      if (!date) {
+        alert('請選擇請假日期');
+        return;
+      }
+      records.push({ studentIndex, date, type, duration });
+      saveToLocalStorage();
+      renderRecords();
+    });
+
+    resetRecordsButton.addEventListener('click', () => {
+      resetModal.style.display = 'block';
+    });
+
+    resetCancelButton.addEventListener('click', () => {
+      resetModal.style.display = 'none';
+    });
+
+    resetConfirmButton.addEventListener('click', () => {
+      records.length = 0;
+      saveToLocalStorage();
+      renderRecords();
+      resetModal.style.display = 'none';
+    });
+
+    copyMonthlyReportButton.addEventListener('click', () => {
+      let report = '學生請假記錄\n';
+      students.forEach((student, index) => {
+        const studentRecords = records.filter(record => record.studentIndex === index);
+        if (studentRecords.length > 0) {
+          report += `\n${student}:\n`;
+          studentRecords.forEach(record => {
+            report += `${record.date} - ${record.type} - ${record.duration}\n`;
+          });
+        }
+      });
+      reportPreview.value = report;
+    });
+
+    emailReportButton.addEventListener('click', () => {
+      const email = recipientEmailInput.value.trim();
+      if (!email) {
+        alert('請輸入收件人 Email');
+        return;
+      }
+      const subject = encodeURIComponent('學生請假記錄');
+      const body = encodeURIComponent(reportPreview.value);
+      window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    });
+
+    addUserButton.addEventListener('click', () => {
+      const newAccount = newAccountInput.value.trim();
+      const newPassword = newPasswordInput.value.trim();
+      if (!newAccount || !newPassword) {
+        alert('請輸入帳號和密碼');
+        return;
+      }
+      users.push({ account: newAccount, password: newPassword, isAdmin: false });
+      saveToLocalStorage();
+      renderAdminUserList();
+    });
+
+    function renderAdminUserList() {
+      adminUserList.innerHTML = '';
+      users.forEach((user, index) => {
+        if (!user.isAdmin) {
+          const userRow = document.createElement('div');
+          userRow.classList.add('user-row');
+          const accountInput = document.createElement('input');
+          accountInput.value = user.account;
+          accountInput.disabled = true;
+          const passwordInput = document.createElement('input');
+          passwordInput.type = 'password';
+          passwordInput.value = user.password;
+          passwordInput.disabled = true;
+          const editButton = document.createElement('button');
+          editButton.textContent = '編輯';
+          editButton.classList.add('edit-btn');
+          editButton.addEventListener('click', () => {
+            accountInput.disabled = !accountInput.disabled;
+            passwordInput.disabled = !passwordInput.disabled;
+            if (accountInput.disabled) {
+              user.account = accountInput.value.trim();
+              user.password = passwordInput.value.trim();
+              saveToLocalStorage();
+              editButton.textContent = '編輯';
+            } else {
+              editButton.textContent = '儲存';
+            }
+          });
+          const deleteButton = document.createElement('button');
+          deleteButton.textContent = '刪除';
+          deleteButton.addEventListener('click', () => {
+            users.splice(index, 1);
+            saveToLocalStorage();
+            renderAdminUserList();
+          });
+          userRow.appendChild(accountInput);
+          userRow.appendChild(passwordInput);
+          userRow.appendChild(editButton);
+          userRow.appendChild(deleteButton);
+          adminUserList.appendChild(userRow);
+        }
+      });
+    }
+
+    recipientEmailInput.value = localStorage.getItem('recipientEmail') || '';
+    showLoginArea();
+  </script>
+</body>
+</html>
