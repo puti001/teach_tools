@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作業繳交檢核系統</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        .buttons {
+            margin-bottom: 10px;
+        }
+        .button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #000; /* 預設黑色字體 */
+            font-weight: bold;
+        }
+        .student-button {
+            background-color: lightblue;
+        }
+        .homework-button {
+            background-color: lightgreen;
+        }
+        .not-submitted {
+            background-color: lightcoral;
+        }
+        .not-completed {
+            background-color: lightorange;
+        }
+        .save-button {
+            background-color: lightyellow;
+            font-size: 16px; /* 比其他大2px */
+            border: 2px solid #000; /* 加外框 */
+        }
+        .clear-button {
+            background-color: #d2b48c;
+            font-size: 16px; /* 比其他大2px */
+            border: 2px solid #000; /* 加外框 */
+        }
+        .input-box {
+            display: none;
+            margin-bottom: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .temp-area {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
+        .active-button {
+            background-color: darkblue !important;
+            color: #fff !important; /* 按下後變成白字 */
+        }
+        .explanation {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>多項作業缺交登記表</h1>
+        <div class="section">
+            <label>1.選學生</label>
+            <div class="buttons">
+                <button class="button" onclick="playClickSound(); editStudents()">編輯學生</button>
+            </div>
+            <div id="studentInputBox" class="input-box">
+                <textarea id="studentNames" placeholder="輸入學生名稱，每行一個"></textarea>
+                <button class="button" onclick="playClickSound(); generateStudents()">確定</button>
+            </div>
+            <div id="students"></div>
+        </div>
+        <div class="section">
+            <label>2.選作業</label>
+            <div class="buttons">
+                <button class="button" onclick="playClickSound(); editHomework()">編輯作業</button>
+            </div>
+            <div id="homeworkInputBox" class="input-box">
+                <textarea id="homeworkNames" placeholder="輸入作業名稱，每行一個"></textarea>
+                <button class="button" onclick="playClickSound(); generateHomework()">確定</button>
+            </div>
+            <div id="homework"></div>
+        </div>
+        <div class="section">
+            <label>3.填頁數</label>
+            <input type="text" id="pageNumber" placeholder="頁數" />
+        </div>
+        <div class="section">
+            <label>4.選狀態</label>
+            <div class="buttons">
+                <button class="button not-submitted" onclick="playClickSound(); selectStatus('not-submitted')">未繳交</button>
+                <button class="button not-completed" onclick="playClickSound(); selectStatus('not-completed')">未完成</button>
+            </div>
+        </div>
+        <div class="section">
+            <label>5.確認1～4都完成.選我</label>
+            <button class="button save-button" onclick="playClickSound(); saveToTemp()">傳到暫存區</button>
+            <button class="button clear-button" onclick="playClickSound(); clearTemp()">清除暫存區</button>
+        </div>
+        <div id="tempArea" class="temp-area"></div>
+        <button class="button" onclick="playClickSound(); exportReport()">輸出報表</button>
+        <input type="email" id="emailRecipient" placeholder="收件人郵箱" />
+        <button class="button" onclick="playClickSound(); sendEmail()">Email</button>
+        <div class="explanation">
+            <h2>說明區</h2>
+            <p>1.按鈕介紹：</p>
+            <ul>
+                <li>編輯學生：輸入學生名稱，生成學生按鈕。</li>
+                <li>編輯作業：輸入作業名稱，生成作業按鈕。</li>
+                <li>未繳交：標記選定作業狀態為未繳交。</li>
+                <li>未完成：標記選定作業狀態為未完成。</li>
+                <li>傳到暫存區：將選定內容傳到暫存區。</li>
+                <li>清除暫存區：清除暫存區所有內容。</li>
+                <li>輸出報表：將暫存區內容整理並複製到剪貼簿。</li>
+                <li>Email：發送包含暫存區內容的郵件。</li>
+            </ul>
+            <p>2.使用步驟：</p>
+            <ol>
+                <li>按「編輯學生」輸入並生成學生按鈕。</li>
+                <li>按「編輯作業」輸入並生成作業按鈕。</li>
+                <li>輸入頁數。</li>
+                <li>選擇作業狀態（未繳交或未完成）。</li>
+                <li>按「傳到暫存區」確認所選內容並傳送。</li>
+                <li>按「輸出報表」將整理好的報表複製到剪貼簿。</li>
+                <li>輸入收件人郵箱，按「Email」發送郵件。</li>
+            </ol>
+            <p>3.開發者：屏東縣後庄國小黃老師 + ChatGPT-4o</p>
+            <p>4.更新日期：2024年7月14日</p>
+        </div>
+    </div>
+
+    <script>
+        function playClickSound() {
+            const audio = new Audio('click-sound.mp3'); // 使用本地或系統內建音效
+            audio.play();
+        }
+
+        function editStudents() {
+            document.getElementById('studentInputBox').style.display = 'block';
+            document.getElementById('homeworkInputBox').style.display = 'none';
+        }
+
+        function editHomework() {
+            document.getElementById('homeworkInputBox').style.display = 'block';
+            document.getElementById('studentInputBox').style.display = 'none';
+        }
+
+        function generateStudents() {
+            const studentNames = document.getElementById('studentNames').value.trim().split('\n');
+            const studentContainer = document.getElementById('students');
+            studentContainer.innerHTML = '';
+            studentNames.forEach(name => {
+                if (name) {
+                    const button = document.createElement('button');
+                    button.textContent = name;
+                    button.className = 'button student-button';
+                    button.onclick = () => { playClickSound(); selectButton(button, 'student-button'); };
+                    studentContainer.appendChild(button);
+                }
+            });
+            document.getElementById('studentInputBox').style.display = 'none';
+            localStorage.setItem('students', JSON.stringify(studentNames));
+        }
+
+        function generateHomework() {
+            const homeworkNames = document.getElementById('homeworkNames').value.trim().split('\n');
+            const homeworkContainer = document.getElementById('homework');
+            homeworkContainer.innerHTML = '';
+            homeworkNames.forEach(name => {
+                if (name) {
+                    const button = document.createElement('button');
+                    button.textContent = name;
+                    button.className = 'button homework-button';
+                    button.onclick = () => { playClickSound(); selectButton(button, 'homework-button'); };
+                    homeworkContainer.appendChild(button);
+                }
+            });
+            document.getElementById('homeworkInputBox').style.display = 'none';
+            localStorage.setItem('homework', JSON.stringify(homeworkNames));
+        }
+
+        function selectButton(button, className) {
+            const buttons = document.getElementsByClassName(className);
+            for (const btn of buttons) {
+                btn.classList.remove('active-button');
+            }
+            button.classList.add('active-button');
+        }
+
+        function selectStatus(status) {
+            const notSubmittedBtn = document.querySelector('.not-submitted');
+            const notCompletedBtn = document.querySelector('.not-completed');
+            notSubmittedBtn.classList.remove('active-button');
+            notCompletedBtn.classList.remove('active-button');
+            if (status === 'not-submitted') {
+                notSubmittedBtn.classList.add('active-button');
+            } else {
+                notCompletedBtn.classList.add('active-button');
+            }
+        }
+
+        function saveToTemp() {
+            const studentButton = document.querySelector('.student-button.active-button');
+            const homeworkButton = document.querySelector('.homework-button.active-button');
+            const pageNumber = document.getElementById('pageNumber').value.trim();
+            const statusButton = document.querySelector('.not-submitted.active-button, .not-completed.active-button');
+            if (!studentButton || !homeworkButton || !pageNumber || !statusButton) {
+                alert('請完成所有步驟後再傳到暫存區');
+                return;
+            }
+            const tempArea = document.getElementById('tempArea');
+            const status = statusButton.textContent;
+            const entry = `${studentButton.textContent}：${homeworkButton.textContent}，${pageNumber}頁，${status}。`;
+            tempArea.textContent += entry + '\n';
+            localStorage.setItem('tempData', tempArea.textContent);
+        }
+
+        function clearTemp() {
+            if (confirm('確定要清除暫存區嗎？')) {
+                document.getElementById('tempArea').textContent = '';
+                localStorage.removeItem('tempData');
+            }
+        }
+
+        function exportReport() {
+            const tempData = document.getElementById('tempArea').textContent.trim();
+            if (!tempData) {
+                alert('暫存區沒有資料');
+                return;
+            }
+            const today = new Date().toISOString().split('T')[0];
+            const reportTitle = `${today}，學生作業問題提醒報表`;
+            const consolidatedData = consolidateTempData(tempData);
+            const reportContent = `${reportTitle}\n${consolidatedData}`;
+            navigator.clipboard.writeText(reportContent).then(() => {
+                alert('報表已複製到剪貼簿');
+            });
+        }
+
+        function consolidateTempData(tempData) {
+            const lines = tempData.split('\n');
+            const studentMap = {};
+            lines.forEach(line => {
+                if (line) {
+                    const [student, rest] = line.split('：');
+                    if (!studentMap[student]) {
+                        studentMap[student] = [];
+                    }
+                    studentMap[student].push(rest);
+                }
+            });
+            let consolidatedData = '';
+            for (const [student, records] of Object.entries(studentMap)) {
+                consolidatedData += `${student}：${records.join(' ')}\n`;
+            }
+            return consolidatedData.trim();
+        }
+
+        function sendEmail() {
+            const tempData = document.getElementById('tempArea').textContent.trim();
+            if (!tempData) {
+                alert('暫存區沒有資料');
+                return;
+            }
+            const today = new Date().toISOString().split('T')[0];
+            const reportTitle = `${today}，學生作業問題提醒報表`;
+            const consolidatedData = consolidateTempData(tempData);
+            const reportContent = `${reportTitle}\n${consolidatedData}`;
+            const recipient = document.getElementById('emailRecipient').value;
+            const mailtoLink = `mailto:${recipient}?subject=${encodeURIComponent(reportTitle)}&body=${encodeURIComponent(reportContent)}`;
+            window.location.href = mailtoLink;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedStudents = localStorage.getItem('students');
+            const savedHomework = localStorage.getItem('homework');
+            const savedTempData = localStorage.getItem('tempData');
+            if (savedStudents) {
+                document.getElementById('studentNames').value = JSON.parse(savedStudents).join('\n');
+                generateStudents();
+            }
+            if (savedHomework) {
+                document.getElementById('homeworkNames').value = JSON.parse(savedHomework).join('\n');
+                generateHomework();
+            }
+            if (savedTempData) {
+                document.getElementById('tempArea').textContent = savedTempData;
+            }
+        });
+    </script>
+</body>
+</html>
