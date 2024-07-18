@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自訂題庫評量系統</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .hidden {
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .question {
+            background-color: #ecf0f1;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: #fff;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        pre {
+            background-color: #f8f8f8;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>自訂題庫評量系統</h1>
+
+        <div id="main">
+            <div class="form-group">
+                <label for="fileInput">選擇題庫檔:</label>
+                <input type="file" id="fileInput" accept=".json">
+            </div>
+
+            <div class="form-group">
+                <label for="nameInput">姓名:</label>
+                <input type="text" id="nameInput" placeholder="請輸入姓名">
+            </div>
+
+            <div class="form-group">
+                <button id="startExam">開始考試</button>
+            </div>
+
+            <div class="history">
+                <h3>考試歷史</h3>
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>姓名</th>
+                            <th>分數</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <button id="clearHistory">清空歷史記錄</button>
+            </div>
+
+            <div class="mistakes">
+                <h3>錯題統計</h3>
+                <table id="mistakesTable">
+                    <thead>
+                        <tr>
+                            <th>題目</th>
+                            <th>錯誤次數</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <button id="clearMistakes">清空錯題統計</button>
+            </div>
+
+            <div class="description">
+            <h3>說明</h3>
+            <p>這是一個評量系統，包含是非題、單選題和複選題。</p>
+            <p>新增題庫檔必須符合標準JSON檔的格式（副檔名是.json），如下：</p>
+            <pre>
+[
+  {
+    "id": 1,
+    "type": "trueFalse",
+    "question": "地球是平的嗎？",
+    "correctAnswer": false
+  },
+  {
+    "id": 2,
+    "type": "singleChoice",
+    "question": "台灣的首都是哪個城市？",
+    "options": ["台北", "高雄", "台中", "台南"],
+    "correctAnswer": "台北"
+  },
+  {
+    "id": 3,
+    "type": "multipleChoice",
+    "question": "以下哪些是台灣的主要產業？",
+    "options": ["農業", "製造業", "服務業", "漁業"],
+    "correctAnswer": ["製造業", "服務業"]
+  }
+]
+            </pre>
+            <p>開發者資訊：屏東縣後庄國小黃老師+生成式AI助手，2024-07-17</p>
+        </div>
+        </div>
+
+        <div id="exam" class="hidden">
+            <h2>考試</h2>
+            <div id="questions"></div>
+            <button id="submitExam">交卷</button>
+        </div>
+
+        <div id="result" class="hidden">
+            <h2>結果</h2>
+            <div id="score"></div>
+            <div id="incorrectAnswers"></div>
+            <button id="reviewMistakes">複習錯題</button>
+            <button id="backToMain">回到主畫面</button>
+        </div>
+
+        <div id="review" class="hidden">
+            <h2>複習錯題</h2>
+            <div id="reviewQuestions"></div>
+            <button id="submitReview">完成複習</button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestions = [];
+        let incorrectQuestions = [];
+
+        // 文件上傳處理
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        currentQuestions = JSON.parse(e.target.result);
+                        console.log('Questions loaded:', currentQuestions);
+                    } catch (error) {
+                        console.error('Error parsing JSON:', error);
+                        alert('題庫檔案格式錯誤，請確保是有效的JSON檔案。');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // 顯示問題
+        function displayQuestions(questions, containerId) {
+            const questionsContainer = document.getElementById(containerId);
+            questionsContainer.innerHTML = '';
+            
+            questions.forEach((question, index) => {
+                const questionElement = document.createElement('div');
+                questionElement.classList.add('question');
+                
+                questionElement.innerHTML = `
+                    <p>${index + 1}. ${question.question}</p>
+                    ${createAnswerOptions(question)}
+                `;
+                
+                questionsContainer.appendChild(questionElement);
+            });
+        }
+
+        // 創建答案選項
+        function createAnswerOptions(question) {
+            switch(question.type) {
+                case 'trueFalse':
+                    return `
+                        <label><input type="radio" name="q${question.id}" value="true"> 是</label>
+                        <label><input type="radio" name="q${question.id}" value="false"> 否</label>
+                    `;
+                case 'singleChoice':
+                    return question.options.map(option => 
+                        `<label><input type="radio" name="q${question.id}" value="${option}"> ${option}</label>`
+                    ).join('');
+                case 'multipleChoice':
+                    return question.options.map(option => 
+                        `<label><input type="checkbox" name="q${question.id}" value="${option}"> ${option}</label>`
+                    ).join('');
+                default:
+                    return '';
+            }
+        }
+
+        // 開始考試
+        document.getElementById('startExam').addEventListener('click', function() {
+            const name = document.getElementById('nameInput').value;
+            if (name && currentQuestions.length > 0) {
+                displayQuestions(currentQuestions, 'questions');
+                document.getElementById('main').classList.add('hidden');
+                document.getElementById('exam').classList.remove('hidden');
+            } else {
+                alert('請輸入姓名並選擇題庫檔案。');
+            }
+        });
+
+        // 交卷
+        document.getElementById('submitExam').addEventListener('click', function() {
+            const incorrectAnswers = [];
+            incorrectQuestions = [];
+            let score = 0;
+            
+            currentQuestions.forEach(question => {
+                const selectedAnswers = Array.from(document.querySelectorAll(`input[name="q${question.id}"]:checked`))
+                    .map(input => input.value);
+                
+                let isCorrect;
+                if (question.type === 'trueFalse' || question.type === 'singleChoice') {
+                    isCorrect = selectedAnswers[0] === question.correctAnswer.toString();
+                } else if (question.type === 'multipleChoice') {
+                    isCorrect = arraysEqual(selectedAnswers.sort(), question.correctAnswer.sort());
+                }
+                
+                if (isCorrect) {
+                    score++;
+                } else {
+                    incorrectAnswers.push({
+                        question: question.question,
+                        userAnswer: selectedAnswers,
+                        correctAnswer: question.correctAnswer
+                    });
+                    incorrectQuestions.push(question);
+                    updateMistakesStatistics(question.question);
+                }
+            });
+            
+            const totalQuestions = currentQuestions.length;
+            const scorePercentage = (score / totalQuestions) * 100;
+            
+            displayResults(incorrectAnswers, score, totalQuestions);
+            saveExamHistory(document.getElementById('nameInput').value, scorePercentage);
+        });
+
+        // 顯示結果
+        function displayResults(incorrectAnswers, score, totalQuestions) {
+            const scoreContainer = document.getElementById('score');
+            const resultContainer = document.getElementById('incorrectAnswers');
+            scoreContainer.innerHTML = `<p>您的得分: ${score}/${totalQuestions} (${(score/totalQuestions*100).toFixed(2)}%)</p>`;
+            resultContainer.innerHTML = '';
+            
+            if (incorrectAnswers.length === 0) {
+                resultContainer.innerHTML = '<p>恭喜！您全部答對了。</p>';
+            } else {
+                incorrectAnswers.forEach((item, index) => {
+                    resultContainer.innerHTML += `
+                        <div class="question">
+                            <p>${index + 1}. ${item.question}</p>
+                            <p>您的答案: ${item.userAnswer.join(', ')}</p>
+                            <p>正確答案: ${item.correctAnswer}</p>
+                        </div>
+                    `;
+                });
+            }
+            
+            document.getElementById('exam').classList.add('hidden');
+            document.getElementById('result').classList.remove('hidden');
+        }
+
+        // 輔助函數：判斷兩個數組是否相等
+        function arraysEqual(a, b) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) return false;
+            }
+            return true;
+        }
+
+        // 儲存考試歷史
+        function saveExamHistory(name, score) {
+            const history = JSON.parse(localStorage.getItem('examHistory')) || [];
+            history.push({
+                date: new Date().toLocaleString(),
+                name: name,
+                score: score.toFixed(2)
+            });
+            localStorage.setItem('examHistory', JSON.stringify(history));
+            updateHistoryTable();
+        }
+
+        // 更新考試歷史表格
+        function updateHistoryTable() {
+            const history = JSON.parse(localStorage.getItem('examHistory')) || [];
+            const tableBody = document.querySelector('#historyTable tbody');
+            tableBody.innerHTML = '';
+            history.forEach(record => {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = record.date;
+                row.insertCell(1).textContent = record.name;
+                row.insertCell(2).textContent = `${record.score}%`;
+            });
+        }
+
+        // 更新錯題統計
+        function updateMistakesStatistics(question) {
+            const mistakes = JSON.parse(localStorage.getItem('mistakesStatistics')) || {};
+            mistakes[question] = (mistakes[question] || 0) + 1;
+            localStorage.setItem('mistakesStatistics', JSON.stringify(mistakes));
+            updateMistakesTable();
+        }
+
+        // 更新錯題統計表格
+        function updateMistakesTable() {
+            const mistakes = JSON.parse(localStorage.getItem('mistakesStatistics')) || {};
+            const tableBody = document.querySelector('#mistakesTable tbody');
+            tableBody.innerHTML = '';
+            for (const [question, count] of Object.entries(mistakes)) {
+                const row = tableBody.insertRow();
+                row.insertCell(0).textContent = question;
+                row.insertCell(1).textContent = count;
+            }
+        }
+
+        // 回到主畫面
+        document.getElementById('backToMain').addEventListener('click', function() {
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('main').classList.remove('hidden');
+            updateHistoryTable();
+            updateMistakesTable();
+        });
+
+        // 清空歷史記錄
+        document.getElementById('clearHistory').addEventListener('click', function() {
+            localStorage.removeItem('examHistory');
+            updateHistoryTable();
+            alert('歷史記錄已清空');
+        });
+
+        // 清空錯題統計
+        document.getElementById('clearMistakes').addEventListener('click', function() {
+            localStorage.removeItem('mistakesStatistics');
+            updateMistakesTable();
+            alert('錯題統計已清空');
+        });
+
+        // 複習錯題
+        document.getElementById('reviewMistakes').addEventListener('click', function() {
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('review').classList.remove('hidden');
+            displayQuestions(incorrectQuestions, 'reviewQuestions');
+        });
+
+        // 完成複習
+        document.getElementById('submitReview').addEventListener('click', function() {
+            document.getElementById('review').classList.add('hidden');
+            document.getElementById('main').classList.remove('hidden');
+            alert('複習完成！');
+        });
+
+        // 頁面加載時更新歷史記錄和錯題統計
+        window.addEventListener('load', function() {
+            updateHistoryTable();
+            updateMistakesTable();
+        });
+    </script>
+</body>
+</html>
