@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "type": "trueFalse",
+        "question": "《金剛經》輯錄了佛陀與座下「解空第一」的弟子大迦葉之間的問答。(頁22)",
+        "correctAnswer": false
+    },
+    {
+        "id": 2,
+        "type": "trueFalse",
+        "question": "《金剛經》闡述了「一切法無我」、「一切法皆空」的「般若空性」；一旦證悟了「空」、通透了「般若」，我們在人間，出世入世都能受用、皆得成就。(頁22)",
+        "correctAnswer": true
+    },
+    {
+        "id": 3,
+        "type": "trueFalse",
+        "question": "在大乘佛法裡，「成就」，即是利益眾生，是修行的成就、佛菩薩的成就。(頁25)",
+        "correctAnswer": true
+    },
+    {
+        "id": 4,
+        "type": "trueFalse",
+        "question": "《金剛經》就是要我們從此岸度到彼岸，達到波羅蜜多的法門，也就是「以入世的精神，做出世的事業」。(頁26)",
+        "correctAnswer": false
+    },
+    {
+        "id": 5,
+        "type": "trueFalse",
+        "question": "「集體創作」不是由很多人支持一個人的獨裁，而是集體裡的每個人都有平等的參與。(頁41)",
+        "correctAnswer": true
+    }
+]
