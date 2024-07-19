@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>自訂題庫評量系統</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        #main, #exam, #result, #review {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input[type="text"], .form-group input[type="file"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .hidden {
+            display: none;
+        }
+        .exam-results, .description, .question, .review-question {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div id="main">
+        <h1>自訂題庫評量系統</h1>
+        
+        <div class="form-group">
+            <label for="quizUrl">貼上題庫檔網址：</label>
+            <input type="text" id="quizUrl" placeholder="輸入題庫檔網址">
+            <button onclick="loadQuizFromUrl()">載入網路題庫</button>
+        </div>
+
+        <div class="form-group">
+            <label for="quizFile">或選擇本地題庫檔:</label>
+            <input type="file" id="quizFile" accept=".json">
+        </div>
+
+        <div class="form-group">
+            <label for="quizName">評量名稱:</label>
+            <input type="text" id="quizName" placeholder="評量名稱">
+        </div>
+
+        <div class="form-group">
+            <label for="name">姓名:</label>
+            <input type="text" id="name" placeholder="姓名">
+        </div>
+
+        <button onclick="startExam()">開始考試</button>
+
+        <div class="exam-results">
+            <h3>考試結果</h3>
+            <table id="resultsTable">
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>評量名稱</th>
+                        <th>姓名</th>
+                        <th>分數</th>
+                        <th>錯誤題目</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <button onclick="clearResults()">清空結果記錄</button>
+        </div>
+
+        <div class="description">
+            <h3>說明</h3>
+            <p>1.這是一個評量系統，包含是非題、單選題和複選題。</p>
+            <p>2.可以選擇網路或本地題庫檔（.json）</p>
+            <p>3.交卷後，本地會存有「考試結果」，教師如果有設置Google Apps Script，也會自動傳送到指定的 Google試算表(教學連結 <a href="https://clongwh.blogspot.com/2024/07/google.html" target="_blank">https://clongwh.blogspot.com/2024/07/google.html</a>)</p>
+            <p>4.新增題庫檔必須符合標準JSON檔的格式（副檔名是.json），如下：</p>
+            <pre>
+[
+{"id": 1,"type": "trueFalse","question": "地球是平的嗎？","correctAnswer": false},
+ {"id": 2,"type": "singleChoice","question": "台灣的首都是哪個城市？","options": ["台北", "高雄", "台中", "台南"],"correctAnswer": "台北"},
+ {"id": 3,"type": "multipleChoice","question": "以下哪些是台灣的主要產業？","options": ["農業", "製造業", "服務業", "漁業"],"correctAnswer": ["製造業", "服務業"]}
+]
+            </pre>
+            <p>5.開發者資訊：屏東縣後庄國小黃老師+生成式AI助手，2024-07-19</p>
+        </div>
+    </div>
+
+    <div id="exam" class="hidden">
+        <h2>考試</h2>
+        <div id="questions"></div>
+        <button onclick="submitExam()">交卷</button>
+    </div>
+
+    <div id="result" class="hidden">
+        <h2>結果</h2>
+        <div id="score"></div>
+        <div id="incorrectAnswers"></div>
+        <button onclick="reviewMistakes()">複習錯題</button>
+        <button onclick="backToMain()">回到主畫面</button>
+    </div>
+
+    <div id="review" class="hidden">
+        <h2>複習錯題</h2>
+        <div id="reviewQuestions"></div>
+        <button onclick="backToMain()">完成複習</button>
+    </div>
+
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script>
+        let quizQuestions = [];
+        let currentExamAnswers = [];
+        let examResults = JSON.parse(localStorage.getItem('examResults')) || [];
+
+        function loadQuizFromUrl() {
+            const url = document.getElementById('quizUrl').value;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    quizQuestions = data;
+                    document.getElementById('quizName').value = new URL(url).pathname.split('/').pop().replace('.json', '');
+                    showMessage('題庫已成功載入！');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('載入題庫時出錯，請檢查網址是否正確。', 'error');
+                });
+        }
+
+        document.getElementById('quizFile').addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    quizQuestions = JSON.parse(e.target.result);
+                    document.getElementById('quizName').value = file.name.replace('.json', '');
+                    showMessage('題庫已成功載入！');
+                } catch (error) {
+                    showMessage('無法解析題庫檔案。請確保文件格式正確。', 'error');
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        window.onload = function() {
+            updateResultsTable();
+        };
+
+        function startExam() {
+            if (quizQuestions.length === 0) {
+                showMessage('請先載入題庫檔案！', 'error');
+                return;
+            }
+            document.getElementById('main').classList.add('hidden');
+            document.getElementById('exam').classList.remove('hidden');
+            displayQuestions();
+        }
+
+        function displayQuestions() {
+            let questionsHtml = '';
+            quizQuestions.forEach((q, index) => {
+                questionsHtml += `<div class="question">
+                    <p>${index + 1}. ${q.question}</p>`;
+                if (q.type === 'trueFalse') {
+                    questionsHtml += `
+                        <input type="radio" name="q${index}" value="true"> 是
+                        <input type="radio" name="q${index}" value="false"> 否
+                    `;
+                } else if (q.type === 'singleChoice') {
+                    q.options.forEach(option => {
+                        questionsHtml += `
+                            <input type="radio" name="q${index}" value="${option}"> ${option}
+                        `;
+                    });
+                } else if (q.type === 'multipleChoice') {
+                    q.options.forEach(option => {
+                        questionsHtml += `
+                            <input type="checkbox" name="q${index}" value="${option}"> ${option}
+                        `;
+                    });
+                }
+                questionsHtml += `</div>`;
+            });
+            document.getElementById('questions').innerHTML = questionsHtml;
+        }
+
+        function submitExam() {
+            let score = 0;
+            let incorrectAnswers = [];
+            currentExamAnswers = [];
+            quizQuestions.forEach((q, index) => {
+                let userAnswer;
+                if (q.type === 'trueFalse' || q.type === 'singleChoice') {
+                    userAnswer = document.querySelector(`input[name="q${index}"]:checked`)?.value;
+                    if (userAnswer === 'true') {
+                        userAnswer = true;
+                    } else if (userAnswer === 'false') {
+                        userAnswer = false;
+                    }
+                } else if (q.type === 'multipleChoice') {
+                    userAnswer = Array.from(document.querySelectorAll(`input[name="q${index}"]:checked`)).map(checkbox => checkbox.value);
+                }
+                currentExamAnswers.push(userAnswer);
+                if (JSON.stringify(userAnswer) === JSON.stringify(q.correctAnswer)) {
+                    score++;
+                } else {
+                    incorrectAnswers.push({ question: q.question, userAnswer, correctAnswer: q.correctAnswer });
+                }
+            });
+            const totalScore = (score / quizQuestions.length) * 100;
+            const result = {
+                date: new Date().toLocaleString(),
+                quizName: document.getElementById('quizName').value,
+                name: document.getElementById('name').value,
+                score: totalScore.toFixed(2),
+                incorrectAnswers: incorrectAnswers
+            };
+            examResults.push(result);
+            localStorage.setItem('examResults', JSON.stringify(examResults));
+            displayResult(result);
+            sendToGoogleSheet(result);
+        }
+
+        function displayResult(result) {
+            document.getElementById('score').innerText = `得分: ${result.score}`;
+            let incorrectAnswersHtml = '<h3>錯誤題目</h3>';
+            result.incorrectAnswers.forEach((item, index) => {
+                incorrectAnswersHtml += `<p>${index + 1}. ${item.question}</p>`;
+                if (Array.isArray(item.correctAnswer)) {
+                    incorrectAnswersHtml += `<p>正確答案: ${item.correctAnswer.join(', ')}</p>`;
+                } else {
+                    incorrectAnswersHtml += `<p>正確答案: ${item.correctAnswer}</p>`;
+                }
+                if (Array.isArray(item.userAnswer)) {
+                    incorrectAnswersHtml += `<p>你的答案: ${item.userAnswer.join(', ')}</p>`;
+                } else {
+                    incorrectAnswersHtml += `<p>你的答案: ${item.userAnswer}</p>`;
+                }
+            });
+            document.getElementById('incorrectAnswers').innerHTML = incorrectAnswersHtml;
+            document.getElementById('result').classList.remove('hidden');
+        }
+
+        function backToMain() {
+            document.getElementById('main').classList.remove('hidden');
+            document.getElementById('exam').classList.add('hidden');
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('review').classList.add('hidden');
+            updateResultsTable();
+        }
+
+        function reviewMistakes() {
+            document.getElementById('result').classList.add('hidden');
+            document.getElementById('review').classList.remove('hidden');
+            let reviewHtml = '';
+            quizQuestions.forEach((q, index) => {
+                const userAnswer = currentExamAnswers[index];
+                if (JSON.stringify(userAnswer) !== JSON.stringify(q.correctAnswer)) {
+                    reviewHtml += `<div class="review-question">
+                        <p>${q.question}</p>`;
+                    if (q.type === 'trueFalse') {
+                        reviewHtml += `
+                            <input type="radio" name="review_q${index}" value="true"> 是
+                            <input type="radio" name="review_q${index}" value="false"> 否
+                        `;
+                    } else if (q.type === 'singleChoice' || q.type === 'multipleChoice') {
+                        q.options.forEach(option => {
+                            reviewHtml += `
+                                <input type="${q.type === 'singleChoice' ? 'radio' : 'checkbox'}" 
+                                       name="review_q${index}" value="${option}"> ${option}
+                            `;
+                        });
+                    }
+                    reviewHtml += '</div>';
+                }
+            });
+            document.getElementById('reviewQuestions').innerHTML = reviewHtml;
+        }
+
+        function updateResultsTable() {
+            const tbody = document.getElementById('resultsTable').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = '';
+            examResults.forEach(result => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = result.date;
+                row.insertCell(1).innerText = result.quizName;
+                row.insertCell(2).innerText = result.name;
+                row.insertCell(3).innerText = result.score;
+                row.insertCell(4).innerText = result.incorrectAnswers.map(ia => ia.question).join(', ');
+            });
+        }
+
+        function clearResults() {
+            examResults = [];
+            localStorage.setItem('examResults', JSON.stringify(examResults));
+            updateResultsTable();
+        }
+
+        function showMessage(message, type = 'success') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            messageDiv.innerText = message;
+            document.body.appendChild(messageDiv);
+            setTimeout(() => {
+                document.body.removeChild(messageDiv);
+            }, 3000);
+        }
+
+        function sendToGoogleSheet(result) {
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbyef98yIlOH3VmQ5aSH0CRYYeAQ3PCsJX7XVerGdx22GlZ4RpHsTWM2Evl-qlV8Pns0/exec'; // 修改為你的Google Apps Script的URL
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(result)
+            }).then(response => console.log('Success!', response))
+              .catch(error => console.error('Error!', error.message));
+        }
+    </script>
+</body>
+</html>
