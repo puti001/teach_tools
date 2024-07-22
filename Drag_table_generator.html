@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拖曳表格產生器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin: 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #007BFF;
+        }
+
+        .input-section, .table-settings, .controls, .actions, .description {
+            margin-bottom: 20px;
+        }
+
+        #itemList {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: block;
+            font-size: 14px;
+            outline: none;
+        }
+
+        button {
+            background: #007BFF;
+            color: white;
+            font-weight: bold;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        .generated-buttons {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .generated-buttons button {
+            margin: 5px;
+            color: black; /* 確保文字顏色為黑色 */
+            border: 1px solid #ddd;
+        }
+
+        .table-container {
+            margin-top: 20px;
+            overflow-x: auto; /* 確保表格不會擠壓其他元素 */
+        }
+
+        .table-container table {
+            border-collapse: collapse;
+            width: 100%;
+            background-color: white; /* 預設底色為白色 */
+        }
+
+        .table-container td {
+            border: 1px solid black; /* 預設格線為黑色 */
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            vertical-align: top;
+        }
+
+        .table-container td input {
+            width: 100%;
+            border: none;
+            box-sizing: border-box;
+        }
+
+        select {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .description {
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .description ul {
+            list-style-type: disc;
+            padding-left: 20px;
+        }
+
+        .actions {
+            margin-top: 20px;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        /* 新增表格標題樣式 */
+        #tableTitle {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .table-title {
+            font-weight: bold;
+            font-size: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            color: black; /* 確保標題顏色為黑色 */
+            background-color: white; /* 確保標題背景為白色 */
+        }
+
+        .color-palette {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .color-palette div {
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            border: 2px solid black;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>拖曳表格產生器</h1>
+        <div class="table-settings">
+            <input type="text" id="tableTitle" placeholder="輸入表格標題">
+            <button id="applyTableTitle">確定</button>
+        </div>
+        <div class="table-settings">
+            <input type="text" id="tableSize" placeholder="輸入表格大小（例如：6x8）">
+            <button id="generateTable">產生表格</button>
+        </div>
+        <div class="controls">
+            <div>
+                <label for="borderWidth">格線粗細：</label>
+                <select id="borderWidth">
+                    <option value="1px">細</option>
+                    <option value="2px">中細</option>
+                    <option value="3px">中</option>
+                    <option value="4px">中粗</option>
+                    <option value="5px">粗</option>
+                </select>
+                <button id="applyBorderWidth">確定</button>
+            </div>
+        </div>
+        <div class="input-section">
+            <textarea id="itemList" placeholder="輸入項目清單（每列一個項目）"></textarea>
+            <button id="generateItems">產生按鈕</button>
+        </div>
+        <div class="generated-buttons" id="generatedButtons"></div>
+        <div class="table-container" id="tableContainer"></div>
+        <div class="color-palette" id="colorPalette">
+            <!-- 12 種淺色系色塊 -->
+            <div style="background-color: #FFB6C1;"></div>
+            <div style="background-color: #FFC0CB;"></div>
+            <div style="background-color: #FF69B4;"></div>
+            <div style="background-color: #FF1493;"></div>
+            <div style="background-color: #DB7093;"></div>
+            <div style="background-color: #FF6347;"></div>
+            <div style="background-color: #FFD700;"></div>
+            <div style="background-color: #FFE4B5;"></div>
+            <div style="background-color: #B0E0E6;"></div>
+            <div style="background-color: #ADD8E6;"></div>
+            <div style="background-color: #87CEEB;"></div>
+            <div style="background-color: #00BFFF;"></div>
+            <div style="background-color: white;"></div>
+        </div>
+        <div class="actions">
+            <button id="clearCell">清除儲存格</button>
+            <button id="downloadScreenshot">表格截圖</button>
+            <button id="downloadCSV">生成 .csv檔</button>
+            <button id="clearTable">清除表格</button>
+        </div>
+        <div class="description">
+            <h2>使用方法</h2>
+            <ul>
+                <li>輸入表格標題框，按「確定」應用。</li>
+                <li>在「輸入表格大小」欄位輸入表格的列數和欄數，例如6x8，按「產生表格」。</li>
+                <li>有下拉清單可以決定表格格線粗細。</li>
+                <li>輸入表格內文字，一列一項。</li>
+                <li>按「產生按鈕」會根據以上清單生成可拖曳到表格的按鈕，儲存格將會變成按鈕顏色。</li>
+                <li>1列12色塊，點選之後可以對儲存格改色。</li>
+                <li>點擊儲存格2次可切換到手動輸入模式，再次點擊輸入框外部或按下「Enter」鍵可保存輸入內容。</li>
+                <li>按「清除儲存格」後選擇一個儲存格來清除其內容和顏色。</li>
+                <li>按「表格截圖」下載表格圖片（JPG格式）。</li>
+                <li>網頁為響應式設計，所以調整網頁大小，表格長寬就會自由改變。</li>
+                <li>按「生成 .csv檔」下載表格CSV檔。</li>
+                <li>按「清除表格」清除整個表格。</li>
+            </ul>
+            <p>開發者資訊：屏東縣後庄國小黃老師+生成式AI助手，2024-07-20</p>
+        </div>
+    </div>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const itemList = document.getElementById('itemList');
+            const generateItemsButton = document.getElementById('generateItems');
+            const generatedButtons = document.getElementById('generatedButtons');
+            const tableContainer = document.getElementById('tableContainer');
+            const tableSize = document.getElementById('tableSize');
+            const generateTableButton = document.getElementById('generateTable');
+            const borderWidth = document.getElementById('borderWidth');
+            const applyBorderWidthButton = document.getElementById('applyBorderWidth');
+            const downloadScreenshotButton = document.getElementById('downloadScreenshot');
+            const downloadCSVButton = document.getElementById('downloadCSV');
+            const clearTableButton = document.getElementById('clearTable');
+            const clearCellButton = document.getElementById('clearCell');
+            const tableTitleInput = document.getElementById('tableTitle');
+            const applyTableTitleButton = document.getElementById('applyTableTitle');
+            const colorPalette = document.getElementById('colorPalette');
+            let clearCellMode = false;
+            let selectedColor = '';
+
+            // Load saved items list
+            const savedItemsList = localStorage.getItem('itemsList');
+            if (savedItemsList) {
+                itemList.value = savedItemsList;
+                generateItems();
+            }
+
+            // Load saved table
+            const savedTable = localStorage.getItem('tableHTML');
+            if (savedTable) {
+                tableContainer.innerHTML = savedTable;
+            }
+
+            // Generate buttons from items list
+            generateItemsButton.addEventListener('click', generateItems);
+
+            function generateItems() {
+                const items = itemList.value.split('\n').filter(item => item.trim() !== '');
+                if (items.length === 0) {
+                    alert('請輸入至少一個項目');
+                    return;
+                }
+
+                generatedButtons.innerHTML = '';
+                const colors = [
+                    '#FFB6C1', '#FFC0CB', '#FF69B4', '#FF1493', '#DB7093', '#FF6347',
+                    '#FFD700', '#FFE4B5', '#B0E0E6', '#ADD8E6', '#87CEEB', '#00BFFF'
+                ];
+                localStorage.setItem('itemsList', itemList.value); // Save items list
+
+                items.forEach((item, index) => {
+                    const button = document.createElement('button');
+                    button.textContent = item.trim();
+                    button.style.backgroundColor = colors[index % colors.length];
+                    button.style.color = 'black'; // 確保按鈕文字顏色為黑色
+                    button.draggable = true;
+                    button.addEventListener('dragstart', dragStart);
+                    generatedButtons.appendChild(button);
+                });
+            }
+
+            // Generate table
+            generateTableButton.addEventListener('click', () => {
+                const [cols, rows] = tableSize.value.split('x').map(Number);
+                if (isNaN(cols) || isNaN(rows) || cols <= 0 || rows <= 0) {
+                    alert('請輸入有效的表格大小，例如 6x8');
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.style.backgroundColor = 'white'; // Set default background color
+                for (let i = 0; i < rows; i++) {
+                    const tr = document.createElement('tr');
+                    for (let j = 0; j < cols; j++) {
+                        const td = document.createElement('td');
+                        td.style.borderWidth = borderWidth.value;
+                        td.style.borderColor = 'black'; // 預設格線為黑色
+                        td.addEventListener('dragover', dragOver);
+                        td.addEventListener('drop', drop);
+                        td.addEventListener('dblclick', () => {
+                            if (td.querySelector('input')) return;
+                            const input = document.createElement('input');
+                            input.type = 'text';
+                            input.value = td.textContent;
+                            td.innerHTML = '';
+                            td.appendChild(input);
+                            input.focus();
+                            input.addEventListener('blur', () => {
+                                td.textContent = input.value;
+                                saveTable();
+                            });
+                            input.addEventListener('keydown', (e) => {
+                                if (e.key === 'Enter') {
+                                    td.textContent = input.value;
+                                    saveTable();
+                                }
+                            });
+                        });
+                        td.addEventListener('contextmenu', (e) => {
+                            e.preventDefault();
+                            if (confirm('確定要清除此儲存格內容和顏色嗎？')) {
+                                td.textContent = '';
+                                td.style.backgroundColor = '';
+                                saveTable();
+                            }
+                        });
+                        tr.appendChild(td);
+                    }
+                    table.appendChild(tr);
+                }
+                table.style.borderCollapse = 'collapse'; // Ensures border is collapsed
+                tableContainer.innerHTML = '';
+                tableContainer.appendChild(table);
+                saveTable();
+            });
+
+            // Apply border width
+            applyBorderWidthButton.addEventListener('click', () => {
+                const tds = tableContainer.querySelectorAll('td');
+                tds.forEach(td => {
+                    td.style.borderWidth = borderWidth.value;
+                });
+                saveTable();
+            });
+
+            // Apply table title
+            applyTableTitleButton.addEventListener('click', () => {
+                const title = tableTitleInput.value.trim();
+                if (title) {
+                    const tableTitle = document.createElement('div');
+                    tableTitle.className = 'table-title';
+                    tableTitle.textContent = title;
+                    tableTitle.style.backgroundColor = 'white'; // 確保標題背景為白色
+                    if (tableContainer.firstChild && tableContainer.firstChild.tagName === 'TABLE') {
+                        tableContainer.insertBefore(tableTitle, tableContainer.firstChild);
+                    } else {
+                        tableContainer.appendChild(tableTitle);
+                    }
+                    saveTable();
+                }
+            });
+
+            // Clear cell
+            clearCellButton.addEventListener('click', () => {
+                clearCellMode = !clearCellMode;
+                clearCellButton.textContent = clearCellMode ? '取消清除儲存格' : '清除儲存格';
+            });
+
+            // Color palette click event
+            colorPalette.addEventListener('click', (e) => {
+                if (e.target.tagName === 'DIV') {
+                    selectedColor = e.target.style.backgroundColor;
+                }
+            });
+
+            function dragStart(e) {
+                e.dataTransfer.setData('text/plain', e.target.textContent);
+                e.dataTransfer.setData('color', e.target.style.backgroundColor);
+            }
+
+            function dragOver(e) {
+                e.preventDefault();
+            }
+
+            function drop(e) {
+                e.preventDefault();
+                const data = e.dataTransfer.getData('text/plain');
+                const color = e.dataTransfer.getData('color');
+                const target = e.target;
+                if (target.tagName === 'TD') {
+                    target.textContent = data;
+                    target.style.backgroundColor = color;
+                    saveTable();
+                }
+            }
+
+            // Download screenshot
+            downloadScreenshotButton.addEventListener('click', () => {
+                html2canvas(tableContainer, {
+                    scrollX: 0,
+                    scrollY: 0,
+                    useCORS: true,
+                    backgroundColor: null
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'table.jpg';
+                    link.href = canvas.toDataURL('image/jpeg');
+                    link.click();
+                });
+            });
+
+            // Download CSV
+            downloadCSVButton.addEventListener('click', () => {
+                const rows = [];
+                tableContainer.querySelectorAll('tr').forEach(tr => {
+                    const row = [];
+                    tr.querySelectorAll('td').forEach(td => {
+                        row.push(td.textContent);
+                    });
+                    rows.push(row.join(','));
+                });
+                const csvContent = '\uFEFF' + rows.join('\n'); // Adding BOM for UTF-8 compatibility
+                const link = document.createElement('a');
+                link.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent));
+                link.setAttribute('download', 'table.csv');
+                link.click();
+            });
+
+            // Clear table
+            clearTableButton.addEventListener('click', () => {
+                if (confirm('確定要清除表格嗎？')) {
+                    tableContainer.innerHTML = '';
+                    localStorage.removeItem('tableHTML');
+                }
+            });
+
+            // Add functionality for clearing cell content
+            tableContainer.addEventListener('click', (e) => {
+                if (clearCellMode && e.target.tagName === 'TD') {
+                    e.target.textContent = '';
+                    e.target.style.backgroundColor = '';
+                    saveTable();
+                }
+                if (selectedColor && e.target.tagName === 'TD') {
+                    e.target.style.backgroundColor = selectedColor;
+                    saveTable();
+                }
+            });
+
+            function saveTable() {
+                localStorage.setItem('tableHTML', tableContainer.innerHTML);
+            }
+        });
+    </script>
+</body>
+</html>
