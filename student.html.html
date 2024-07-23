@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>學生端</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .color-palette {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .color {
+            width: 30px;
+            height: 30px;
+            border: 2px solid black;
+            cursor: pointer;
+        }
+
+        .red { background-color: red; }
+        .yellow { background-color: yellow; }
+        .blue { background-color: blue; }
+        .black { background-color: black; }
+        .white { background-color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>學生端</h1>
+        <label for="teacher-url">教師端網址:</label>
+        <input type="text" id="teacher-url">
+        <button id="url-confirm">確定</button>
+        <br>
+        <label for="student-name">姓名:</label>
+        <input type="text" id="student-name">
+        <button id="name-confirm">確定</button>
+        <div id="assignment-area"></div>
+        <div class="color-palette">
+            <div class="color red"></div>
+            <div class="color yellow"></div>
+            <div class="color blue"></div>
+            <div class="color black"></div>
+            <div class="color white"></div>
+        </div>
+        <button id="submit-assignment">繳交作業</button>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const teacherUrlInput = document.getElementById("teacher-url");
+            const urlConfirmBtn = document.getElementById("url-confirm");
+            const studentNameInput = document.getElementById("student-name");
+            const nameConfirmBtn = document.getElementById("name-confirm");
+            const assignmentArea = document.getElementById("assignment-area");
+            const submitAssignmentBtn = document.getElementById("submit-assignment");
+
+            // Load stored URL if available
+            if (localStorage.getItem("teacherUrl")) {
+                teacherUrlInput.value = localStorage.getItem("teacherUrl");
+            }
+
+            urlConfirmBtn.addEventListener("click", () => {
+                localStorage.setItem("teacherUrl", teacherUrlInput.value);
+                alert("網址已保存");
+            });
+
+            nameConfirmBtn.addEventListener("click", () => {
+                alert("姓名已保存");
+            });
+
+            submitAssignmentBtn.addEventListener("click", () => {
+                const studentName = studentNameInput.value;
+                const teacherUrl = teacherUrlInput.value;
+
+                if (studentName && teacherUrl) {
+                    const fileUrl = "https://via.placeholder.com/150"; // Mock file URL for demo
+                    window.parent.postMessage({
+                        type: "assignmentSubmitted",
+                        studentName: studentName,
+                        fileUrl: fileUrl
+                    }, "*");
+                    alert("作業已提交");
+                } else {
+                    alert("請輸入姓名和教師端網址");
+                }
+            });
+        });
+    </script>
+</body>
+</html>
