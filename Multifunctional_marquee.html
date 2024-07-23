@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全螢幕跑馬燈</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: black;
+        }
+        #marquee-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        #marquee-content {
+            white-space: pre-wrap;
+            position: absolute;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        #settings-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        #settings-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 400px;
+            width: 100%;
+        }
+        .setting-group {
+            margin-bottom: 10px;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+        }
+        .button-group button {
+            flex: 1;
+            margin: 0 5px;
+        }
+        @keyframes marquee-horizontal {
+            from { transform: translateX(100%); }
+            to { transform: translateX(-100%); }
+        }
+        @keyframes marquee-vertical {
+            from { transform: translateY(100%); }
+            to { transform: translateY(-100%); }
+        }
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="marquee-container">
+        <div id="marquee-content"></div>
+        <div id="clock" style="position: absolute; top: 10px; right: 10px; color: white; font-size: 20px;"></div>
+        <div id="countdown" style="position: absolute; top: 40px; right: 10px; color: white; font-size: 20px;"></div>
+    </div>
+    <div id="settings-panel">
+        <div id="settings-content">
+            <h2>設置</h2>
+            <div class="setting-group button-group">
+                <button id="content-type-text">文字</button>
+                <button id="content-type-image">圖片</button>
+                <button id="content-type-time">時間</button>
+                <button id="content-type-countdown">倒數計時</button>
+            </div>
+            <div id="text-settings" class="setting-group">
+                <label for="text-input">文字：</label>
+                <textarea id="text-input" rows="4" cols="50">歡迎使用全螢幕跑馬燈！</textarea>
+            </div>
+            <div id="image-settings" class="setting-group" style="display:none;">
+                <label for="image-input">上傳圖片：</label>
+                <input type="file" id="image-input" accept="image/*">
+            </div>
+            <div id="time-settings" class="setting-group" style="display:none;">
+                <label for="time-format">時間格式：</label>
+                <select id="time-format">
+                    <option value="12">12 小時</option>
+                    <option value="24">24 小時</option>
+                </select>
+            </div>
+            <div id="countdown-settings" class="setting-group" style="display:none;">
+                <label>倒數計時：</label>
+                <div>
+                    <input type="number" id="countdown-hours" placeholder="時" min="0" max="23" value="0"> :
+                    <input type="number" id="countdown-minutes" placeholder="分" min="0" max="59" value="0"> :
+                    <input type="number" id="countdown-seconds" placeholder="秒" min="0" max="59" value="0">
+                </div>
+                <button id="start-countdown">開始倒數</button>
+            </div>
+            <div class="setting-group">
+                <label for="font-select">字體：</label>
+                <select id="font-select">
+                    <option value="Arial">Arial</option>
+                    <option value="Verdana">Verdana</option>
+                    <option value="Times New Roman">Times New Roman</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="font-size">字體大小：<span id="font-size-value">200</span>px</label>
+                <input type="range" id="font-size" min="50" max="400" value="200">
+            </div>
+            <div class="setting-group">
+                <label for="adapt-to-screen">文字大小適應螢幕高度：</label>
+                <input type="checkbox" id="adapt-to-screen">
+            </div>
+            <div class="setting-group">
+                <label for="speed">滾動速度：</label>
+                <input type="range" id="speed" min="0" max="20" value="10">
+            </div>
+            <div class="setting-group button-group">
+                <button id="direction-horizontal">水平滾動</button>
+                <button id="direction-vertical">垂直滾動</button>
+            </div>
+            <div class="setting-group">
+                <label for="text-color">文字顏色：</label>
+                <input type="color" id="text-color" value="#FFFFFF">
+            </div>
+            <div class="setting-group">
+                <label for="background-color">背景顏色：</label>
+                <input type="color" id="background-color" value="#000000">
+            </div>
+            <div class="setting-group">
+                <label for="background-image-upload">背景圖片：</label>
+                <input type="file" id="background-image-upload" accept="image/*">
+            </div>
+            <div class="setting-group">
+                <button id="reset-background">恢復顏色背景</button>
+            </div>
+            <div class="setting-group">
+                <label for="blink">文字閃爍：</label>
+                <input type="checkbox" id="blink">
+            </div>
+            <button id="close-settings">關閉設置</button>
+            <button id="fullscreen-toggle">進入/退出全螢幕</button>
+        </div>
+    </div>
+
+    <script>
+        const marqueeContainer = document.getElementById('marquee-container');
+        const marqueeContent = document.getElementById('marquee-content');
+        const settingsPanel = document.getElementById('settings-panel');
+        const closeSettings = document.getElementById('close-settings');
+        const contentTypeText = document.getElementById('content-type-text');
+        const contentTypeImage = document.getElementById('content-type-image');
+        const contentTypeTime = document.getElementById('content-type-time');
+        const contentTypeCountdown = document.getElementById('content-type-countdown');
+        const textInput = document.getElementById('text-input');
+        const imageInput = document.getElementById('image-input');
+        const timeFormat = document.getElementById('time-format');
+        const countdownHours = document.getElementById('countdown-hours');
+        const countdownMinutes = document.getElementById('countdown-minutes');
+        const countdownSeconds = document.getElementById('countdown-seconds');
+        const startCountdown = document.getElementById('start-countdown');
+        const fontSelect = document.getElementById('font-select');
+        const fontSize = document.getElementById('font-size');
+        const fontSizeValue = document.getElementById('font-size-value');
+        const adaptToScreen = document.getElementById('adapt-to-screen');
+        const speed = document.getElementById('speed');
+        const directionHorizontal = document.getElementById('direction-horizontal');
+        const directionVertical = document.getElementById('direction-vertical');
+        const textColor = document.getElementById('text-color');
+        const backgroundColor = document.getElementById('background-color');
+        const backgroundImageUpload = document.getElementById('background-image-upload');
+        const resetBackground = document.getElementById('reset-background');
+        const blinkCheckbox = document.getElementById('blink');
+        const textSettings = document.getElementById('text-settings');
+        const imageSettings = document.getElementById('image-settings');
+        const timeSettings = document.getElementById('time-settings');
+        const countdownSettings = document.getElementById('countdown-settings');
+        const fullscreenToggle = document.getElementById('fullscreen-toggle');
+
+        let contentType = 'text';
+        let direction = 'horizontal';
+        let countdownInterval;
+
+        function updateMarquee() {
+            marqueeContent.style.fontFamily = fontSelect.value;
+            marqueeContent.style.fontSize = `${fontSize.value}px`;
+            marqueeContent.style.color = textColor.value;
+            marqueeContainer.style.backgroundColor = backgroundColor.value;
+            marqueeContainer.style.backgroundImage = ''; // Reset background image
+
+            const animationName = direction === 'horizontal' ? 'marquee-horizontal' : 'marquee-vertical';
+            const animationDuration = speed.value > 0 ? `${100 / speed.value}s` : '0s';
+            const blinkAnimation = blinkCheckbox.checked ? ', blink 1s step-end infinite' : '';
+
+            marqueeContent.style.animation = `${animationName} ${animationDuration} linear infinite${blinkAnimation}`;
+
+            if (contentType === 'text') {
+                marqueeContent.textContent = textInput.value;
+            } else if (contentType === 'image') {
+                const file = imageInput.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        marqueeContent.innerHTML = `<img src="${e.target.result}" style="max-height: 100vh; max-width: 100vw;">`;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            } else if (contentType === 'time') {
+                marqueeContent.textContent = new Date().toLocaleTimeString('zh-TW', {
+                    hour12: timeFormat.value === '12'
+                });
+            } else if (contentType === 'countdown') {
+                // Countdown logic will be handled separately
+            }
+
+            marqueeContent.style.writingMode = direction === 'vertical' ? 'vertical-rl' : 'horizontal-tb';
+
+            if (adaptToScreen.checked && contentType === 'text') {
+                const containerHeight = marqueeContainer.clientHeight;
+                const textHeight = marqueeContent.scrollHeight;
+                const scaleFactor = containerHeight / textHeight;
+                marqueeContent.style.fontSize = `${Math.min(400, Math.max(50, fontSize.value * scaleFactor))}px`;
+            }
+
+            localStorage.setItem('marqueeText', textInput.value);
+        }
+
+        function updateClock() {
+            if (contentType === 'time') {
+                marqueeContent.textContent = new Date().toLocaleTimeString('zh-TW', {
+                    hour12: timeFormat.value === '12'
+                });
+            }
+        }
+
+        function startCountdownTimer() {
+            let totalSeconds = parseInt(countdownHours.value) * 3600 + parseInt(countdownMinutes.value) * 60 + parseInt(countdownSeconds.value);
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = setInterval(() => {
+                if (totalSeconds <= 0) {
+                    clearInterval(countdownInterval);
+                    new Audio('countdown-end-sound.mp3').play();
+                } else {
+                    totalSeconds--;
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
+                    marqueeContent.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        marqueeContainer.addEventListener('click', () => {
+            settingsPanel.style.display = 'flex';
+        });
+
+        closeSettings.addEventListener('click', () => {
+            settingsPanel.style.display = 'none';
+        });
+
+        contentTypeText.addEventListener('click', () => {
+            contentType = 'text';
+            textSettings.style.display = 'block';
+            imageSettings.style.display = 'none';
+            timeSettings.style.display = 'none';
+            countdownSettings.style.display = 'none';
+            updateMarquee();
+        });
+
+        contentTypeImage.addEventListener('click', () => {
+            contentType = 'image';
+            textSettings.style.display = 'none';
+            imageSettings.style.display = 'block';
+            timeSettings.style.display = 'none';
+            countdownSettings.style.display = 'none';
+            updateMarquee();
+        });
+
+        contentTypeTime.addEventListener('click', () => {
+            contentType = 'time';
+            textSettings.style.display = 'none';
+            imageSettings.style.display = 'none';
+            timeSettings.style.display = 'block';
+            countdownSettings.style.display = 'none';
+            updateMarquee();
+        });
+
+        contentTypeCountdown.addEventListener('click', () => {
+            contentType = 'countdown';
+            textSettings.style.display = 'none';
+            imageSettings.style.display = 'none';
+            timeSettings.style.display = 'none';
+            countdownSettings.style.display = 'block';
+            updateMarquee();
+        });
+
+        startCountdown.addEventListener('click', startCountdownTimer);
+
+        directionHorizontal.addEventListener('click', () => {
+            direction = 'horizontal';
+            updateMarquee();
+        });
+
+        directionVertical.addEventListener('click', () => {
+            direction = 'vertical';
+            updateMarquee();
+        });
+
+        [textInput, fontSelect, fontSize, adaptToScreen, speed, textColor, backgroundColor, blinkCheckbox, imageInput, timeFormat].forEach(elem => {
+            elem.addEventListener('input', updateMarquee);
+        });
+
+        fontSize.addEventListener('input', () => {
+            fontSizeValue.textContent = fontSize.value;
+        });
+
+        backgroundImageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    marqueeContainer.style.backgroundImage = `url(${e.target.result})`;
+                    marqueeContainer.style.backgroundSize = 'cover';
+                    marqueeContainer.style.backgroundColor = ''; // Reset background color
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        resetBackground.addEventListener('click', () => {
+            marqueeContainer.style.backgroundImage = '';
+            updateMarquee();
+        });
+
+        fullscreenToggle.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        });
+
+        // 載入儲存的文字
+        const savedText = localStorage.getItem('marqueeText');
+        if (savedText) {
+            textInput.value = savedText;
+        }
+
+        updateMarquee();
+        setInterval(updateClock, 1000);
+    </script>
+</body>
+</html>
