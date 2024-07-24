@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小組競賽計分板</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        select, input, button {
+            font-size: 16px;
+            margin: 5px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .scoreboard {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .team {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px;
+            text-align: center;
+            min-width: 150px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .team:hover {
+            transform: translateY(-5px);
+        }
+        .team-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .score {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        .controls button {
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            margin: 0 5px;
+        }
+        #settingsModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #000;
+        }
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .settings-row label {
+            flex: 1;
+        }
+        .settings-row input, .settings-row select {
+            flex: 2;
+            margin-right: 10px;
+        }
+        #raceTrack {
+            display: flex;
+            flex-direction: column;
+            margin-top: 20px;
+        }
+        .race-lane {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .race-name {
+            width: 80px;
+            font-weight: bold;
+        }
+        .race-progress {
+            flex-grow: 1;
+            height: 30px;
+            background-color: #e0e0e0;
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .race-bar {
+            height: 100%;
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+        }
+        .race-icon {
+            font-size: 20px;
+            margin-right: 5px;
+        }
+        .race-score {
+            margin-left: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>小組競賽計分板</h1>
+    <div>
+        <label for="scoreboardType">計分板類型：</label>
+        <select id="scoreboardType">
+            <option value="classic">經典模式</option>
+            <option value="race">賽道模式</option>
+        </select>
+    </div>
+    <div id="classicScoreboard" class="scoreboard"></div>
+    <div id="raceTrack" style="display: none;"></div>
+    <button id="settingsBtn">設定</button>
+
+    <div id="settingsModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>設定</h2>
+            <div id="teamSettings"></div>
+            <div class="settings-row">
+                <label for="winningScore">獲勝分數：</label>
+                <input type="number" id="winningScore" min="1" value="10">
+            </div>
+            <button id="addTeamBtn">新增小組</button>
+            <button id="resetBtn">重置遊戲</button>
+        </div>
+    </div>
+
+    <script>
+        const classicScoreboard = document.getElementById('classicScoreboard');
+        const raceTrack = document.getElementById('raceTrack');
+        const scoreboardType = document.getElementById('scoreboardType');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeBtn = document.getElementsByClassName('close')[0];
+        const teamSettings = document.getElementById('teamSettings');
+        const addTeamBtn = document.getElementById('addTeamBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const winningScoreInput = document.getElementById('winningScore');
+
+        const icons = {
+            '火箭': '🚀',
+            '飛機': '✈️',
+            '汽車': '🚗',
+            '機車': '🏍️',
+            '單車': '🚲',
+            '跑步': '🏃'
+        };
+
+        let teams = [
+            { name: '小組 1', score: 0, icon: '火箭', color: '#FF6B6B' },
+            { name: '小組 2', score: 0, icon: '飛機', color: '#4ECDC4' }
+        ];
+
+        function updateScoreboard() {
+            const winningScore = parseInt(winningScoreInput.value);
+            if (scoreboardType.value === 'classic') {
+                classicScoreboard.innerHTML = '';
+                teams.forEach((team, index) => {
+                    const teamDiv = document.createElement('div');
+                    teamDiv.className = 'team';
+                    teamDiv.style.backgroundColor = team.color;
+                    teamDiv.innerHTML = `
+                        <div class="team-name">${team.name} ${icons[team.icon]}</div>
+                        <div class="score">${team.score}</div>
+                        <div class="controls">
+                            <button onclick="updateScore(${index}, -1)">-</button>
+                            <button onclick="updateScore(${index}, 1)">+</button>
+                        </div>
+                    `;
+                    classicScoreboard.appendChild(teamDiv);
+                });
+                classicScoreboard.style.display = 'flex';
+                raceTrack.style.display = 'none';
+            } else {
+                raceTrack.innerHTML = '';
+                teams.forEach((team, index) => {
+                    const laneDiv = document.createElement('div');
+                    laneDiv.className = 'race-lane';
+                    const progress = (team.score / winningScore) * 100;
+                    laneDiv.innerHTML = `
+                        <div class="race-name">${team.name}</div>
+                        <div class="race-progress">
+                            <div class="race-bar" style="width: ${progress}%; background-color: ${team.color}">
+                                <span class="race-icon">${icons[team.icon]}</span>
+                            </div>
+                        </div>
+                        <div class="race-score">${team.score}</div>
+                        <button onclick="updateScore(${index}, -1)">-</button>
+                        <button onclick="updateScore(${index}, 1)">+</button>
+                    `;
+                    raceTrack.appendChild(laneDiv);
+                });
+                classicScoreboard.style.display = 'none';
+                raceTrack.style.display = 'flex';
+            }
+        }
+
+        function updateScore(teamIndex, change) {
+            teams[teamIndex].score += change;
+            if (teams[teamIndex].score < 0) teams[teamIndex].score = 0;
+            updateScoreboard();
+            checkWinner();
+        }
+
+        function checkWinner() {
+            const winningScore = parseInt(winningScoreInput.value);
+            const winner = teams.find(team => team.score >= winningScore);
+            if (winner) {
+                alert(`${winner.name} 獲勝！`);
+            }
+        }
+
+        function updateSettings() {
+            teamSettings.innerHTML = '';
+            teams.forEach((team, index) => {
+                const row = document.createElement('div');
+                row.className = 'settings-row';
+                row.innerHTML = `
+                    <label for="team${index}">小組 ${index + 1} 名稱：</label>
+                    <input type="text" id="team${index}" value="${team.name}">
+                    <select id="icon${index}">
+                        ${Object.keys(icons).map(icon => `<option value="${icon}" ${team.icon === icon ? 'selected' : ''}>${icons[icon]} ${icon}</option>`).join('')}
+                    </select>
+                    <input type="color" id="color${index}" value="${team.color}">
+                `;
+                teamSettings.appendChild(row);
+            });
+        }
+
+        scoreboardType.addEventListener('change', updateScoreboard);
+
+        settingsBtn.onclick = () => {
+            updateSettings();
+            settingsModal.style.display = 'block';
+        }
+
+        closeBtn.onclick = () => {
+            settingsModal.style.display = 'none';
+            teams.forEach((team, index) => {
+                team.name = document.getElementById(`team${index}`).value;
+                team.icon = document.getElementById(`icon${index}`).value;
+                team.color = document.getElementById(`color${index}`).value;
+            });
+            updateScoreboard();
+        }
+
+        addTeamBtn.onclick = () => {
+            teams.push({ name: `小組 ${teams.length + 1}`, score: 0, icon: '火箭', color: '#' + Math.floor(Math.random()*16777215).toString(16) });
+            updateSettings();
+            updateScoreboard();
+        }
+
+        resetBtn.onclick = () => {
+            teams.forEach(team => team.score = 0);
+            updateScoreboard();
+        }
+
+        winningScoreInput.addEventListener('change', updateScoreboard);
+
+        updateScoreboard();
+    </script>
+</body>
+</html>
