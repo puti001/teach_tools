@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小組競賽計分板</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', '微軟正黑體', Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #2c3e50;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            background-color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .team-name {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        canvas {
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+        #settingsPanel {
+            background-color: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        input, select {
+            margin: 5px 0;
+            padding: 5px;
+            border-radius: 3px;
+            border: 1px solid #bdc3c7;
+        }
+        .setting-group {
+            margin-bottom: 15px;
+        }
+        .classic-scoreboard {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+        }
+        .classic-team {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+        .classic-team h3 {
+            margin-top: 0;
+        }
+        .classic-score {
+            font-size: 48px;
+            margin: 10px 0;
+        }
+        .classic-controls button {
+            background-color: white;
+            color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <h1>小組競賽計分板</h1>
+    <div class="setting-group">
+        <label for="scoreboardType">計分板類型：</label>
+        <select id="scoreboardType" onchange="changeScoreboardType()">
+            <option value="race">賽車計分</option>
+            <option value="classic">經典計分</option>
+        </select>
+    </div>
+    <div id="scoreboard"></div>
+    <canvas id="raceTrack" width="760" height="200"></canvas>
+    <button onclick="toggleSettings()">設定</button>
+    
+    <div id="settingsPanel" style="display: none;">
+        <h2>設定</h2>
+        <div id="teamNameInputs"></div>
+        <div class="setting-group">
+            <label for="winningScore">獲勝分數：</label>
+            <input type="number" id="winningScore" value="100" onchange="updateWinningScore()">
+        </div>
+        <div class="setting-group">
+            <label for="increment">增減幅度：</label>
+            <select id="increment" onchange="updateIncrement()">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="15">15</option>
+            </select>
+        </div>
+        <button onclick="addTeam()">新增小組</button>
+        <button onclick="resetGame()">重置遊戲</button>
+    </div>
+
+    <script>
+        let teams = [
+            { name: '小組 1', score: 0, icon: '🚀' },
+            { name: '小組 2', score: 0, icon: '🚀' }
+        ];
+        let winningScore = 100;
+        let increment = 1;
+        const icons = ['🚀', '🐢', '🐰', '🐌', '🐝'];
+        let gameOver = false;
+        let scoreboardType = 'race';
+
+        const canvas = document.getElementById('raceTrack');
+        const ctx = canvas.getContext('2d');
+
+        function renderScoreboard() {
+            const scoreboard = document.getElementById('scoreboard');
+            scoreboard.innerHTML = '';
+            if (scoreboardType === 'race') {
+                teams.forEach((team, index) => {
+                    const teamDiv = document.createElement('div');
+                    teamDiv.className = 'controls';
+                    teamDiv.innerHTML = `
+                        <span class="team-name">${team.name}</span>
+                        <div>
+                            <button onclick="updateScore(${index}, -${increment})">-</button>
+                            <select onchange="updateTeamIcon(${index}, this.value)">
+                                ${icons.map(icon => `<option value="${icon}" ${team.icon === icon ? 'selected' : ''}>${icon}</option>`).join('')}
+                            </select>
+                            <button onclick="updateScore(${index}, ${increment})">+</button>
+                        </div>
+                    `;
+                    scoreboard.appendChild(teamDiv);
+                });
+                canvas.style.display = 'block';
+                drawRace();
+            } else {
+                canvas.style.display = 'none';
+                const classicScoreboard = document.createElement('div');
+                classicScoreboard.className = 'classic-scoreboard';
+                teams.forEach((team, index) => {
+                    const teamDiv = document.createElement('div');
+                    teamDiv.className = 'classic-team';
+                    teamDiv.innerHTML = `
+                        <h3>${team.name}</h3>
+                        <div class="classic-score">${team.score}</div>
+                        <div class="classic-controls">
+                            <button onclick="updateScore(${index}, -${increment})">-</button>
+                            <button onclick="updateScore(${index}, ${increment})">+</button>
+                        </div>
+                    `;
+                    classicScoreboard.appendChild(teamDiv);
+                });
+                scoreboard.appendChild(classicScoreboard);
+            }
+            updateTeamNameInputs();
+        }
+
+        function drawRace() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const trackWidth = canvas.width - 60;
+            const laneHeight = canvas.height / teams.length;
+
+            teams.forEach((team, index) => {
+                const y = laneHeight * index + laneHeight / 2;
+                
+                ctx.beginPath();
+                ctx.moveTo(30, y);
+                ctx.lineTo(canvas.width - 30, y);
+                ctx.strokeStyle = '#bdc3c7';
+                ctx.stroke();
+
+                const x = 30 + (team.score / winningScore) * trackWidth;
+                ctx.font = '24px Arial';
+                ctx.fillText(team.icon, x - 12, y + 8);
+
+                ctx.font = '14px Arial';
+                ctx.fillText(team.name, 10, y - 20);
+            });
+        }
+
+        function updateScore(teamIndex, change) {
+            if (gameOver) return;
+            teams[teamIndex].score += change;
+            if (teams[teamIndex].score < 0) teams[teamIndex].score = 0;
+            if (teams[teamIndex].score >= winningScore) {
+                gameOver = true;
+                alert(`${teams[teamIndex].name} 獲勝！`);
+                playVictorySound();
+            }
+            renderScoreboard();
+        }
+
+        function updateTeamIcon(teamIndex, newIcon) {
+            teams[teamIndex].icon = newIcon;
+            renderScoreboard();
+        }
+
+        function addTeam() {
+            teams.push({ name: `小組 ${teams.length + 1}`, score: 0, icon: '🚀' });
+            renderScoreboard();
+        }
+
+        function toggleSettings() {
+            const panel = document.getElementById('settingsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function updateWinningScore() {
+            winningScore = parseInt(document.getElementById('winningScore').value);
+            renderScoreboard();
+        }
+
+        function updateIncrement() {
+            increment = parseInt(document.getElementById('increment').value);
+        }
+
+        function playVictorySound() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+            oscillator.connect(audioContext.destination);
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        function resetGame() {
+            teams.forEach(team => team.score = 0);
+            gameOver = false;
+            renderScoreboard();
+        }
+
+        function changeScoreboardType() {
+            scoreboardType = document.getElementById('scoreboardType').value;
+            renderScoreboard();
+        }
+
+        function updateTeamNameInputs() {
+            const container = document.getElementById('teamNameInputs');
+            container.innerHTML = '';
+            teams.forEach((team, index) => {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = team.name;
+                input.onchange = (e) => updateTeamName(index, e.target.value);
+                const label = document.createElement('label');
+                label.textContent = `小組 ${index + 1} 名稱：`;
+                label.appendChild(input);
+                container.appendChild(label);
+            });
+        }
+
+        function updateTeamName(index, newName) {
+            teams[index].name = newName;
+            renderScoreboard();
+        }
+
+        renderScoreboard();
+    </script>
+</body>
+</html>
