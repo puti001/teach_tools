@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>簡易心智圖工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #mindmap {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ddd;
+            margin-bottom: 20px;
+            overflow: auto;
+            position: relative;
+        }
+        .node {
+            background-color: #f0f0f0;
+            border: 2px solid #000;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px;
+            cursor: move;
+            position: absolute;
+            min-width: 100px;
+            min-height: 50px;
+            word-wrap: break-word;
+            resize: both;
+            overflow: auto;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        @media screen and (max-width: 600px) {
+            .controls {
+                flex-direction: column;
+            }
+            button {
+                width: 100%;
+            }
+        }
+        .connection-line {
+            position: absolute;
+            background-color: #000;
+            height: 2px;
+            transform-origin: 0 0;
+            pointer-events: auto;
+            z-index: 1;
+            cursor: pointer;
+        }
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .color-picker div {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        .color1 { background-color: #FFDDC1; }
+        .color2 { background-color: #FFD1DC; }
+        .color3 { background-color: #D1FFD6; }
+        .color4 { background-color: #D1E7FF; }
+        .color5 { background-color: #E1D1FF; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>簡易心智圖工具</h1>
+        <div id="mindmap"></div>
+        <div class="controls">
+            <input type="text" id="nodeText" placeholder="輸入節點文字">
+            <button onclick="addNode()">添加節點</button>
+            <button onclick="deleteNode()">刪除節點</button>
+            <button onclick="connectNodes()">連接節點</button>
+            <button onclick="copyNode()">複製節點</button>
+            <button onclick="saveMapAsImage()">存成PNG</button>
+            <button onclick="undo()">Undo</button>
+            <button onclick="redo()">Redo</button>
+        </div>
+        <div class="controls">
+            <div class="color-picker">
+                <div class="color1" onclick="changeNodeColor('#FFDDC1')"></div>
+                <div class="color2" onclick="changeNodeColor('#FFD1DC')"></div>
+                <div class="color3" onclick="changeNodeColor('#D1FFD6')"></div>
+                <div class="color4" onclick="changeNodeColor('#D1E7FF')"></div>
+                <div class="color5" onclick="changeNodeColor('#E1D1FF')"></div>
+            </div>
+            <button onclick="changeFontSize(2)">字大</button>
+            <button onclick="changeFontSize(-2)">字小</button>
+            <button onclick="toggleFontWeight()">粗/細</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedNodes = [];
+        let nodeCounter = 0;
+        let history = [];
+        let redoStack = [];
+
+        function addNode() {
+            const nodeText = document.getElementById('nodeText').value;
+            if (nodeText) {
+                const node = createNode(nodeText);
+                document.getElementById('mindmap').appendChild(node);
+                document.getElementById('nodeText').value = '';
+                saveState();
+            }
+        }
+
+        function createNode(text, left = Math.random() * 400, top = Math.random() * 400) {
+            const node = document.createElement('div');
+            node.className = 'node';
+            node.id = 'node' + nodeCounter++;
+            node.style.left = left + 'px';
+            node.style.top = top + 'px';
+            node.onclick = function(event) {
+                if (event.target === this) {
+                    selectNode(this);
+                }
+            };
+            node.ondblclick = function(event) {
+                if (event.target === this) {
+                    editNodeText(this);
+                }
+            };
+            node.onmousedown = startDrag;
+            node.onresize = resizeNode;
+            node.textContent = text;
+            return node;
+        }
+
+        function selectNode(node) {
+            if (selectedNodes.includes(node)) {
+                node.style.border = '2px solid #000';
+                selectedNodes = selectedNodes.filter(n => n !== node);
+            } else {
+                node.style.border = '2px solid #4CAF50';
+                selectedNodes.push(node);
+                if (selectedNodes.length > 2) {
+                    const removedNode = selectedNodes.shift();
+                    removedNode.style.border = '2px solid #000';
+                }
+            }
+        }
+
+        function editNodeText(node) {
+            const text = node.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = text;
+            input.style.width = '100%';
+            input.style.height = '100%';
+            input.style.border = 'none';
+            input.style.padding = '10px';
+            input.style.boxSizing = 'border-box';
+            input.style.textAlign = 'center';
+            node.textContent = '';
+            node.appendChild(input);
+            input.focus();
+
+            input.onblur = function() {
+                node.textContent = this.value;
+                saveState();
+            };
+
+            input.onkeydown = function(event) {
+                if (event.key === 'Enter') {
+                    this.blur();
+                }
+            };
+        }
+
+        function deleteNode() {
+            selectedNodes.forEach(node => {
+                const lines = document.querySelectorAll(`.connection-line[data-from="${node.id}"], .connection-line[data-to="${node.id}"]`);
+                lines.forEach(line => line.remove());
+                node.remove();
+            });
+            selectedNodes = [];
+            saveState();
+        }
+
+        function connectNodes() {
+            if (selectedNodes.length === 2) {
+                drawLine(selectedNodes[0], selectedNodes[1]);
+                selectedNodes.forEach(node => node.style.border = '2px solid #000');
+                selectedNodes = [];
+                saveState();
+            }
+        }
+
+        function drawLine(node1, node2) {
+            const line = document.createElement('div');
+            line.className = 'connection-line';
+            line.dataset.from = node1.id;
+            line.dataset.to = node2.id;
+            updateLine(line, node1, node2);
+            line.ondblclick = function() {
+                this.remove();
+                saveState();
+            };
+            document.getElementById('mindmap').insertBefore(line, document.getElementById('mindmap').firstChild);
+        }
+
+        function updateLine(line, node1, node2) {
+            const rect1 = node1.getBoundingClientRect();
+            const rect2 = node2.getBoundingClientRect();
+            const mindmapRect = document.getElementById('mindmap').getBoundingClientRect();
+
+            const x1 = rect1.left + rect1.width / 2 - mindmapRect.left;
+            const y1 = rect1.top + rect1.height / 2 - mindmapRect.top;
+            const x2 = rect2.left + rect2.width / 2 - mindmapRect.left;
+            const y2 = rect2.top + rect2.height / 2 - mindmapRect.top;
+
+            const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+            const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
+            line.style.left = x1 + 'px';
+            line.style.top = y1 + 'px';
+            line.style.width = length + 'px';
+            line.style.transform = `rotate(${angle}deg)`;
+        }
+
+        let isDragging = false;
+        let currentNode = null;
+        let offsetX, offsetY;
+
+        function startDrag(event) {
+            event.preventDefault();
+            if (event.target.classList.contains('node')) {
+                isDragging = true;
+                currentNode = event.target;
+                const rect = currentNode.getBoundingClientRect();
+                offsetX = event.clientX - rect.left;
+                offsetY = event.clientY - rect.top;
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stopDrag);
+            }
+        }
+
+        function drag(event) {
+            if (isDragging) {
+                const mindmapRect = document.getElementById('mindmap').getBoundingClientRect();
+                const left = event.clientX - mindmapRect.left - offsetX;
+                const top = event.clientY - mindmapRect.top - offsetY;
+
+                currentNode.style.left = `${left}px`;
+                currentNode.style.top = `${top}px`;
+
+                const lines = document.querySelectorAll(`.connection-line[data-from="${currentNode.id}"], .connection-line[data-to="${currentNode.id}"]`);
+                lines.forEach(line => {
+                    const node1 = document.getElementById(line.dataset.from);
+                    const node2 = document.getElementById(line.dataset.to);
+                    updateLine(line, node1, node2);
+                });
+            }
+        }
+
+        function stopDrag() {
+            if (isDragging) {
+                isDragging = false;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', stopDrag);
+                saveState();
+            }
+        }
+
+        function resizeNode(event) {
+            if (event.target.classList.contains('node')) {
+                const node = event.target;
+                node.style.width = event.target.style.width;
+                node.style.height = event.target.style.height;
+                const lines = document.querySelectorAll(`.connection-line[data-from="${node.id}"], .connection-line[data-to="${node.id}"]`);
+                lines.forEach(line => {
+                    const node1 = document.getElementById(line.dataset.from);
+                    const node2 = document.getElementById(line.dataset.to);
+                    updateLine(line, node1, node2);
+                });
+                autoFitText(node);
+                saveState();
+            }
+        }
+
+        function copyNode() {
+            selectedNodes.forEach(node => {
+                const newNode = createNode(node.textContent, parseFloat(node.style.left) + 20, parseFloat(node.style.top) + 20);
+                newNode.style.backgroundColor = node.style.backgroundColor;
+                newNode.style.fontSize = window.getComputedStyle(node).fontSize;
+                newNode.style.fontWeight = window.getComputedStyle(node).fontWeight;
+                document.getElementById('mindmap').appendChild(newNode);
+                saveState();
+            });
+        }
+
+        function changeNodeColor(color) {
+            selectedNodes.forEach(node => {
+                node.style.backgroundColor = color;
+            });
+            saveState();
+        }
+
+        function changeFontSize(delta) {
+            selectedNodes.forEach(node => {
+                const currentSize = parseFloat(window.getComputedStyle(node).fontSize);
+                node.style.fontSize = (currentSize + delta) + 'px';
+                autoFitText(node);
+            });
+            saveState();
+        }
+
+        function toggleFontWeight() {
+            selectedNodes.forEach(node => {
+                const currentWeight = window.getComputedStyle(node).fontWeight;
+                node.style.fontWeight = (currentWeight === 'bold' || currentWeight >= 700) ? 'normal' : 'bold';
+                autoFitText(node);
+            });
+            saveState();
+        }
+
+        function saveState() {
+            const mindmapHTML = document.getElementById('mindmap').innerHTML;
+            history.push(mindmapHTML);
+            redoStack = [];
+        }
+
+        function undo() {
+            if (history.length > 1) {
+                redoStack.push(history.pop());
+                const previousState = history[history.length - 1];
+                document.getElementById('mindmap').innerHTML = previousState;
+                bindNodeEvents();
+            }
+        }
+
+        function redo() {
+            if (redoStack.length > 0) {
+                const redoState = redoStack.pop();
+                history.push(redoState);
+                document.getElementById('mindmap').innerHTML = redoState;
+                bindNodeEvents();
+            }
+        }
+
+        function bindNodeEvents() {
+            document.querySelectorAll('.node').forEach(node => {
+                node.onclick = function(event) {
+                    if (event.target === this) {
+                        selectNode(this);
+                    }
+                };
+                node.ondblclick = function(event) {
+                    if (event.target === this) {
+                        editNodeText(this);
+                    }
+                };
+                node.onmousedown = startDrag;
+                node.onresize = resizeNode;
+            });
+        }
+
+        document.getElementById('mindmap').ondragover = allowDrop;
+        document.getElementById('mindmap').ondrop = drop;
+
+        function saveMapAsImage() {
+            const mindmap = document.getElementById('mindmap');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = mindmap.scrollWidth;
+            canvas.height = mindmap.scrollHeight;
+
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const lines = mindmap.querySelectorAll('.connection-line');
+            lines.forEach(line => {
+                const x1 = parseFloat(line.style.left);
+                const y1 = parseFloat(line.style.top);
+                const length = parseFloat(line.style.width);
+                const angle = parseFloat(line.style.transform.replace('rotate(', '').replace('deg)', ''));
+
+                ctx.save();
+                ctx.translate(x1, y1);
+                ctx.rotate(angle * Math.PI / 180);
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, length, 2);
+                ctx.restore();
+            });
+
+            const nodes = mindmap.querySelectorAll('.node');
+            nodes.forEach(node => {
+                const rect = node.getBoundingClientRect();
+                const x = rect.left - mindmap.getBoundingClientRect().left;
+                const y = rect.top - mindmap.getBoundingClientRect().top;
+
+                ctx.fillStyle = node.style.backgroundColor || '#f0f0f0';
+                ctx.fillRect(x, y, rect.width, rect.height);
+                ctx.strokeStyle = '#000';
+                ctx.strokeRect(x, y, rect.width, rect.height);
+
+                ctx.fillStyle = '#000';
+                ctx.font = window.getComputedStyle(node).fontSize + ' ' + window.getComputedStyle(node).fontFamily;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fontWeight = window.getComputedStyle(node).fontWeight;
+
+                const padding = 5;
+                const maxWidth = rect.width - padding * 2;
+                const words = node.textContent.split('');
+                let line = '';
+                let lines = [];
+                let lineHeight = parseFloat(window.getComputedStyle(node).lineHeight);
+
+                for (let n = 0; n < words.length; n++) {
+                    const testLine = line + words[n];
+                    const metrics = ctx.measureText(testLine);
+                    const testWidth = metrics.width;
+                    if (testWidth > maxWidth && n > 0) {
+                        lines.push(line);
+                        line = words[n];
+                    } else {
+                        line = testLine;
+                    }
+                }
+                lines.push(line);
+
+                const totalTextHeight = lines.length * lineHeight;
+                const textY = y + (rect.height - totalTextHeight) / 2 + lineHeight / 2;
+
+                lines.forEach((line, index) => {
+                    ctx.fillText(line.trim(), x + rect.width / 2, textY + index * lineHeight);
+                });
+            });
+
+            const link = document.createElement('a');
+            link.download = 'mindmap.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function autoFitText(node) {
+            const padding = 10;
+            const maxWidth = parseFloat(node.style.width) - padding * 2;
+            const maxHeight = parseFloat(node.style.height) - padding * 2;
+            const ctx = document.createElement('canvas').getContext('2d');
+            ctx.font = window.getComputedStyle(node).fontSize + ' ' + window.getComputedStyle(node).fontFamily;
+            ctx.fontWeight = window.getComputedStyle(node).fontWeight;
+
+            const words = node.textContent.split('');
+            let line = '';
+            let lines = [];
+            let lineHeight = parseFloat(window.getComputedStyle(node).lineHeight);
+
+            for (let n = 0; n < words.length; n++) {
+                const testLine = line + words[n];
+                const metrics = ctx.measureText(testLine);
+                const testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    lines.push(line);
+                    line = words[n];
+                } else {
+                    line = testLine;
+                }
+            }
+            lines.push(line);
+
+            if (lines.length * lineHeight > maxHeight) {
+                let fontSize = parseFloat(window.getComputedStyle(node).fontSize);
+                while (lines.length * lineHeight > maxHeight && fontSize > 5) {
+                    fontSize -= 1;
+                    ctx.font = fontSize + 'px ' + window.getComputedStyle(node).fontFamily;
+                    lines = [];
+                    line = '';
+                    for (let n = 0; n < words.length; n++) {
+                        const testLine = line + words[n];
+                        const metrics = ctx.measureText(testLine);
+                        const testWidth = metrics.width;
+                        if (testWidth > maxWidth && n > 0) {
+                            lines.push(line);
+                            line = words[n];
+                        } else {
+                            line = testLine;
+                        }
+                    }
+                    lines.push(line);
+                }
+                node.style.fontSize = fontSize + 'px';
+            }
+        }
+    </script>
+</body>
+</html>
