@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>進階班級借還書系統</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.21.1/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tabs button {
+            background-color: #f1f1f1;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 10px 20px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+        .tabs button:hover {
+            background-color: #ddd;
+        }
+        .tabs button.active {
+            background-color: #ccc;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .book-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        .form-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        .form-container input, .form-container button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>進階班級借還書系統</h1>
+        
+        <div class="tabs">
+            <button class="tablinks active" onclick="openTab(event, 'bookList')">圖書列表</button>
+            <button class="tablinks" onclick="openTab(event, 'addBook')">新增圖書</button>
+            <button class="tablinks" onclick="openTab(event, 'uploadBooks')">批量上傳</button>
+        </div>
+
+        <div id="bookList" class="tab-content" style="display:block;">
+            <h2>圖書列表</h2>
+            <div id="searchContainer">
+                <input type="text" id="searchInput" placeholder="搜索圖書...">
+                <button onclick="searchBooks()">搜索</button>
+            </div>
+            <div id="bookListContainer" class="book-grid"></div>
+        </div>
+
+        <div id="addBook" class="tab-content">
+            <h2>新增圖書</h2>
+            <div class="form-container">
+                <input type="text" id="bookTitle" placeholder="書名">
+                <input type="text" id="bookAuthor" placeholder="作者">
+                <input type="text" id="bookISBN" placeholder="ISBN">
+                <button onclick="addBook()">新增圖書</button>
+            </div>
+        </div>
+
+        <div id="uploadBooks" class="tab-content">
+            <h2>批量上傳圖書</h2>
+            <div class="form-container">
+                <input type="file" id="csvFile" accept=".csv">
+                <button onclick="uploadBooks()">上傳檔案</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="borrowModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('borrowModal')">&times;</span>
+            <h2>借閱圖書</h2>
+            <p id="borrowBookInfo"></p>
+            <input type="text" id="borrowerName" placeholder="借閱者姓名">
+            <button onclick="confirmBorrow()">確認借閱</button>
+        </div>
+    </div>
+
+    <div id="returnModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('returnModal')">&times;</span>
+            <h2>歸還圖書</h2>
+            <p id="returnBookInfo"></p>
+            <button onclick="confirmReturn()">確認歸還</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbx2dTH5ojVkrdFMSXX_-SKBns3LEHPc8uBz9S4EWD-IjHtjavH_Za5DR1NfdtYSrmlT/exec';
+
+        // 打開指定的標籤頁
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tab-content");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // 獲取並顯示圖書列表
+        async function getBooks() {
+            try {
+                const response = await axios.get(`${API_URL}?action=getBooks`);
+                const books = response.data;
+                const container = document.getElementById('bookListContainer');
+                container.innerHTML = '';
+                books.forEach(book => {
+                    const bookElement = document.createElement('div');
+                    bookElement.className = 'book-item';
+                    bookElement.innerHTML = `
+                        <h3>${book.title}</h3>
+                        <p>作者: ${book.author}</p>
+                        <p>ISBN: ${book.isbn}</p>
+                        <p>狀態: ${book.status}</p>
+                        ${book.status === '可借閱' 
+                            ? `<button onclick="openBorrowModal('${book.isbn}')">借閱</button>`
+                            : `<button onclick="openReturnModal('${book.isbn}')">歸還</button>`}
+                    `;
+                    container.appendChild(bookElement);
+                });
+            } catch (error) {
+                console.error('Error fetching books:', error);
+                alert('獲取圖書列表失敗，請稍後再試。');
+            }
+        }
+
+        // 搜索圖書
+        async function searchBooks() {
+            const searchTerm = document.getElementById('searchInput').value;
+            try {
+                const response = await axios.get(`${API_URL}?action=searchBooks&term=${searchTerm}`);
+                const books = response.data;
+                const container = document.getElementById('bookListContainer');
+                container.innerHTML = '';
+                books.forEach(book => {
+                    const bookElement = document.createElement('div');
+                    bookElement.className = 'book-item';
+                    bookElement.innerHTML = `
+                        <h3>${book.title}</h3>
+                        <p>作者: ${book.author}</p>
+                        <p>ISBN: ${book.isbn}</p>
+                        <p>狀態: ${book.status}</p>
+                        ${book.status === '可借閱' 
+                            ? `<button onclick="openBorrowModal('${book.isbn}')">借閱</button>`
+                            : `<button onclick="openReturnModal('${book.isbn}')">歸還</button>`}
+                    `;
+                    container.appendChild(bookElement);
+                });
+            } catch (error) {
+                console.error('Error searching books:', error);
+                alert('搜索圖書失敗，請稍後再試。');
+            }
+        }
+
+        // 新增圖書
+        async function addBook() {
+            const title = document.getElementById('bookTitle').value;
+            const author = document.getElementById('bookAuthor').value;
+            const isbn = document.getElementById('bookISBN').value;
+            try {
+                await axios.post(API_URL, {
+                    action: 'addBook',
+                    title: title,
+                    author: author,
+                    isbn: isbn
+                });
+                alert('圖書新增成功！');
+                getBooks(); // 重新加載圖書列表
+            } catch (error) {
+                console.error('Error adding book:', error);
+                alert('新增圖書失敗，請稍後再試。');
+            }
+        }
+
+        // 批量上傳圖書
+        async function uploadBooks() {
+            const fileInput = document.getElementById('csvFile');
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    const csvData = e.target.result;
+                    try {
+                        await axios.post(API_URL, {
+                            action: 'uploadBooks',
+                            data: csvData
+                        });
+                        alert('批量上傳成功！');
+                        getBooks(); // 重新加載圖書列表
+                    } catch (error) {
+                        console.error('Error uploading books:', error);
+                        alert('批量上傳失敗，請檢查文件格式並稍後再試。');
+                    }
+                };
+                reader.readAsText(file);
+            } else {
+                alert('請選擇一個CSV文件。');
+            }
+        }
+
+        // 打開借閱模態框
+        function openBorrowModal(isbn) {
+            document.getElementById('borrowModal').style.display = 'block';
+            document.getElementById('borrowBookInfo').textContent = `ISBN: ${isbn}`;
+        }
+
+        // 打開歸還模態框
+        function openReturnModal(isbn) {
+            document.getElementById('returnModal').style.display = 'block';
+            document.getElementById('returnBookInfo').textContent = `ISBN: ${isbn}`;
+        }
+
+        // 關閉模態框
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // 確認借閱
+async function confirmBorrow() {
+    const isbn = document.getElementById('borrowBookInfo').textContent.split(': ')[1];
+    const borrower = document.getElementById('borrowerName').value;
+    console.log('Attempting to borrow book:', { isbn, borrower });
+    try {
+        console.log('Sending request to:', API_URL);
+        const response = await axios.post(API_URL, {
+            action: 'borrowBook',
+            isbn: isbn,
+            borrower: borrower
+        });
+        console.log('API Response:', response);
+        if (response.data === 'success') {
+            alert('借閱成功！');
+            closeModal('borrowModal');
+            getBooks();
+        } else {
+            alert('借閱失敗: ' + response.data);
+        }
+    } catch (error) {
+        console.error('Error borrowing book:', error);
+        if (error.response) {
+            console.log('Error response:', error.response.data);
+        }
+        alert('借閱失敗，錯誤信息: ' + error.message);
+    }
+}
+        // 確認歸還
+        async function confirmReturn() {
+            const isbn = document.getElementById('returnBookInfo').textContent.split(': ')[1];
+            try {
+                await axios.post(API_URL, {
+                    action: 'returnBook',
+                    isbn: isbn
+                });
+                alert('歸還成功！');
+                closeModal('returnModal');
+                getBooks(); // 重新加載圖書列表
+            } catch (error) {
+                console.error('Error returning book:', error);
+                alert('歸還失敗，請稍後再試。');
+            }
+        }
+
+        // 頁面加載時獲取圖書列表
+        window.onload = getBooks;
+    </script>
+</body>
+</html>
