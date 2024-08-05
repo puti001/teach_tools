@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>班級借還書系統</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .book-item { 
+            border: 1px solid #ddd; 
+            padding: 15px; 
+            text-align: center; 
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .book-item:hover { transform: translateY(-5px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .book-item button { margin-top: 10px; padding: 5px 10px; cursor: pointer; }
+        .book-item.borrowed { background-color: #fff9c4; }
+        .book-item.overdue { background-color: #ffcdd2; }
+        h1 { color: #333; }
+        button { background-color: #4CAF50; color: white; border: none; padding: 10px 20px; text-align: center; text-decoration: none; display: inline-block; font-size: 16px; margin: 4px 2px; cursor: pointer; border-radius: 4px; }
+        #searchBox { width: 300px; padding: 10px; margin-right: 10px; font-size: 16px; }
+        .controls { margin-bottom: 20px; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            text-align: center;
+        }
+        .modal input {
+            width: 100%;
+            padding: 5px;
+            margin: 10px 0;
+        }
+        .modal button {
+            margin: 5px;
+        }
+        .tab {
+            overflow: hidden;
+            border: 1px solid #ccc;
+            background-color: #f1f1f1;
+        }
+        .tab button {
+            background-color: inherit;
+            float: left;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 16px;
+            transition: 0.3s;
+            font-size: 17px;
+        }
+        .tab button:hover {
+            background-color: #ddd;
+        }
+        .tab button.active {
+            background-color: #ccc;
+        }
+        .tabcontent {
+            display: none;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-top: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>班級借還書系統</h1>
+    <div class="controls">
+        <input type="text" id="scriptUrl" placeholder="輸入Google Apps Script Web App URL">
+        <button onclick="setScriptUrl()">設置URL</button>
+    </div>
+    <div class="tab">
+        <button class="tablinks" onclick="openTab(event, 'AllBooks')" id="defaultOpen">所有書籍</button>
+        <button class="tablinks" onclick="openTab(event, 'BorrowedBooks')">已借出的書</button>
+    </div>
+
+    <div id="AllBooks" class="tabcontent">
+        <div class="controls">
+            <input type="text" id="searchBox" placeholder="搜索書名...">
+            <button onclick="searchBooks()">搜索</button>
+            <button onclick="loadBooks()">刷新圖書列表</button>
+        </div>
+        <div id="bookContainer" class="book-grid">
+            <!-- 所有圖書將在這裡動態插入 -->
+        </div>
+    </div>
+
+    <div id="BorrowedBooks" class="tabcontent">
+        <div id="borrowedContainer" class="book-grid">
+            <!-- 已借出的圖書將在這裡動態插入 -->
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <p id="modalText"></p>
+            <input type="text" id="modalInput">
+            <button onclick="submitModal()">確定</button>
+            <button onclick="closeModal()">取消</button>
+        </div>
+    </div>
+
+    <script>
+        let allBooks = [];
+let scriptUrl = '';
+
+        function setScriptUrl() {
+            scriptUrl = document.getElementById('scriptUrl').value;
+            if (scriptUrl) {
+                loadBooks();
+            } else {
+                alert('請輸入有效的URL');
+            }
+        }
+
+        function loadBooks() {
+            if (!scriptUrl) {
+                alert('請先設置Google Apps Script Web App URL');
+                return;
+            }
+
+            console.log('開始加載圖書');
+            document.getElementById('bookContainer').innerHTML = '加載中...';
+            document.getElementById('borrowedContainer').innerHTML = '加載中...';
+            
+            fetch(scriptUrl + '?action=getBooks')
+                .then(response => response.json())
+                .then(books => {
+                    allBooks = books;
+                    updateBookGrid(books);
+                    updateBorrowedBooks(books);
+                })
+                .catch(error => {
+                    console.error('獲取圖書數據失敗：', error);
+                    document.getElementById('bookContainer').innerHTML = '加載失敗，請重試';
+                    document.getElementById('borrowedContainer').innerHTML = '加載失敗，請重試';
+                });
+        }
+
+        function updateBookGrid(books) {
+            var container = document.getElementById('bookContainer');
+            container.innerHTML = '';
+            
+            if (books && books.length > 0) {
+                books.forEach(function(book, index) {
+                    var bookElement = createBookElement(book, index);
+                    container.appendChild(bookElement);
+                });
+            } else {
+                container.innerHTML = '沒有可顯示的圖書數據';
+            }
+        }
+
+        function updateBorrowedBooks(books) {
+            var container = document.getElementById('borrowedContainer');
+            container.innerHTML = '';
+            
+            var borrowedBooks = books.filter(book => book.status === '已借出');
+            
+            if (borrowedBooks.length > 0) {
+                borrowedBooks.forEach(function(book, index) {
+                    var bookElement = createBookElement(book, index);
+                    container.appendChild(bookElement);
+                });
+            } else {
+                container.innerHTML = '目前沒有借出的書籍';
+            }
+        }
+
+        function createBookElement(book, index) {
+            var bookElement = document.createElement('div');
+            bookElement.className = 'book-item';
+            if (book.status === '已借出') {
+                bookElement.classList.add('borrowed');
+                if (isOverdue(book.returnDate)) {
+                    bookElement.classList.add('overdue');
+                }
+            }
+            bookElement.innerHTML = `
+                <div><strong>${book.name}</strong></div>
+                <div>狀態: ${book.status}</div>
+                ${book.borrower ? `<div>借閱人: ${book.borrower}</div>` : ''}
+                ${book.borrowDate ? `<div>借閱日期: ${book.borrowDate}</div>` : ''}
+                ${book.returnDate ? `<div>預計歸還日期: ${book.returnDate}</div>` : ''}
+                <button onclick="toggleBookStatus(${index})">${book.status === '可借閱' ? '借書' : '還書'}</button>
+            `;
+            return bookElement;
+        }
+
+        function toggleBookStatus(index) {
+            if (!scriptUrl) {
+                alert('請先設置Google Apps Script Web App URL');
+                return;
+            }
+
+            if (event.target.innerText === '借書') {
+                showModal("請輸入借閱人姓名：", function(borrower) {
+                    if (borrower) {
+                        fetch(scriptUrl + '?action=borrowBook&index=' + index + '&borrower=' + encodeURIComponent(borrower))
+                            .then(response => response.json())
+                            .then(result => {
+                                if (result.success) {
+                                    alert('借書成功！');
+                                    loadBooks();
+                                } else {
+                                    alert('借書失敗：' + result.message);
+                                }
+                            })
+                            .catch(error => {
+                                alert('借書失敗，請重試');
+                            });
+                    }
+                });
+            } else {
+                showModal("請輸入管理密碼：", function(password) {
+                    if (password === 'a0861') {
+                        fetch(scriptUrl + '?action=returnBook&index=' + index)
+                            .then(response => response.json())
+                            .then(result => {
+                                if (result.success) {
+                                    alert('還書成功！');
+                                    loadBooks();
+                                } else {
+                                    alert('還書失敗：' + result.message);
+                                }
+                            })
+                            .catch(error => {
+                                alert('還書失敗，請重試');
+                            });
+                    } else {
+                        alert('密碼錯誤，無法還書');
+                    }
+                });
+            }
+        }
+
+        function isOverdue(returnDate) {
+            if (!returnDate) return false;
+            var today = new Date();
+            var returnDay = new Date(returnDate);
+            return today > returnDay;
+        }
+
+        function searchBooks() {
+            var searchTerm = document.getElementById('searchBox').value.toLowerCase();
+            var filteredBooks = allBooks.filter(function(book) {
+                return book.name.toLowerCase().includes(searchTerm);
+            });
+            updateBookGrid(filteredBooks);
+        }
+
+        var modal = document.getElementById('modal');
+        var modalCallback;
+
+        function showModal(text, callback) {
+            document.getElementById('modalText').textContent = text;
+            document.getElementById('modalInput').value = '';
+            modal.style.display = "block";
+            modalCallback = callback;
+        }
+
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+        function submitModal() {
+            var input = document.getElementById('modalInput').value;
+            closeModal();
+            if (modalCallback) modalCallback(input);
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        function openTab(evt, tabName) {
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+                tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablinks");
+            for (i = 0; i < tablinks.length; i++) {
+                tablinks[i].className = tablinks[i].className.replace(" active", "");
+            }
+            document.getElementById(tabName).style.display = "block";
+            evt.currentTarget.className += " active";
+        }
+
+        // 頁面加載完成後自動加載圖書並打開默認標籤
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBooks();
+            document.getElementById("defaultOpen").click();
+        });
+    </script>
+</body>
+</html>
