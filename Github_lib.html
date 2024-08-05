@@ -116,6 +116,17 @@
     </div>
 
     <script>
+fetch(scriptUrl + '?action=getBooks', {
+    mode: 'no-cors'
+})
+.then(response => response.json())
+.then(books => {
+    // 處理數據
+})
+.catch(error => {
+    console.error('獲取圖書數據失敗：', error);
+    // 顯示錯誤信息
+});
         let allBooks = [];
 let scriptUrl = '';
 
