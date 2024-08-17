@@ -1,0 +1,446 @@
+<html><head><base href="https://websim.io/quiz/math/a4generator/">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puti數學計算題產生器</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .container {
+        display: flex;
+        width: 100%;
+    }
+    .left-panel {
+        width: 300px;
+        padding-right: 20px;
+    }
+    .right-panel {
+        flex-grow: 1;
+    }
+    .a4-preview {
+        width: 210mm;
+        height: 297mm;
+        margin: 0 auto;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        padding: 20mm;
+        box-sizing: border-box;
+        position: relative;
+    }
+    .a4-header {
+        margin-bottom: 10mm;
+    }
+    .a4-title {
+        text-align: center;
+        font-size: 20pt;
+        font-weight: bold;
+        margin-bottom: 5mm;
+    }
+    .a4-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+    }
+    .question {
+        border-right: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+        padding: 5mm;
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        font-size: 14pt;
+        box-sizing: border-box;
+    }
+    .question:nth-child(2n) {
+        border-right: none;
+    }
+    .question:last-child, .question:nth-last-child(2) {
+        border-bottom: none;
+    }
+    .save-pdf-btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .save-pdf-btn:hover {
+        background-color: #45a049;
+    }
+    .answer-page {
+        page-break-before: always;
+    }
+    .answer-title {
+        text-align: center;
+        font-size: 20pt;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .answer-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+    .answer-item {
+        border: 1px solid #ccc;
+        padding: 5px;
+        text-align: center;
+    }
+    .page-number {
+        position: absolute;
+        bottom: 10mm;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 12pt;
+    }
+    @media print {
+        .answer-page {
+            page-break-before: always;
+        }
+    }
+    .app-title {
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h1 class="app-title">Puti數學計算題產生器</h1>
+            <h2>測驗設定</h2>
+            <div>
+                <label for="custom-title">自定標題：</label>
+                <input type="text" id="custom-title">
+            </div>
+            <div>
+                <input type="checkbox" id="use-default-title" checked>
+                <label for="use-default-title">使用預設標題</label>
+            </div>
+            <div>
+                <label for="digits1">數字1位數：</label>
+                <input type="number" id="digits1" value="2" min="1" max="5">
+            </div>
+            <div>
+                <label for="digits2">數字2位數：</label>
+                <input type="number" id="digits2" value="2" min="1" max="5">
+            </div>
+            <div>
+                <label for="decimal1">數字1小數位：</label>
+                <input type="number" id="decimal1" value="0" min="0" max="2">
+            </div>
+            <div>
+                <label for="decimal2">數字2小數位：</label>
+                <input type="number" id="decimal2" value="0" min="0" max="2">
+            </div>
+            <div>
+                <label for="num-questions">題目數量：</label>
+                <input type="range" id="num-questions" min="1" max="20" value="10">
+                <span id="num-questions-value">10</span>
+            </div>
+            <div>
+                <label for="row-height">行高(cm)：</label>
+                <input type="range" id="row-height" min="2" max="8" step="0.1" value="4">
+                <span id="row-height-value">4</span>
+            </div>
+            <div>
+                <label for="rows-per-page">每頁行數：</label>
+                <input type="range" id="rows-per-page" min="1" max="5" value="3">
+                <span id="rows-per-page-value">3</span>
+            </div>
+            <div>
+                <h3>運算：</h3>
+                <div>
+                    <input type="checkbox" id="addition" checked>
+                    <label for="addition">加法</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="subtraction" checked>
+                    <label for="subtraction">減法</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="multiplication" checked>
+                    <label for="multiplication">乘法</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="division" checked>
+                    <label for="division">除法</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="div-divisible">
+                    <label for="div-divisible">除法（整除）</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="div-remainder">
+                    <label for="div-remainder">除法（有餘數）</label>
+                </div>
+            </div>
+            <button id="generate-btn">生成測驗</button>
+        </div>
+        <div class="right-panel">
+            <button class="save-pdf-btn" onclick="savePDF()">儲存 PDF</button>
+            <div id="preview-container"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        const generateBtn = document.getElementById('generate-btn');
+        const previewContainer = document.getElementById('preview-container');
+        const customTitleInput = document.getElementById('custom-title');
+        const useDefaultTitleCheckbox = document.getElementById('use-default-title');
+
+        let digits1, digits2, decimal1, decimal2, operations, numQuestions, rowHeight, rowsPerPage;
+
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const valueSpan = document.getElementById(valueId);
+            if (slider && valueSpan) {
+                valueSpan.textContent = slider.value;
+                slider.oninput = function() {
+                    valueSpan.textContent = this.value;
+                }
+            }
+        }
+
+        updateSliderValue('num-questions', 'num-questions-value');
+        updateSliderValue('row-height', 'row-height-value');
+        updateSliderValue('rows-per-page', 'rows-per-page-value');
+
+        function generateNumber(digits, decimalPlaces) {
+            const min = Math.pow(10, digits - 1);
+            const max = Math.pow(10, digits) - 1;
+            let num = Math.random() * (max - min + 1) + min;
+            return parseFloat(num.toFixed(decimalPlaces));
+        }
+
+        function generateQuestion(usedQuestions) {
+            let question;
+            do {
+                const operation = operations[Math.floor(Math.random() * operations.length)];
+                let num1, num2;
+
+                num1 = generateNumber(digits1, decimal1);
+                num2 = generateNumber(digits2, decimal2);
+
+                switch (operation) {
+                    case '-':
+                        if (num2 > num1) {
+                            [num1, num2] = [num2, num1];
+                        }
+                        break;
+                    case '÷':
+                        const divisible = document.getElementById('div-divisible').checked;
+                        const remainder = document.getElementById('div-remainder').checked;
+                        
+                        if (divisible && !remainder) {
+                            num2 = Math.floor(Math.random() * 9) + 2; // Divisor between 2 and 10
+                            num1 = num2 * Math.floor(Math.random() * 10) + num2;
+                        } else if (!divisible && remainder) {
+                            do {
+                                num2 = Math.floor(Math.random() * 9) + 2; // Divisor between 2 and 10
+                                num1 = Math.floor(Math.random() * 100) + num2;
+                            } while (num1 % num2 === 0);
+                        } else {
+                            num2 = Math.floor(Math.random() * 9) + 2; // Divisor between 2 and 10
+                            num1 = Math.floor(Math.random() * 100) + num2;
+                        }
+                        break;
+                }
+
+                question = `${num1.toFixed(decimal1)} ${operation} ${num2.toFixed(decimal2)} = `;
+            } while (usedQuestions.has(question));
+
+            usedQuestions.add(question);
+            return question;
+        }
+
+        function getTitle() {
+            if (useDefaultTitleCheckbox.checked) {
+                return `${new Date().toLocaleDateString('zh-TW')} 計算題測驗`;
+            } else {
+                return customTitleInput.value || 'Puti數學計算題產生器';
+            }
+        }
+
+        function createA4Page(pageNumber, totalPages) {
+            const page = document.createElement('div');
+            page.className = 'a4-preview';
+            page.innerHTML = `
+                <div class="a4-header">
+                    <div class="a4-title">${getTitle()}</div>
+                    <div>班級：__________ 座號：__________ 姓名：____________________</div>
+                </div>
+                <div class="a4-content" id="quiz-content-${pageNumber}"></div>
+                <div class="page-number">${pageNumber} / ${totalPages}</div>
+            `;
+            return page;
+        }
+
+        function updatePageNumbers() {
+            const pages = document.querySelectorAll('.a4-preview:not(.answer-page)');
+            const totalPages = pages.length;
+            pages.forEach((page, index) => {
+                const pageNumber = page.querySelector('.page-number');
+                pageNumber.textContent = `${index + 1} / ${totalPages}`;
+            });
+        }
+
+        function calculateAnswer(question) {
+            const [num1, operation, num2] = question.split(' ');
+            const a = parseFloat(num1);
+            const b = parseFloat(num2);
+            switch (operation) {
+                case '+': return a + b;
+                case '-': return a - b;
+                case '×': return a * b;
+                case '÷': 
+                    const quotient = Math.floor(a / b);
+                    const remainder = a % b;
+                    return remainder === 0 ? quotient : `${quotient}...${remainder}`;
+            }
+        }
+
+        function formatAnswer(answer) {
+            if (typeof answer === 'number') {
+                return Number.isInteger(answer) ? answer.toString() : answer.toFixed(2);
+            }
+            return answer;
+        }
+
+        function createAnswerPage(questions) {
+            const answerPage = document.createElement('div');
+            answerPage.className = 'a4-preview answer-page';
+            answerPage.innerHTML = `
+                <div class="answer-title">答案卷</div>
+                <div class="answer-grid"></div>
+            `;
+
+            const answerGrid = answerPage.querySelector('.answer-grid');
+            questions.forEach((question, index) => {
+                const answer = calculateAnswer(question);
+                const answerItem = document.createElement('div');
+                answerItem.className = 'answer-item';
+                answerItem.textContent = `${index + 1}. ${formatAnswer(answer)}`;
+                answerGrid.appendChild(answerItem);
+            });
+
+            return answerPage;
+        }
+
+        function generateQuiz() {
+            digits1 = parseInt(document.getElementById('digits1').value);
+            digits2 = parseInt(document.getElementById('digits2').value);
+            decimal1 = parseInt(document.getElementById('decimal1').value);
+            decimal2 = parseInt(document.getElementById('decimal2').value);
+            numQuestions = parseInt(document.getElementById('num-questions').value);
+            rowHeight = parseFloat(document.getElementById('row-height').value);
+            rowsPerPage = parseInt(document.getElementById('rows-per-page').value);
+
+            operations = [];
+            if (document.getElementById('addition').checked) operations.push('+');
+            if (document.getElementById('subtraction').checked) operations.push('-');
+            if (document.getElementById('multiplication').checked) operations.push('×');
+            if (document.getElementById('division').checked) operations.push('÷');
+
+            if (operations.length === 0) {
+                alert('請至少選擇一種運算。');
+                return;
+            }
+
+            const usedQuestions = new Set();
+            const questions = [];
+            for (let i = 0; i < numQuestions; i++) {
+                questions.push(generateQuestion(usedQuestions));
+            }
+
+            previewContainer.innerHTML = '';
+            const contentHeight = 257; // A4 height (297mm) - 40mm margins
+
+            let currentPage = createA4Page(1, 1);
+            previewContainer.appendChild(currentPage);
+            let currentContent = currentPage.querySelector('.a4-content');
+            currentContent.style.gridTemplateRows = `repeat(${rowsPerPage}, ${rowHeight}cm)`;
+
+            let currentRow = 0;
+            let questionNumber = 1;
+            let pageNumber = 1;
+            let questionsInCurrentRow = 0;
+
+            for (let i = 0; i < numQuestions; i++) {
+                if (currentRow >= rowsPerPage) {
+                    pageNumber++;
+                    currentPage = createA4Page(pageNumber, pageNumber);
+                    previewContainer.appendChild(currentPage);
+                    currentContent = currentPage.querySelector('.a4-content');
+                    currentContent.style.gridTemplateRows = `repeat(${rowsPerPage}, ${rowHeight}cm)`;
+                    currentRow = 0;
+                }
+
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+                questionDiv.style.height = `${rowHeight}cm`;
+                questionDiv.textContent = `${questionNumber}. ${questions[i]}`;
+
+                currentContent.appendChild(questionDiv);
+                questionsInCurrentRow++;
+
+                if (questionsInCurrentRow === 2) {
+                    currentRow++;
+                    questionsInCurrentRow = 0;
+                }
+
+                questionNumber++;
+            }
+
+            updatePageNumbers();
+
+            // Add answer page
+            const answerPage = createAnswerPage(questions);
+            previewContainer.appendChild(answerPage);
+        }
+
+        function savePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pages = document.querySelectorAll('.a4-preview');
+            const title = getTitle();
+
+            const saveNextPage = (index) => {
+                if (index >= pages.length) {
+                    doc.save(`${title}.pdf`);
+                    return;
+                }
+
+                html2canvas(pages[index], { scale: 2 }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    if (index > 0) doc.addPage();
+                    doc.addImage(imgData, 'PNG', 0, 0, 210, 297);
+                    saveNextPage(index + 1);
+                });
+            };
+
+            saveNextPage(0);
+        }
+
+        generateBtn.addEventListener('click', generateQuiz);
+        useDefaultTitleCheckbox.addEventListener('change', function() {
+            customTitleInput.disabled = this.checked;
+        });
+
+        // 初始化一個預設測驗
+        generateQuiz();
+    </script>
+</body>
+</html>
