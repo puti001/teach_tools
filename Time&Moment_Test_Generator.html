@@ -1,0 +1,580 @@
+<html><head><base href="https://%E9%A1%9E%E5%9E%8B%EF%BC%9A%E6%96%B0%E5%A2%9E">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puti時間與時刻測驗產生器</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+    }
+    .container {
+        display: flex;
+        width: 100%;
+    }
+    .left-panel {
+        width: 300px;
+        padding-right: 20px;
+    }
+    .right-panel {
+        flex-grow: 1;
+    }
+    .a4-preview {
+        width: 210mm;
+        height: 297mm;
+        margin: 0 auto;
+        background: white;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        padding: 20mm;
+        box-sizing: border-box;
+        position: relative;
+    }
+    .a4-header {
+        line-height: 1.5;
+        margin-bottom: 0;
+    }
+    .a4-title {
+        font-size: 20pt;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 0;
+        line-height: 1.5;
+    }
+    .a4-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+    }
+    .question {
+        border: 1px solid #ccc;
+        padding: 5mm;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        font-size: 14pt;
+        box-sizing: border-box;
+    }
+    .question p {
+        margin: 0;
+        line-height: 1.5;
+    }
+    .clock {
+        width: 100px;
+        height: 100px;
+    }
+    .save-pdf-btn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .save-pdf-btn:hover {
+        background-color: #45a049;
+    }
+    .answer-page {
+        page-break-before: always;
+    }
+    .answer-title {
+        text-align: center;
+        font-size: 18pt;
+        font-weight: bold;
+        margin-bottom: 0;
+        line-height: 1.5;
+    }
+    .answer-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+    .answer-item {
+        border: 1px solid #ccc;
+        padding: 5px;
+        text-align: center;
+    }
+    @media print {
+        .answer-page {
+            page-break-before: always;
+        }
+    }
+    .slider-container {
+        margin-bottom: 15px;
+    }
+    .slider-container label {
+        display: block;
+        margin-bottom: 5px;
+    }
+    .slider-container input {
+        width: 100%;
+    }
+    .slider-value {
+        display: inline-block;
+        margin-left: 10px;
+    }
+    .page-number {
+        position: absolute;
+        bottom: 10mm;
+        left: 0;
+        right: 0;
+        text-align: center;
+    }
+    .time-calculation-options {
+        margin-left: 20px;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <h1>Puti時間與時刻測驗產生器</h1>
+            <h2>測驗設定</h2>
+            <div>
+                <label for="custom-title">自定標題：</label>
+                <input type="text" id="custom-title">
+            </div>
+            <div>
+                <input type="checkbox" id="use-default-title" checked>
+                <label for="use-default-title">使用預設標題</label>
+            </div>
+            <div class="slider-container">
+                <label for="num-questions">題目數量：<span id="num-questions-value" class="slider-value">10</span></label>
+                <input type="range" id="num-questions" min="2" max="20" value="10">
+            </div>
+            <div class="slider-container">
+                <label for="rows-per-page">每頁行數：<span id="rows-per-page-value" class="slider-value">2</span></label>
+                <input type="range" id="rows-per-page" min="1" max="5" value="2">
+            </div>
+            <div class="slider-container">
+                <label for="row-height">每行高度：<span id="row-height-value" class="slider-value">5</span> cm</label>
+                <input type="range" id="row-height" min="3" max="8" value="5" step="0.1">
+            </div>
+            <div>
+                <h3>程度：</h3>
+                <div>
+                    <input type="checkbox" id="whole-hour" checked>
+                    <label for="whole-hour">整點 (1:00, 2:00...)</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="half-hour" checked>
+                    <label for="half-hour">點半 (1:30, 2:30...)</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="any-time">
+                    <label for="any-time">任意 (1:32, 2:57...)</label>
+                </div>
+            </div>
+            <div>
+                <h3>類型：</h3>
+                <div>
+                    <input type="checkbox" id="draw-clock" checked>
+                    <label for="draw-clock">看時刻畫出時鐘</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="write-time" checked>
+                    <label for="write-time">看時鐘寫出時刻</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="convert-12-to-24">
+                    <label for="convert-12-to-24">12轉24時制</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="convert-24-to-12">
+                    <label for="convert-24-to-12">24轉12時制</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="time-calculation">
+                    <label for="time-calculation">2個時間的加減</label>
+                    <div class="time-calculation-options">
+                        <input type="checkbox" id="calc-days">
+                        <label for="calc-days">日</label>
+                        <input type="checkbox" id="calc-hours">
+                        <label for="calc-hours">時</label>
+                        <input type="checkbox" id="calc-minutes">
+                        <label for="calc-minutes">分</label>
+                        <input type="checkbox" id="calc-seconds">
+                        <label for="calc-seconds">秒</label>
+                    </div>
+                </div>
+            </div>
+            <button id="generate-btn">生成測驗</button>
+        </div>
+        <div class="right-panel">
+            <button class="save-pdf-btn" onclick="savePDF()">儲存 PDF</button>
+            <div id="preview-container"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        const generateBtn = document.getElementById('generate-btn');
+        const previewContainer = document.getElementById('preview-container');
+        const customTitleInput = document.getElementById('custom-title');
+        const useDefaultTitleCheckbox = document.getElementById('use-default-title');
+        const numQuestionsSlider = document.getElementById('num-questions');
+        const rowsPerPageSlider = document.getElementById('rows-per-page');
+        const rowHeightSlider = document.getElementById('row-height');
+
+        function updateSliderValue(sliderId, valueId) {
+            const slider = document.getElementById(sliderId);
+            const value = document.getElementById(valueId);
+            value.textContent = slider.value;
+            slider.oninput = function() {
+                value.textContent = this.value;
+            }
+        }
+
+        updateSliderValue('num-questions', 'num-questions-value');
+        updateSliderValue('rows-per-page', 'rows-per-page-value');
+        updateSliderValue('row-height', 'row-height-value');
+
+        function getTitle() {
+            if (useDefaultTitleCheckbox.checked) {
+                return `${new Date().toLocaleDateString('zh-TW')} 時間與時刻測驗`;
+            } else {
+                return customTitleInput.value || '時間與時刻測驗';
+            }
+        }
+
+        function createA4Page(pageNumber, totalPages, rowsPerPage, rowHeight) {
+            const page = document.createElement('div');
+            page.className = 'a4-preview';
+            page.innerHTML = `
+                <div class="a4-title">${getTitle()}</div>
+                <div class="a4-header">班級：__________ 座號：__________ 姓名：____________________</div>
+                <div class="a4-content" id="quiz-content-${pageNumber}" style="grid-template-rows: repeat(${rowsPerPage}, ${rowHeight}cm);"></div>
+                <div class="page-number">第${pageNumber}頁 / 共${totalPages}頁</div>
+            `;
+            return page;
+        }
+
+        function updatePageNumbers() {
+            const pages = document.querySelectorAll('.a4-preview:not(.answer-page)');
+            const totalPages = pages.length;
+            const title = getTitle();
+            pages.forEach((page, index) => {
+                const titleElement = page.querySelector('.a4-title');
+                titleElement.textContent = title;
+                const pageNumberElement = page.querySelector('.page-number');
+                pageNumberElement.textContent = `第${index + 1}頁 / 共${totalPages}頁`;
+            });
+        }
+
+        function generateRandomTime(wholeHour, halfHour, anyTime) {
+            let hour, minute;
+            if (wholeHour && !halfHour && !anyTime) {
+                hour = Math.floor(Math.random() * 12) + 1;
+                minute = 0;
+            } else if (!wholeHour && halfHour && !anyTime) {
+                hour = Math.floor(Math.random() * 12) + 1;
+                minute = 30;
+            } else if (anyTime) {
+                hour = Math.floor(Math.random() * 24);
+                minute = Math.floor(Math.random() * 60);
+            } else {
+                hour = Math.floor(Math.random() * 12) + 1;
+                minute = Math.random() < 0.5 ? 0 : 30;
+            }
+            return { hour, minute };
+        }
+
+        function formatTime12(hour, minute) {
+            const period = hour < 12 ? 'AM' : 'PM';
+            hour = hour % 12 || 12;
+            return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')} ${period}`;
+        }
+
+        function formatTime24(hour, minute) {
+            return `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        }
+
+        function createClock(hour, minute) {
+            const hourAngle = ((hour % 12) + minute / 60) * 30;
+            const minuteAngle = minute * 6;
+
+            let clockHtml = `
+                <svg class="clock" viewBox="0 0 100 100" width="100" height="100">
+                    <circle cx="50" cy="50" r="48" stroke="black" stroke-width="2" fill="white"/>
+                    <line x1="50" y1="50" x2="50" y2="20" stroke="black" stroke-width="4" transform="rotate(${hourAngle} 50 50)" />
+                    <line x1="50" y1="50" x2="50" y2="10" stroke="black" stroke-width="2" transform="rotate(${minuteAngle} 50 50)" />
+                    <circle cx="50" cy="50" r="3" fill="black"/>
+            `;
+
+            for (let i = 1; i <= 12; i++) {
+                const angle = i * 30;
+                const x = 50 + 40 * Math.sin(angle * Math.PI / 180);
+                const y = 50 - 40 * Math.cos(angle * Math.PI / 180);
+                clockHtml += `<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="middle" font-size="8">${i}</text>`;
+            }
+
+            for (let i = 0; i < 60; i++) {
+                const angle = i * 6;
+                const length = i % 5 === 0 ? 5 : 2;
+                const x1 = 50 + 48 * Math.sin(angle * Math.PI / 180);
+                const y1 = 50 - 48 * Math.cos(angle * Math.PI / 180);
+                const x2 = 50 + (48 - length) * Math.sin(angle * Math.PI / 180);
+                const y2 = 50 - (48 - length) * Math.cos(angle * Math.PI / 180);
+                clockHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="black" stroke-width="1" />`;
+            }
+
+            clockHtml += `</svg>`;
+            return clockHtml;
+        }
+
+        function generateTimeCalculationQuestion() {
+            const calcDays = document.getElementById('calc-days').checked;
+            const calcHours = document.getElementById('calc-hours').checked;
+            const calcMinutes = document.getElementById('calc-minutes').checked;
+            const calcSeconds = document.getElementById('calc-seconds').checked;
+
+            let time1 = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+            let time2 = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+
+            if (calcDays) {
+                time1.days = Math.floor(Math.random() * 7);
+                time2.days = Math.floor(Math.random() * 7);
+            }
+            if (calcHours) {
+                time1.hours = Math.floor(Math.random() * 24);
+                time2.hours = Math.floor(Math.random() * 24);
+            }
+            if (calcMinutes) {
+                time1.minutes = Math.floor(Math.random() * 60);
+                time2.minutes = Math.floor(Math.random() * 60);
+            }
+            if (calcSeconds) {
+                time1.seconds = Math.floor(Math.random() * 60);
+                time2.seconds = Math.floor(Math.random() * 60);
+            }
+
+            const operation = Math.random() < 0.5 ? '+' : '-';
+
+            let questionText = '計算以下時間的';
+            questionText += operation === '+' ? '和' : '差';
+            questionText += '：\n';
+            questionText += formatTimeCalculation(time1) + ' ' + operation + ' ' + formatTimeCalculation(time2);
+
+            return {
+                questionText: questionText,
+                time1: time1,
+                time2: time2,
+                operation: operation
+            };
+        }
+
+        function formatTimeCalculation(time) {
+            let result = '';
+            if (time.days > 0) result += time.days + '日 ';
+            if (time.hours > 0) result += time.hours + '時 ';
+            if (time.minutes > 0) result += time.minutes + '分 ';
+            if (time.seconds > 0) result += time.seconds + '秒';
+            return result.trim();
+        }
+
+        function calculateTimeResult(time1, time2, operation) {
+            let result = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+            let totalSeconds1 = time1.days * 86400 + time1.hours * 3600 + time1.minutes * 60 + time1.seconds;
+            let totalSeconds2 = time2.days * 86400 + time2.hours * 3600 + time2.minutes * 60 + time2.seconds;
+
+            let totalSeconds;
+            if (operation === '+') {
+                totalSeconds = totalSeconds1 + totalSeconds2;
+            } else {
+                totalSeconds = totalSeconds1 - totalSeconds2;
+            }
+
+            result.days = Math.floor(totalSeconds / 86400);
+            totalSeconds %= 86400;
+            result.hours = Math.floor(totalSeconds / 3600);
+            totalSeconds %= 3600;
+            result.minutes = Math.floor(totalSeconds / 60);
+            result.seconds = totalSeconds % 60;
+
+            return result;
+        }
+
+        function generateQuiz() {
+            const numQuestions = parseInt(numQuestionsSlider.value);
+            const rowsPerPage = parseInt(rowsPerPageSlider.value);
+            const rowHeight = parseFloat(rowHeightSlider.value);
+            const wholeHour = document.getElementById('whole-hour').checked;
+            const halfHour = document.getElementById('half-hour').checked;
+            const anyTime = document.getElementById('any-time').checked;
+            const drawClock = document.getElementById('draw-clock').checked;
+            const writeTime = document.getElementById('write-time').checked;
+            const convert12to24 = document.getElementById('convert-12-to-24').checked;
+            const convert24to12 = document.getElementById('convert-24-to-12').checked;
+            const timeCalculation = document.getElementById('time-calculation').checked;
+
+            if (!wholeHour && !halfHour && !anyTime) {
+                alert('請至少選擇一種時間程度。');
+                return;
+            }
+
+            if (!drawClock && !writeTime && !convert12to24 && !convert24to12 && !timeCalculation) {
+                alert('請至少選擇一種題目類型。');
+                return;
+            }
+
+            previewContainer.innerHTML = '';
+            let currentPage = createA4Page(1, 1, rowsPerPage, rowHeight);
+            previewContainer.appendChild(currentPage);
+            let currentContent = currentPage.querySelector('.a4-content');
+
+            const questions = [];
+            const questionsPerPage = rowsPerPage * 2;
+
+            for (let i = 0; i < numQuestions; i++) {
+                if (i > 0 && i % questionsPerPage === 0) {
+                    currentPage = createA4Page(Math.floor(i / questionsPerPage) + 1, Math.ceil(numQuestions / questionsPerPage), rowsPerPage, rowHeight);
+                    previewContainer.appendChild(currentPage);
+                    currentContent = currentPage.querySelector('.a4-content');
+                }
+
+                const { hour, minute } = generateRandomTime(wholeHour, halfHour, anyTime);
+                const questionTypes = [
+                    drawClock ? 'draw' : null,
+                    writeTime ? 'write' : null,
+                    convert12to24 ? 'convert12to24' : null,
+                    convert24to12 ? 'convert24to12' : null,
+                    timeCalculation ? 'timeCalculation' : null
+                ].filter(type => type !== null);
+
+                const questionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'question';
+
+                let questionData;
+                switch (questionType) {
+                    case 'draw':
+                        questionDiv.innerHTML = `
+                            <p>${i + 1}. 請畫出下列時刻的時鐘：</p>
+                            <p>${formatTime24(hour, minute)}</p>
+                            <svg class="clock" viewBox="0 0 100 100" width="100" height="100">
+                                <circle cx="50" cy="50" r="48" stroke="black" stroke-width="2" fill="white"/>
+                                <circle cx="50" cy="50" r="3" fill="black"/>
+                            </svg>
+                        `;
+                        questionData = { hour, minute, type: questionType };
+                        break;
+                    case 'write':
+                        questionDiv.innerHTML = `
+                            <p>${i + 1}. 請寫出下列時鐘的時刻：</p>
+                            ${createClock(hour, minute)}
+                            <p>答案：__________</p>
+                        `;
+                        questionData = { hour, minute, type: questionType };
+                        break;
+                    case 'convert12to24':
+                        questionDiv.innerHTML = `
+                            <p>${i + 1}. 將下列12小時制時刻轉換為24小時制：</p>
+                            <p>${formatTime12(hour, minute)}</p>
+                            <p>答案：__________</p>
+                        `;
+                        questionData = { hour, minute, type: questionType };
+                        break;
+                    case 'convert24to12':
+                        questionDiv.innerHTML = `
+                            <p>${i + 1}. 將下列24小時制時刻轉換為12小時制：</p>
+                            <p>${formatTime24(hour, minute)}</p>
+                            <p>答案：__________</p>
+                        `;
+                        questionData = { hour, minute, type: questionType };
+                        break;
+                    case 'timeCalculation':
+                        const calcQuestion = generateTimeCalculationQuestion();
+                        questionDiv.innerHTML = `
+                            <p>${i + 1}. ${calcQuestion.questionText}</p>
+                            <p>答案：__________</p>
+                        `;
+                        questionData = { ...calcQuestion, type: questionType };
+                        break;
+                }
+
+                currentContent.appendChild(questionDiv);
+                questions.push(questionData);
+            }
+
+            updatePageNumbers();
+
+            // Add answer page
+            const answerPage = createAnswerPage(questions);
+            previewContainer.appendChild(answerPage);
+        }
+
+        function createAnswerPage(questions) {
+            const answerPage = document.createElement('div');
+            answerPage.className = 'a4-preview answer-page';
+            answerPage.innerHTML = `
+                <div class="answer-title">答案卷</div>
+                <div class="answer-grid"></div>
+            `;
+
+            const answerGrid = answerPage.querySelector('.answer-grid');
+            questions.forEach((question, index) => {
+                const answerItem = document.createElement('div');
+                answerItem.className = 'answer-item';
+                switch (question.type) {
+                    case 'draw':
+                        answerItem.innerHTML = `${index + 1}. ${createClock(question.hour, question.minute)}`;
+                        break;
+                    case 'write':
+                        answerItem.textContent = `${index + 1}. ${formatTime24(question.hour, question.minute)}`;
+                        break;
+                    case 'convert12to24':
+                        answerItem.textContent = `${index + 1}. ${formatTime24(question.hour, question.minute)}`;
+                        break;
+                    case 'convert24to12':
+                        answerItem.textContent = `${index + 1}. ${formatTime12(question.hour, question.minute)}`;
+                        break;
+                    case 'timeCalculation':
+                        const result = calculateTimeResult(question.time1, question.time2, question.operation);
+                        answerItem.textContent = `${index + 1}. ${formatTimeCalculation(result)}`;
+                        break;
+                }
+                answerGrid.appendChild(answerItem);
+            });
+
+            return answerPage;
+        }
+
+        function savePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const pages = document.querySelectorAll('.a4-preview');
+            const title = getTitle();
+
+            const saveNextPage = (index) => {
+                if (index >= pages.length) {
+                    doc.save(`${title}.pdf`);
+                    return;
+                }
+
+                html2canvas(pages[index], { scale: 2 }).then(canvas => {
+                    const imgData = canvas.toDataURL('image/png');
+                    if (index > 0) doc.addPage();
+                    doc.addImage(imgData, 'PNG', 0, 0, 210, 297);
+                    saveNextPage(index + 1);
+                });
+            };
+
+            saveNextPage(0);
+        }
+
+        generateBtn.addEventListener('click', generateQuiz);
+        useDefaultTitleCheckbox.addEventListener('change', function() {
+            customTitleInput.disabled = this.checked;
+        });
+
+        // 初始化一個預設測驗
+        generateQuiz();
+    </script>
+</body>
+</html>
