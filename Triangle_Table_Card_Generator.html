@@ -1,5 +1,5 @@
 <html><head><base href="https://websimlabel.com/">
-<title>Puti三角桌牌產生器</title>
+<title>A4 文件標籤產生器</title>
 <style>
     body {
         font-family: "Microsoft JhengHei", Arial, sans-serif;
@@ -98,7 +98,6 @@
         position: absolute;
         cursor: move;
         user-select: none;
-        max-width: 100%;
     }
     .draggable-text {
         white-space: pre-wrap;
@@ -146,7 +145,7 @@
 </div>
 <div class="container">
     <div class="left-panel">
-        <h1>Puti三角桌牌產生器</h1>
+        <h1>A4 文件標籤產生器</h1>
         
         <div class="input-area">
             <label for="noteList">備註清單：</label>
@@ -181,6 +180,11 @@
             <label for="imageUpload">插入圖片：</label>
             <input type="file" id="imageUpload" accept="image/*" onchange="handleImageUpload(event)">
         </div>
+
+        <div class="font-size-slider">
+            <label for="imageZoom">圖片縮放：<span id="imageZoomValue">100</span>%</label>
+            <input type="range" id="imageZoom" min="10" max="200" value="100">
+        </div>
     </div>
     
     <div class="right-panel">
@@ -198,12 +202,14 @@
     let isDragging = false;
     let startX, startY;
     let uploadedImage = null;
+    let imageZoom = 100;
 
     window.onload = function() {
         loadFromLocalStorage();
         document.getElementById('noteFontSize').addEventListener('input', updateNoteFontSize);
         document.getElementById('nameFontSize').addEventListener('input', updateNameFontSize);
-        generatePreview(); // Generate preview on page load
+        document.getElementById('imageZoom').addEventListener('input', updateImageZoom);
+        generatePreview();
     };
 
     function saveToLocalStorage() {
@@ -212,6 +218,7 @@
         localStorage.setItem('selectedFont', document.getElementById('fontSelect').value);
         localStorage.setItem('noteFontSize', document.getElementById('noteFontSize').value);
         localStorage.setItem('nameFontSize', document.getElementById('nameFontSize').value);
+        localStorage.setItem('imageZoom', document.getElementById('imageZoom').value);
     }
 
     function loadFromLocalStorage() {
@@ -231,6 +238,10 @@
         if (localStorage.getItem('nameFontSize')) {
             document.getElementById('nameFontSize').value = localStorage.getItem('nameFontSize');
             updateNameFontSize();
+        }
+        if (localStorage.getItem('imageZoom')) {
+            document.getElementById('imageZoom').value = localStorage.getItem('imageZoom');
+            updateImageZoom();
         }
     }
 
@@ -258,6 +269,13 @@
     function updateNameFontSize() {
         const size = document.getElementById('nameFontSize').value;
         document.getElementById('nameFontSizeValue').textContent = size;
+        saveToLocalStorage();
+        generatePreview();
+    }
+
+    function updateImageZoom() {
+        imageZoom = document.getElementById('imageZoom').value;
+        document.getElementById('imageZoomValue').textContent = imageZoom;
         saveToLocalStorage();
         generatePreview();
     }
@@ -321,6 +339,8 @@
                         imageElement.src = uploadedImage;
                         imageElement.style.maxWidth = '100%';
                         imageElement.style.maxHeight = '100%';
+                        imageElement.style.transform = `scale(${imageZoom / 100})`;
+                        imageElement.style.transformOrigin = 'top left';
                         label.appendChild(imageElement);
                     }
 
@@ -345,6 +365,9 @@
 
     function setupDraggableElement(element) {
         element.addEventListener('mousedown', startDragging);
+        if (element.classList.contains('draggable-image')) {
+            element.addEventListener('wheel', zoomImage);
+        }
     }
 
     function startDragging(e) {
@@ -379,6 +402,16 @@
         document.removeEventListener('mouseup', stopDragging);
     }
 
+    function zoomImage(e) {
+        e.preventDefault();
+        const delta = Math.sign(e.deltaY) * -1;
+        const zoomSpeed = 0.1;
+        const newZoom = parseFloat(imageZoom) + delta * zoomSpeed * 100;
+        imageZoom = Math.max(10, Math.min(200, newZoom));
+        document.getElementById('imageZoom').value = imageZoom;
+        updateImageZoom();
+    }
+
     function updateAllCells(changedElement) {
         const selector = changedElement.classList.contains('note-text') ? '.note-text' :
                          changedElement.classList.contains('name-text') ? '.name-text' : '.draggable-image';
@@ -387,6 +420,9 @@
             if (cell !== changedElement) {
                 cell.style.left = changedElement.style.left;
                 cell.style.top = changedElement.style.top;
+                if (selector === '.draggable-image') {
+                    cell.style.transform = changedElement.style.transform;
+                }
             }
         });
     }
