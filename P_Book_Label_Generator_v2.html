@@ -1,0 +1,540 @@
+<html><head><base href="https://websimlabel.com/">
+<title>Puti_A4文件合併列印聯絡簿標籤產生器 (本地存儲+2圖)</title>
+<style>
+    body {
+        font-family: "Microsoft JhengHei", Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    .container {
+        display: flex;
+        flex: 1;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .left-panel {
+        width: 25%;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+    .right-panel {
+        width: 75%;
+        padding: 20px;
+        box-sizing: border-box;
+        background-color: #f9f9f9;
+        overflow-y: auto;
+    }
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-top: 0;
+    }
+    .settings, .template, .data-input, .image-settings, .text-settings {
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    select, textarea, input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    .actions {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 20px;
+        background-color: #f0f0f0;
+    }
+    button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    .preview-container {
+        overflow-y: auto;
+        max-height: calc(100vh - 140px);
+    }
+    .preview-page {
+        width: 210mm;
+        height: 297mm;
+        border: 1px solid #000;
+        margin: 20px auto;
+        padding: 10mm;
+        box-sizing: border-box;
+        background-color: white;
+        page-break-after: always;
+    }
+    .label {
+        border: 1px dashed #ccc;
+        padding: 5px;
+        box-sizing: border-box;
+        overflow: hidden;
+        font-size: 12px;
+        position: relative;
+    }
+    .draggable-text {
+        position: absolute;
+        cursor: move;
+        user-select: none;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-width: 100%;
+    }
+    .resize-handle {
+        width: 10px;
+        height: 10px;
+        background-color: #4CAF50;
+        position: absolute;
+        right: -5px;
+        bottom: -5px;
+        cursor: se-resize;
+    }
+    .draggable-image {
+        position: absolute;
+        cursor: move;
+    }
+    .image-settings input[type="file"], .text-settings input[type="range"] {
+        margin-bottom: 10px;
+    }
+    .image-settings input[type="range"], .text-settings input[type="range"] {
+        width: 80%;
+        display: inline-block;
+    }
+    .image-settings span, .text-settings span {
+        width: 20%;
+        display: inline-block;
+        text-align: right;
+    }
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .preview-container, .preview-container * {
+            visibility: visible;
+        }
+        .preview-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .preview-page {
+            margin: 0;
+            page-break-after: always;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="actions">
+    <button onclick="generatePreview()">生成預覽</button>
+    <button onclick="saveAsPDF()">儲存為PDF</button>
+</div>
+<div class="container">
+    <div class="left-panel">
+        <h1>Puti_A4文件合併列印聯絡簿標籤產生器V2.0</h1>
+        
+        <div class="settings">
+            <label for="columns">列數：</label>
+            <select id="columns">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+            
+            <label for="rows">行數：</label>
+            <select id="rows">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+            </select>
+        </div>
+        
+        <div class="template">
+            <label for="templateInput">標籤模板：</label>
+            <textarea id="templateInput" rows="4" placeholder="在此輸入您的模板。使用 {{data}} 作為合併區域。"></textarea>
+        </div>
+        
+        <div class="data-input">
+            <label for="dataInput">數據輸入：</label>
+            <textarea id="dataInput" rows="6" placeholder="在此輸入您的合併數據，每行一項。"></textarea>
+        </div>
+
+        <div class="text-settings">
+            <label for="textScale">文字大小：</label>
+            <input type="range" id="textScale" min="100" max="500" value="100" oninput="updateTextScale()">
+            <span id="textScaleValue">100%</span>
+
+            <label for="fontFamily">字體選擇：</label>
+            <select id="fontFamily" onchange="updateFontFamily()">
+                <option value="DFKai-SB">標楷體（預設）</option>
+                <option value="Microsoft JhengHei">微軟正黑</option>
+                <option value="PMingLiU">新細明</option>
+            </select>
+        </div>
+
+        <div class="image-settings">
+            <label for="imageInput1">插入圖片1（上層）：</label>
+            <input type="file" id="imageInput1" accept="image/*" onchange="handleImageUpload(1)">
+            <input type="range" id="imageScale1" min="10" max="200" value="100" oninput="updateImageScale(1)">
+            <span id="imageScaleValue1">100%</span>
+
+            <label for="imageInput2">插入圖片2（下層）：</label>
+            <input type="file" id="imageInput2" accept="image/*" onchange="handleImageUpload(2)">
+            <input type="range" id="imageScale2" min="10" max="200" value="100" oninput="updateImageScale(2)">
+            <span id="imageScaleValue2">100%</span>
+        </div>
+    </div>
+    
+    <div class="right-panel">
+        <div class="preview">
+            <label>預覽：</label>
+            <div class="preview-container" id="previewContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+<script>
+    let draggableText;
+    let draggableImage1;
+    let draggableImage2;
+    let isDragging = false;
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight;
+    let activeElement;
+
+    window.onload = function() {
+        loadFromLocalStorage();
+        generatePreview(); // Generate preview on page load
+    };
+
+    function saveToLocalStorage() {
+        localStorage.setItem('columns', document.getElementById('columns').value);
+        localStorage.setItem('rows', document.getElementById('rows').value);
+        localStorage.setItem('templateInput', document.getElementById('templateInput').value);
+        localStorage.setItem('dataInput', document.getElementById('dataInput').value);
+        localStorage.setItem('imageScale1', document.getElementById('imageScale1').value);
+        localStorage.setItem('imageScale2', document.getElementById('imageScale2').value);
+        localStorage.setItem('textScale', document.getElementById('textScale').value);
+        localStorage.setItem('fontFamily', document.getElementById('fontFamily').value);
+    }
+
+    function loadFromLocalStorage() {
+        if (localStorage.getItem('columns')) {
+            document.getElementById('columns').value = localStorage.getItem('columns');
+        }
+        if (localStorage.getItem('rows')) {
+            document.getElementById('rows').value = localStorage.getItem('rows');
+        }
+        if (localStorage.getItem('templateInput')) {
+            document.getElementById('templateInput').value = localStorage.getItem('templateInput');
+        }
+        if (localStorage.getItem('dataInput')) {
+            document.getElementById('dataInput').value = localStorage.getItem('dataInput');
+        }
+        if (localStorage.getItem('imageScale1')) {
+            document.getElementById('imageScale1').value = localStorage.getItem('imageScale1');
+            document.getElementById('imageScaleValue1').textContent = localStorage.getItem('imageScale1') + '%';
+        }
+        if (localStorage.getItem('imageScale2')) {
+            document.getElementById('imageScale2').value = localStorage.getItem('imageScale2');
+            document.getElementById('imageScaleValue2').textContent = localStorage.getItem('imageScale2') + '%';
+        }
+        if (localStorage.getItem('textScale')) {
+            document.getElementById('textScale').value = localStorage.getItem('textScale');
+            document.getElementById('textScaleValue').textContent = localStorage.getItem('textScale') + '%';
+        }
+        if (localStorage.getItem('fontFamily')) {
+            document.getElementById('fontFamily').value = localStorage.getItem('fontFamily');
+        }
+    }
+
+    document.getElementById('columns').addEventListener('change', generatePreview);
+    document.getElementById('rows').addEventListener('change', generatePreview);
+    document.getElementById('templateInput').addEventListener('input', generatePreview);
+    document.getElementById('dataInput').addEventListener('input', generatePreview);
+    document.getElementById('imageScale1').addEventListener('change', generatePreview);
+    document.getElementById('imageScale2').addEventListener('change', generatePreview);
+    document.getElementById('textScale').addEventListener('change', generatePreview);
+    document.getElementById('fontFamily').addEventListener('change', generatePreview);
+
+    function generatePreview() {
+        saveToLocalStorage();
+        const columns = parseInt(document.getElementById('columns').value);
+        const rows = parseInt(document.getElementById('rows').value);
+        const template = document.getElementById('templateInput').value;
+        const data = document.getElementById('dataInput').value.split('\n');
+        
+        const previewContainer = document.getElementById('previewContainer');
+        previewContainer.innerHTML = '';
+
+        const labelsPerPage = columns * rows;
+        const pageCount = Math.ceil(data.length / labelsPerPage);
+
+        for (let page = 0; page < pageCount; page++) {
+            const previewPage = document.createElement('div');
+            previewPage.className = 'preview-page';
+            previewPage.style.display = 'grid';
+            previewPage.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+            previewPage.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            previewPage.style.gap = '5px';
+
+            for (let i = 0; i < labelsPerPage; i++) {
+                const dataIndex = page * labelsPerPage + i;
+                if (dataIndex < data.length) {
+                    const label = document.createElement('div');
+                    label.className = 'label';
+
+                    const image2 = document.createElement('img');
+                    image2.className = 'draggable-image';
+                    image2.style.zIndex = '1';
+                    label.appendChild(image2);
+
+                    const text = document.createElement('div');
+                    text.className = 'draggable-text';
+                    text.innerHTML = template.replace('{{data}}', data[dataIndex]);
+                    text.style.zIndex = '2';
+                    label.appendChild(text);
+
+                    const image1 = document.createElement('img');
+                    image1.className = 'draggable-image';
+                    image1.style.zIndex = '3';
+                    label.appendChild(image1);
+
+                    if (page === 0 && i === 0) {
+                        draggableText = text;
+                        draggableImage1 = image1;
+                        draggableImage2 = image2;
+                        const resizeHandle = document.createElement('div');
+                        resizeHandle.className = 'resize-handle';
+                        text.appendChild(resizeHandle);
+                        setupDraggable(text);
+                        setupDraggable(image1);
+                        setupDraggable(image2);
+                        setupResizable(text);
+                    }
+                    
+                    syncStyle(text, image1, image2);
+                    
+                    previewPage.appendChild(label);
+                }
+            }
+            previewContainer.appendChild(previewPage);
+        }
+        updateImages();
+        updateTextScale();
+        updateFontFamily();
+    }
+
+    function syncStyle(text, image1, image2) {
+        if (draggableText && text) {
+            text.style.left = draggableText.style.left;
+            text.style.top = draggableText.style.top;
+            text.style.fontSize = draggableText.style.fontSize;
+            text.style.width = draggableText.style.width;
+            text.style.height = draggableText.style.height;
+            text.style.fontFamily = draggableText.style.fontFamily;
+        }
+        
+        if (draggableImage1 && image1) {
+            image1.style.left = draggableImage1.style.left;
+            image1.style.top = draggableImage1.style.top;
+            image1.style.width = draggableImage1.style.width;
+            image1.style.height = draggableImage1.style.height;
+            image1.src = draggableImage1.src;
+        }
+        
+        if (draggableImage2 && image2) {
+            image2.style.left = draggableImage2.style.left;
+            image2.style.top = draggableImage2.style.top;
+            image2.style.width = draggableImage2.style.width;
+            image2.style.height = draggableImage2.style.height;
+            image2.src = draggableImage2.src;
+        }
+    }
+
+    function setupDraggable(element) {
+        element.addEventListener('mousedown', startDragging);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDragging);
+    }
+
+    function setupResizable(element) {
+        const resizeHandle = element.querySelector('.resize-handle');
+        resizeHandle.addEventListener('mousedown', startResizing);
+        document.addEventListener('mousemove', resize);
+        document.addEventListener('mouseup', stopResizing);
+    }
+
+    function startDragging(e) {
+        if (e.target.className === 'resize-handle') return;
+        isDragging = true;
+        activeElement = e.target;
+        startX = e.clientX - activeElement.offsetLeft;
+        startY = e.clientY - activeElement.offsetTop;
+    }
+
+    function startResizing(e) {
+        isResizing = true;
+        activeElement = e.target.parentElement;
+        startX = e.clientX;
+        startY = e.clientY;
+        startWidth = parseInt(document.defaultView.getComputedStyle(activeElement).width, 10);
+        startHeight = parseInt(document.defaultView.getComputedStyle(activeElement).height, 10);
+    }
+
+    function drag(e) {
+        if (isDragging && activeElement) {
+            e.preventDefault();
+            const left = e.clientX - startX;
+            const top = e.clientY - startY;
+            activeElement.style.left = left + 'px';
+            activeElement.style.top = top + 'px';
+            updateAllElements();
+        }
+    }
+
+    function resize(e) {
+        if (isResizing && activeElement) {
+            e.preventDefault();
+            const width = startWidth + e.clientX - startX;
+            const height = startHeight + e.clientY - startY;
+            activeElement.style.width = width + 'px';
+            activeElement.style.height = height + 'px';
+            updateAllElements();
+        }
+    }
+
+    function stopDragging() {
+        isDragging = false;
+        activeElement = null;
+    }
+
+    function stopResizing() {
+        isResizing = false;
+        activeElement = null;
+    }
+
+    function updateAllElements() {
+        const texts = document.querySelectorAll('.draggable-text');
+        const images1 = document.querySelectorAll('.draggable-image:nth-child(3)');
+        const images2 = document.querySelectorAll('.draggable-image:nth-child(1)');
+
+        texts.forEach(text => {
+            syncStyle(text, null, null);
+        });
+
+        images1.forEach(image => {
+            syncStyle(null, image, null);
+        });
+
+        images2.forEach(image => {
+            syncStyle(null, null, image);
+        });
+    }
+
+    function handleImageUpload(imageNumber) {
+        const file = document.getElementById(`imageInput${imageNumber}`).files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    if (imageNumber === 1) {
+                        draggableImage1.src = e.target.result;
+                    } else {
+                        draggableImage2.src = e.target.result;
+                    }
+                    updateImageScale(imageNumber);
+                    updateAllElements();
+                }
+                img.src = e.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+    }
+
+    function updateImageScale(imageNumber) {
+        const scale = document.getElementById(`imageScale${imageNumber}`).value;
+        document.getElementById(`imageScaleValue${imageNumber}`).textContent = scale + '%';
+        const image = imageNumber === 1 ? draggableImage1 : draggableImage2;
+        if (image && image.naturalWidth) {
+            const newWidth = (image.naturalWidth * scale / 100) + 'px';
+            const newHeight = (image.naturalHeight * scale / 100) + 'px';
+            image.style.width = newWidth;
+            image.style.height = newHeight;
+            updateAllElements();
+        }
+    }
+
+    function updateImages() {
+        updateImageScale(1);
+        updateImageScale(2);
+    }
+
+    function updateTextScale() {
+        const scale = document.getElementById('textScale').value;
+        document.getElementById('textScaleValue').textContent = scale + '%';
+        if (draggableText) {
+            const newFontSize = (12 * scale / 100) + 'px';
+            draggableText.style.fontSize = newFontSize;
+            updateAllElements();
+        }
+    }
+
+    function updateFontFamily() {
+        const fontFamily = document.getElementById('fontFamily').value;
+        if (draggableText) {
+            draggableText.style.fontFamily = fontFamily;
+            updateAllElements();
+        }
+    }
+    
+    async function saveAsPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        
+        const pages = document.querySelectorAll('.preview-page');
+        for (let i = 0; i < pages.length; i++) {
+            const page = pages[i];
+            if (i > 0) {
+                doc.addPage();
+            }
+            const canvas = await html2canvas(page, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            });
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            doc.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+        }
+        doc.save('標籤.pdf');
+    }
+</script>
+</body></html>
