@@ -1,0 +1,435 @@
+<html><head><base href="https://websimlabel.com/">
+<title>Puti-A4資料夾側標籤產生器（合併列印）</title>
+<style>
+    body {
+        font-family: "Microsoft JhengHei", Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    .container {
+        display: flex;
+        flex: 1;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .left-panel {
+        width: 25%;
+        padding: 20px;
+        box-sizing: border-box;
+        overflow-y: auto;
+    }
+    .right-panel {
+        width: 75%;
+        padding: 20px;
+        box-sizing: border-box;
+        background-color: #f9f9f9;
+        overflow-y: auto;
+    }
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-top: 0;
+    }
+    .settings, .template, .data-input, .text-settings, .background-image, .note {
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    select, textarea, input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+    .actions {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 20px;
+        background-color: #f0f0f0;
+    }
+    button {
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    button:hover {
+        background-color: #45a049;
+    }
+    .preview-container {
+        overflow-y: auto;
+        max-height: calc(100vh - 140px);
+    }
+    .preview-page {
+        width: 297mm;
+        height: 210mm;
+        border: 1px solid #000;
+        margin: 20px auto;
+        padding: 10mm;
+        box-sizing: border-box;
+        background-color: white;
+        page-break-after: always;
+    }
+    .label {
+        border: 1px dashed #ccc;
+        padding: 5px;
+        box-sizing: border-box;
+        overflow: hidden;
+        font-size: 12px;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+    .draggable-text {
+        position: absolute;
+        cursor: move;
+        user-select: none;
+        white-space: nowrap;
+        transform: rotate(-90deg);
+        transform-origin: center;
+        writing-mode: vertical-rl;
+        text-orientation: upright;
+    }
+    .text-settings input[type="range"] {
+        margin-bottom: 10px;
+    }
+    .text-settings input[type="range"] {
+        width: 80%;
+        display: inline-block;
+    }
+    .text-settings span {
+        width: 20%;
+        display: inline-block;
+        text-align: right;
+    }
+    .note {
+        background-color: #ffffd9;
+        border: 1px solid #e7e7b0;
+        padding: 10px;
+        border-radius: 4px;
+    }
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        .preview-container, .preview-container * {
+            visibility: visible;
+        }
+        .preview-container {
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .preview-page {
+            margin: 0;
+            page-break-after: always;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="actions">
+    <button onclick="generatePreview()">生成預覽</button>
+    <button onclick="saveAsPDF()">儲存為PDF</button>
+</div>
+<div class="container">
+    <div class="left-panel">
+        <h1>Puti-A4資料夾側標籤產生器（合併列印）</h1>
+        
+        <div class="settings">
+            <label for="columns">列數：</label>
+            <select id="columns">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+            </select>
+            
+            <label for="rowHeight">列高 (cm)：</label>
+            <input type="number" id="rowHeight" min="0.1" step="0.1" value="5">
+        </div>
+        
+        <div class="template">
+            <label for="templateInput">標籤模板：</label>
+            <textarea id="templateInput" rows="4" placeholder="在此輸入您的模板。使用 {{data}} 作為合併區域。"></textarea>
+        </div>
+        
+        <div class="data-input">
+            <label for="dataInput">數據輸入：</label>
+            <textarea id="dataInput" rows="6" placeholder="在此輸入您的合併數據，每行一項。"></textarea>
+        </div>
+
+        <div class="text-settings">
+            <label for="textScale">文字大小：</label>
+            <input type="range" id="textScale" min="100" max="1000" value="100" oninput="updateTextScale()">
+            <span id="textScaleValue">100%</span>
+
+            <label for="fontFamily">字體選擇：</label>
+            <select id="fontFamily" onchange="updateFontFamily()">
+                <option value="DFKai-SB">標楷體（預設）</option>
+                <option value="Microsoft JhengHei">微軟正黑</option>
+                <option value="PMingLiU">新細明</option>
+            </select>
+        </div>
+
+        <div class="background-image">
+            <label for="backgroundImage">插入背景圖片：</label>
+            <input type="file" id="backgroundImage" accept="image/*" onchange="handleBackgroundImage(event)">
+        </div>
+
+        <div class="note">
+            <strong>備註：</strong>背景圖片寬為28cm、高為您設的標籤列高，建議用 Canva之類的軟體先做好再匯入
+        </div>
+    </div>
+    
+    <div class="right-panel">
+        <div class="preview">
+            <label>預覽：</label>
+            <div class="preview-container" id="previewContainer"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.3.2/html2canvas.min.js"></script>
+<script>
+    let draggableText;
+    let isDragging = false;
+    let startX, startY;
+    let activeElement;
+    let backgroundImage = null;
+
+    window.onload = function() {
+        loadFromLocalStorage();
+        generatePreview(); // Generate preview on page load
+    };
+
+    function saveToLocalStorage() {
+        localStorage.setItem('columns', document.getElementById('columns').value);
+        localStorage.setItem('rowHeight', document.getElementById('rowHeight').value);
+        localStorage.setItem('templateInput', document.getElementById('templateInput').value);
+        localStorage.setItem('dataInput', document.getElementById('dataInput').value);
+        localStorage.setItem('textScale', document.getElementById('textScale').value);
+        localStorage.setItem('fontFamily', document.getElementById('fontFamily').value);
+        if (backgroundImage) {
+            localStorage.setItem('backgroundImage', backgroundImage);
+        }
+    }
+
+    function loadFromLocalStorage() {
+        if (localStorage.getItem('columns')) {
+            document.getElementById('columns').value = localStorage.getItem('columns');
+        }
+        if (localStorage.getItem('rowHeight')) {
+            document.getElementById('rowHeight').value = localStorage.getItem('rowHeight');
+        }
+        if (localStorage.getItem('templateInput')) {
+            document.getElementById('templateInput').value = localStorage.getItem('templateInput');
+        }
+        if (localStorage.getItem('dataInput')) {
+            document.getElementById('dataInput').value = localStorage.getItem('dataInput');
+        }
+        if (localStorage.getItem('textScale')) {
+            document.getElementById('textScale').value = localStorage.getItem('textScale');
+            document.getElementById('textScaleValue').textContent = localStorage.getItem('textScale') + '%';
+        }
+        if (localStorage.getItem('fontFamily')) {
+            document.getElementById('fontFamily').value = localStorage.getItem('fontFamily');
+        }
+        if (localStorage.getItem('backgroundImage')) {
+            backgroundImage = localStorage.getItem('backgroundImage');
+        }
+    }
+
+    document.getElementById('columns').addEventListener('change', generatePreview);
+    document.getElementById('rowHeight').addEventListener('input', generatePreview);
+    document.getElementById('templateInput').addEventListener('input', generatePreview);
+    document.getElementById('dataInput').addEventListener('input', generatePreview);
+    document.getElementById('textScale').addEventListener('change', generatePreview);
+    document.getElementById('fontFamily').addEventListener('change', generatePreview);
+
+    function generatePreview() {
+        saveToLocalStorage();
+        const columns = parseInt(document.getElementById('columns').value);
+        const rowHeight = parseFloat(document.getElementById('rowHeight').value);
+        const template = document.getElementById('templateInput').value;
+        const data = document.getElementById('dataInput').value.split('\n');
+        
+        const previewContainer = document.getElementById('previewContainer');
+        previewContainer.innerHTML = '';
+
+        const pageHeight = 210; // A4 height in landscape mode (mm)
+        const pageWidth = 297; // A4 width in landscape mode (mm)
+        const margins = 20; // 10mm margins on each side
+        const availableHeight = pageHeight - margins * 2;
+        const availableWidth = pageWidth - margins * 2;
+
+        const rowHeightMm = rowHeight * 10; // Convert cm to mm
+        const rows = Math.floor(availableHeight / rowHeightMm);
+
+        const labelsPerPage = columns * rows;
+        const pageCount = Math.ceil(data.length / labelsPerPage);
+
+        for (let page = 0; page < pageCount; page++) {
+            const previewPage = document.createElement('div');
+            previewPage.className = 'preview-page';
+            previewPage.style.display = 'grid';
+            previewPage.style.gridTemplateColumns = `repeat(${columns}, 1fr)`;
+            previewPage.style.gridTemplateRows = `repeat(${rows}, ${rowHeightMm}mm)`;
+            previewPage.style.gap = '0px'; // Set gap to 0
+
+            for (let i = 0; i < labelsPerPage; i++) {
+                const dataIndex = page * labelsPerPage + i;
+                if (dataIndex < data.length) {
+                    const label = document.createElement('div');
+                    label.className = 'label';
+                    if (backgroundImage) {
+                        label.style.backgroundImage = `url(${backgroundImage})`;
+                    }
+
+                    const text = document.createElement('div');
+                    text.className = 'draggable-text';
+                    text.innerHTML = template.replace('{{data}}', formatText(data[dataIndex]));
+                    text.style.zIndex = '2';
+                    label.appendChild(text);
+
+                    if (page === 0 && i === 0) {
+                        draggableText = text;
+                        setupDraggable(text);
+                    }
+                    
+                    syncStyle(text);
+                    
+                    previewPage.appendChild(label);
+                }
+            }
+            previewContainer.appendChild(previewPage);
+        }
+        updateTextScale();
+        updateFontFamily();
+    }
+
+    function formatText(text) {
+        // Replace newline characters with <br> tags
+        return text.replace(/\n/g, '<br>');
+    }
+
+    function syncStyle(text) {
+        if (draggableText && text) {
+            text.style.left = draggableText.style.left;
+            text.style.top = draggableText.style.top;
+            text.style.fontSize = draggableText.style.fontSize;
+            text.style.fontFamily = draggableText.style.fontFamily;
+            text.style.transform = draggableText.style.transform;
+            text.style.transformOrigin = draggableText.style.transformOrigin;
+            text.style.writingMode = 'vertical-rl';
+            text.style.textOrientation = 'upright';
+        }
+    }
+
+    function setupDraggable(element) {
+        element.addEventListener('mousedown', startDragging);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', stopDragging);
+    }
+
+    function startDragging(e) {
+        isDragging = true;
+        activeElement = e.target;
+        startX = e.clientX - activeElement.offsetLeft;
+        startY = e.clientY - activeElement.offsetTop;
+    }
+
+    function drag(e) {
+        if (isDragging && activeElement) {
+            e.preventDefault();
+            const left = e.clientX - startX;
+            const top = e.clientY - startY;
+            activeElement.style.left = left + 'px';
+            activeElement.style.top = top + 'px';
+            updateAllElements();
+        }
+    }
+
+    function stopDragging() {
+        isDragging = false;
+        activeElement = null;
+    }
+
+    function updateAllElements() {
+        const texts = document.querySelectorAll('.draggable-text');
+        texts.forEach(text => {
+            syncStyle(text);
+        });
+    }
+
+    function updateTextScale() {
+        const scale = document.getElementById('textScale').value;
+        document.getElementById('textScaleValue').textContent = scale + '%';
+        if (draggableText) {
+            const newFontSize = (12 * scale / 100) + 'px';
+            draggableText.style.fontSize = newFontSize;
+            updateAllElements();
+        }
+    }
+
+    function updateFontFamily() {
+        const fontFamily = document.getElementById('fontFamily').value;
+        if (draggableText) {
+            draggableText.style.fontFamily = fontFamily;
+            updateAllElements();
+        }
+    }
+    
+    async function saveAsPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('l', 'mm', 'a4');
+        
+        const pages = document.querySelectorAll('.preview-page');
+        for (let i = 0; i < pages.length; i++) {
+            const page = pages[i];
+            if (i > 0) {
+                doc.addPage();
+            }
+            const canvas = await html2canvas(page, {
+                scale: 2,
+                useCORS: true,
+                logging: false
+            });
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            doc.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+        }
+        doc.save('標籤.pdf');
+    }
+
+    function handleBackgroundImage(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                backgroundImage = e.target.result;
+                saveToLocalStorage();
+                generatePreview();
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+</script>
+</body></html>
