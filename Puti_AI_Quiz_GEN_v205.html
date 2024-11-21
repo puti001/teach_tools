@@ -360,25 +360,14 @@ function saveApiKey() {
     }
 }
 
-function loadApiKey() {
-    const apiKey = localStorage.getItem('geminiApiKey');
-    if (apiKey) {
-        document.getElementById('apiKey').value = apiKey;
-        document.getElementById('apiKeyMask').classList.remove('hide');
-        document.getElementById('apiKey').style.display = 'none';
-    } else {
-        document.getElementById('apiKey').style.display = 'block';
-        document.getElementById('apiKeyMask').classList.add('hide');
-    }
-}
-
-// 在頁面載入時清除API Key和重置顯示狀態
-window.onload = function() {
-    localStorage.removeItem('geminiApiKey');
+// 移除 loadApiKey 函數，改為直接在 DOMContentLoaded 中處理初始狀態
+document.addEventListener('DOMContentLoaded', function() {
+    // 強制重置為初始狀態
     document.getElementById('apiKey').style.display = 'block';
     document.getElementById('apiKeyMask').classList.add('hide');
     document.getElementById('apiKey').value = '';
-}
+    localStorage.removeItem('geminiApiKey');
+});
 
         // 修改 generateQuestions 函數
 async function generateQuestions() {
