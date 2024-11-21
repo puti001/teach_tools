@@ -162,14 +162,16 @@
         </div>
 
         <div id="generateTab" class="tab-content active">
-            <div class="form-group">
-                <label for="apiKey">Gemini API Key:</label>
-                <div class="api-key-container">
-                    <input type="text" id="apiKey" placeholder="輸入你的 Gemini API Key">
-                    <div id="apiKeyMask" class="hide">API Key 已儲存</div>
-                </div>
-                <button onclick="saveApiKey()">儲存 API Key</button>
-            </div>
+    <div class="form-group">
+        <label for="apiKey">Gemini API Key:</label>
+        <div class="api-key-container">
+            <input type="text" id="apiKey" placeholder="輸入你的 Gemini API Key">
+            <div id="apiKeyMask" class="hide">API Key 已儲存</div>
+        </div>
+        <button onclick="saveApiKey()">儲存 API Key</button>
+        <button onclick="resetApiKey()">重設 API Key</button>
+    </div>
+</div>
 
             <div class="form-group">
                 <label for="topic">主題 (必填):</label>
@@ -360,13 +362,30 @@ function saveApiKey() {
     }
 }
 
-// 移除 loadApiKey 函數，改為直接在 DOMContentLoaded 中處理初始狀態
-document.addEventListener('DOMContentLoaded', function() {
-    // 強制重置為初始狀態
-    document.getElementById('apiKey').style.display = 'block';
-    document.getElementById('apiKeyMask').classList.add('hide');
-    document.getElementById('apiKey').value = '';
+function resetApiKey() {
+    // 清除 localStorage
     localStorage.removeItem('geminiApiKey');
+    
+    // 重置輸入框
+    const apiKeyInput = document.getElementById('apiKey');
+    apiKeyInput.value = '';
+    apiKeyInput.style.display = 'block';
+    
+    // 隱藏已儲存提示
+    document.getElementById('apiKeyMask').classList.add('hide');
+}
+
+// 頁面載入時檢查
+document.addEventListener('DOMContentLoaded', function() {
+    const apiKey = localStorage.getItem('geminiApiKey');
+    if (apiKey) {
+        document.getElementById('apiKey').value = apiKey;
+        document.getElementById('apiKeyMask').classList.remove('hide');
+        document.getElementById('apiKey').style.display = 'none';
+    } else {
+        document.getElementById('apiKey').style.display = 'block';
+        document.getElementById('apiKeyMask').classList.add('hide');
+    }
 });
 
         // 修改 generateQuestions 函數
