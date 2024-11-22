@@ -5,510 +5,353 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Puti-AI測驗產生器</title>
     <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            line-height: 1.6;
+            margin: 0;
             padding: 20px;
+            background-color: var(--secondary-color);
         }
 
         .container {
-            background-color: #f8f9fa;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
             padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
 
-        .nav-buttons {
-            margin-bottom: 20px;
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
         label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
+            color: var(--text-color);
         }
 
         input[type="text"],
-        input[type="password"],
         textarea,
         select {
             width: 100%;
             padding: 8px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--border-color);
             border-radius: 4px;
-            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        textarea {
+            min-height: 100px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         button {
-            background-color: #007bff;
+            background-color: var(--primary-color);
             color: white;
-            padding: 10px 20px;
             border: none;
+            padding: 10px 20px;
             border-radius: 4px;
             cursor: pointer;
-            margin-right: 10px;
-            margin-bottom: 10px;
+            transition: background-color 0.3s;
         }
 
         button:hover {
-            background-color: #0056b3;
+            background-color: #357abd;
         }
 
-        .page {
-            display: none;
+        button.secondary {
+            background-color: #6c757d;
         }
 
-        .page.active {
-            display: block;
-        }
-
-        .question-item {
-            background-color: white;
-            padding: 15px;
-            margin-bottom: 15px;
+        .result-area {
+            border: 1px solid var(--border-color);
+            padding: 20px;
             border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+            background-color: white;
         }
 
-        .history-item {
-            background-color: white;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 4px;
+        #apiKeyContainer {
+            position: relative;
+        }
+
+        #toggleApiKey {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--primary-color);
             cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
         }
 
-        .history-item:hover {
-            background-color: #f0f0f0;
-        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
 
-        #apiKeyStatus {
-            display: inline-block;
-            margin-left: 10px;
-            padding: 5px;
-            border-radius: 4px;
-        }
-
-        .delete-btn {
-            background-color: #dc3545;
-            margin: 0;
-        }
-
-        .delete-btn:hover {
-            background-color: #c82333;
+            .button-group {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="nav-buttons">
-        <button onclick="showPage('generate')">出題</button>
-        <button onclick="showPage('history')">出題列表</button>
-    </div>
+    <div class="container">
+        <h1>Puti-AI測驗產生器</h1>
+        
+        <div class="form-group" id="apiKeyContainer">
+            <label for="apiKey">Gemini API Key:</label>
+            <input type="password" id="apiKey" placeholder="請輸入您的 Gemini API Key">
+            <button id="toggleApiKey" type="button">顯示/隱藏</button>
+            <button onclick="saveApiKey()" class="secondary">儲存</button>
+            <button onclick="resetApiKey()" class="secondary">重設</button>
+        </div>
 
-    <div id="generatePage" class="page">
-        <div class="container">
-            <h1>Puti-AI測驗產生器</h1>
-            
-            <div class="form-group">
-                <label for="apiKey">API金鑰：</label>
-                <input type="password" id="apiKey" placeholder="請輸入您的 Gemini API 金鑰">
-                <button onclick="saveApiKey()">儲存金鑰</button>
-                <span id="apiKeyStatus"></span>
-            </div>
+        <div class="form-group">
+            <label for="topic">主題 (必填):</label>
+            <input type="text" id="topic" required>
+        </div>
 
-            <div class="form-group">
-                <label for="topic">主題：</label>
-                <input type="text" id="topic" placeholder="請輸入主題">
-            </div>
+        <div class="form-group">
+            <label for="topicText">主題文本:</label>
+            <textarea id="topicText"></textarea>
+        </div>
 
-            <div class="form-group">
-                <label for="content">主題文本：</label>
-                <textarea id="content" rows="4" placeholder="請輸入相關文本內容"></textarea>
-            </div>
+        <div class="form-group">
+            <label for="conditions">附加條件:</label>
+            <textarea id="conditions" placeholder="例如：PILRS四層次提問"></textarea>
+        </div>
 
-            <div class="form-group">
-                <label for="conditions">附加條件：</label>
-                <input type="text" id="conditions" placeholder="請輸入想達成的學習成果或教學目標">
-            </div>
+        <div class="form-group">
+            <label for="grade">適用年級:</label>
+            <select id="grade">
+                <option value="">請選擇年級</option>
+            </select>
+        </div>
 
-            <div class="form-group">
-                <label for="grade">適用年級：</label>
-                <select id="grade">
-                    <option value="1">1年級</option>
-                    <option value="2">2年級</option>
-                    <option value="3">3年級</option>
-                    <option value="4">4年級</option>
-                    <option value="5">5年級</option>
-                    <option value="6">6年級</option>
-                    <option value="7">7年級</option>
-                    <option value="8">8年級</option>
-                    <option value="9">9年級</option>
-                    <option value="10">10年級</option>
-                    <option value="11">11年級</option>
-                    <option value="12">12年級</option>
-                </select>
-            </div>
+        <div class="form-group">
+            <label for="questionCount">題目數量:</label>
+            <select id="questionCount">
+                <option value="">請選擇題數</option>
+            </select>
+        </div>
 
-            <div class="form-group">
-                <label for="questionCount">題目數量：</label>
-                <select id="questionCount">
-                    <option value="1">1題</option>
-                    <option value="2">2題</option>
-                    <option value="3">3題</option>
-                    <option value="4">4題</option>
-                    <option value="5">5題</option>
-                    <option value="6">6題</option>
-                    <option value="7">7題</option>
-                    <option value="8">8題</option>
-                    <option value="9">9題</option>
-                    <option value="10">10題</option>
-                </select>
-            </div>
-
+        <div class="button-group">
             <button onclick="generateQuestions()">生成題目</button>
-            <button onclick="saveTemplate()">儲存範本</button>
-            <button onclick="exportAs('text')">匯出文字檔</button>
-            <button onclick="exportAs('csv')">匯出CSV</button>
+            <button onclick="copyContent()">複製內容</button>
+            <button onclick="exportToCsv()">匯出CSV</button>
         </div>
 
-        <div class="container">
-            <h2>生成的題目</h2>
-            <div id="questionList"></div>
-        </div>
-    </div>
-
-    <div id="historyPage" class="page">
-        <div class="container">
-            <h2>出題列表</h2>
-            <div id="historyList"></div>
+        <div class="result-area" id="resultArea">
+            <div id="questions"></div>
+            <div id="answers"></div>
         </div>
     </div>
 
     <script>
-        // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedApiKey = localStorage.getItem('geminiApiKey');
-            if (savedApiKey) {
-                document.getElementById('apiKey').value = savedApiKey;
-                updateApiKeyStatus(true);
-            }
-            showPage('generate');
-            loadHistory();
+        let questions = [];
+
+// 初始化下拉選單
+window.onload = function() {
+    const gradeSelect = document.getElementById('grade');
+    const questionCountSelect = document.getElementById('questionCount');
+
+    // 年級選項
+    for (let i = 1; i <= 12; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.text = `${i}年級`;
+        gradeSelect.appendChild(option);
+    }
+
+    // 題數選項
+    for (let i = 1; i <= 10; i++) {
+        const option = document.createElement('option');
+        option.value = i;
+        option.text = `${i}題`;
+        questionCountSelect.appendChild(option);
+    }
+
+    // 載入已儲存的 API Key
+    const savedApiKey = localStorage.getItem('geminiApiKey');
+    if (savedApiKey) {
+        document.getElementById('apiKey').value = savedApiKey;
+    }
+};
+
+// API Key 相關功能
+function saveApiKey() {
+    const apiKey = document.getElementById('apiKey').value;
+    localStorage.setItem('geminiApiKey', apiKey);
+    alert('API Key 已儲存！');
+}
+
+function resetApiKey() {
+    localStorage.removeItem('geminiApiKey');
+    document.getElementById('apiKey').value = '';
+    alert('API Key 已重設！');
+}
+
+document.getElementById('toggleApiKey').onclick = function() {
+    const apiKeyInput = document.getElementById('apiKey');
+    apiKeyInput.type = apiKeyInput.type === 'password' ? 'text' : 'password';
+};
+
+// 調用 Gemini API 生成題目
+async function generateQuestions() {
+    const apiKey = document.getElementById('apiKey').value;
+    const topic = document.getElementById('topic').value;
+    
+    if (!topic) {
+        alert('請填寫主題！');
+        return;
+    }
+
+    if (!apiKey) {
+        alert('請輸入 Gemini API Key！');
+        return;
+    }
+
+    const topicText = document.getElementById('topicText').value;
+    const conditions = document.getElementById('conditions').value;
+    const grade = document.getElementById('grade').value;
+    const questionCount = document.getElementById('questionCount').value;
+
+    // 顯示載入提示
+    document.getElementById('questions').innerHTML = '<p>生成題目中，請稍候...</p>';
+    document.getElementById('answers').innerHTML = '';
+
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: `生成${questionCount}題${topic}相關的選擇題，年級為${grade}年級。
+                        ${topicText ? `參考文本：${topicText}` : ''}
+                        ${conditions ? `附加條件：${conditions}` : ''}
+                        請使用JSON格式回應，格式如下：
+                        {
+                            "questions": [
+                                {
+                                    "question": "題目",
+                                    "options": ["A選項", "B選項", "C選項", "D選項"],
+                                    "answer": 0,
+                                    "explanation": "解答說明",
+                                    "timeLimit": 30
+                                }
+                            ]
+                        }`
+                    }]
+                }]
+            })
         });
 
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(page => {
-                page.classList.remove('active');
-            });
-            document.getElementById(pageId + 'Page').classList.add('active');
-        }
-
-        function saveApiKey() {
-            const apiKey = document.getElementById('apiKey').value;
-            if (apiKey) {
-                localStorage.setItem('geminiApiKey', apiKey);
-                updateApiKeyStatus(true);
-            } else {
-                updateApiKeyStatus(false);
-            }
-        }
-
-        function updateApiKeyStatus(saved) {
-            const status = document.getElementById('apiKeyStatus');
-            if (saved) {
-                status.textContent = '已儲存 (****' + document.getElementById('apiKey').value.slice(-4) + ')';
-                status.style.backgroundColor = '#d4edda';
-                status.style.color = '#155724';
-            } else {
-                status.textContent = '未儲存';
-                status.style.backgroundColor = '#f8d7da';
-                status.style.color = '#721c24';
-            }
-        }
-
-        function saveTemplate() {
-            const template = {
-                topic: document.getElementById('topic').value,
-                content: document.getElementById('content').value,
-                conditions: document.getElementById('conditions').value,
-                grade: document.getElementById('grade').value,
-                questionCount: document.getElementById('questionCount').value,
-                timestamp: new Date().toISOString()
-            };
-
-            let templates = JSON.parse(localStorage.getItem('questionTemplates') || '[]');
-            templates.unshift(template);
-            localStorage.setItem('questionTemplates', JSON.stringify(templates));
-            alert('範本已儲存！');
-            loadHistory();
-        }
-
-        async function generateQuestions() {
-            const apiKey = localStorage.getItem('geminiApiKey');
-            if (!apiKey) {
-                alert('請先設定API金鑰！');
-                return;
-            }
-
-            const topic = document.getElementById('topic').value;
-            const content = document.getElementById('content').value;
-            const conditions = document.getElementById('conditions').value;
-            const grade = document.getElementById('grade').value;
-            const questionCount = document.getElementById('questionCount').value;
-
-            const prompt = `
-                你是一個資深優良教師，也是一個評量命題專家，深暗評量理論和實務。
-                請根據以下需求出題：
-
-                主題：${topic}
-                主題文本：${content}
-                附加條件：${conditions}
-                適用年級：${grade}年級
-                題數：${questionCount}題
-
-                請生成${questionCount}個單選題，每題必須包含：
-                1. 題目內容
-                2. 四個選項(A,B,C,D)
-                3. 標準答案
-                4. 詳細解說
-
-                請使用以下JSON格式回應：
-                {
-                    "questions": [
-                        {
-                            "question": "題目內容",
-                            "options": ["A選項", "B選項", "C選項", "D選項"],
-                            "answer": 0,
-                            "explanation": "解說內容"
-                        }
-                    ]
-                }
-            `;
-
-            try {
-                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{
-                                text: prompt
-                            }]
-                        }]
-                    })
-                });
-
-                if (!response.ok) {
-                    throw new Error('API 請求失敗');
-                }
-
-                const data = await response.json();
-                const generatedText = data.candidates[0].content.parts[0].text;
-                const questions = JSON.parse(generatedText).questions;
-
+        const data = await response.json();
+        
+        if (data.candidates && data.candidates[0].content) {
+            const textContent = data.candidates[0].content.parts[0].text;
+            const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const parsedData = JSON.parse(jsonMatch[0]);
+                questions = parsedData.questions;
                 displayQuestions(questions);
-                saveToHistory({
-                    topic,
-                    content,
-                    conditions,
-                    grade,
-                    questionCount,
-                    questions,
-                    timestamp: new Date().toISOString()
-                });
-            } catch (error) {
-                console.error('生成題目時發生錯誤:', error);
-                alert('生成題目時發生錯誤，請稍後再試');
+            } else {
+                throw new Error('無法解析回應格式');
             }
+        } else {
+            throw new Error('API 回應格式不正確');
         }
+    } catch (error) {
+        document.getElementById('questions').innerHTML = `<p>錯誤：${error.message}</p>`;
+        console.error('生成題目失敗:', error);
+    }
+}
 
-        function displayQuestions(questions) {
-            const questionList = document.getElementById('questionList');
-            questionList.innerHTML = '';
+function displayQuestions(questions) {
+    const questionsDiv = document.getElementById('questions');
+    const answersDiv = document.getElementById('answers');
+    
+    let questionsHtml = '<h2>題目：</h2>';
+    let answersHtml = '<h2>答案與解說：</h2>';
 
-            questions.forEach((q, i) => {
-                const questionDiv = document.createElement('div');
-                questionDiv.className = 'question-item';
-                questionDiv.innerHTML = `
-                    <p><strong>${i + 1}. ${q.question}</strong></p>
-                    ${q.options.map((opt, j) => `
-                        <div>
-                            <input type="radio" name="q${i}" value="${j}" ${j === q.answer ? 'checked' : ''}>
-                            <label>${opt}</label>
-                        </div>
-                    `).join('')}
-                    <div style="margin-top: 10px; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
-                        <p><strong>正確答案：</strong>${String.fromCharCode(65 + q.answer)}</p>
-                        <p><strong>解說：</strong>${q.explanation}</p>
-                    </div>
-                `;
-                questionList.appendChild(questionDiv);
-            });
-        }
+    questions.forEach((q, i) => {
+        questionsHtml += `
+            <div class="question">
+                <p>${i + 1}. ${q.question}</p>
+                ${q.options.map((option, j) => `
+                    <div>${['A', 'B', 'C', 'D'][j]}. ${option}</div>
+                `).join('')}
+            </div>
+        `;
 
-        function exportAs(format) {
-            const questions = Array.from(document.querySelectorAll('.question-item')).map((item, index) => {
-                return {
-                    question: item.querySelector('strong').textContent.replace(`${index + 1}. `, ''),
-                    options: Array.from(item.querySelectorAll('input[type="radio"] + label')).map(label => label.textContent),
-                    answer: Array.from(item.querySelectorAll('input[type="radio"]')).findIndex(input => input.checked),
-                    explanation: item.querySelector('p:last-child').textContent.replace('解說：', '')
-                };
-            });
+        answersHtml += `
+            <div class="answer">
+                <p>${i + 1}. 正確答案：${['A', 'B', 'C', 'D'][q.answer]}</p>
+                <p>解說：${q.explanation}</p>
+            </div>
+        `;
+    });
 
-            if (questions.length === 0) {
-                alert('沒有可匯出的題目！');
-                return;
-            }
+    questionsDiv.innerHTML = questionsHtml;
+    answersDiv.innerHTML = answersHtml;
+}
 
-            switch(format) {
-                case 'text':
-                    exportAsText(questions);
-                    break;
-                case 'csv':
-                    exportAsCSV(questions);
-                    break;
-            }
-        }
+function copyContent() {
+    const content = document.getElementById('resultArea').innerText;
+    navigator.clipboard.writeText(content)
+        .then(() => alert('內容已複製到剪貼簿！'))
+        .catch(err => alert('複製失敗：' + err));
+}
 
-        function exportAsText(questions) {
-            let content = '';
-            questions.forEach((q, i) => {
-                content += `${i + 1}. ${q.question}\n`;
-                q.options.forEach((opt, j) => {
-                    content += `${String.fromCharCode(65 + j)}. ${opt}\n`;
-                });
-                content += `正確答案：${String.fromCharCode(65 + q.answer)}\n`;
-                content += `解說：${q.explanation}\n\n`;
-            });
+function exportToCsv() {
+    if (questions.length === 0) {
+        alert('請先生成題目！');
+        return;
+    }
 
-            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'Puti測驗題目.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
+    let csv = '\ufeff題目,選項1,選項2,選項3,選項4,時間限制,正確答案,解說\n';
+    
+    questions.forEach(q => {
+        csv += `"${q.question}","${q.options[0]}","${q.options[1]}","${q.options[2]}","${q.options[3]}",${q.timeLimit},"${['A', 'B', 'C', 'D'][q.answer]}","${q.explanation}"\n`;
+    });
 
-        function exportAsCSV(questions) {
-            let content = '題號,題目,選項A,選項B,選項C,選項D,正確答案,解說\n';
-            questions.forEach((q, i) => {
-                content += `${i + 1},"${q.question}","${q.options[0]}","${q.options[1]}","${q.options[2]}","${q.options[3]}","${String.fromCharCode(65 + q.answer)}","${q.explanation}"\n`;
-            });
-
-            const blob = new Blob(['\uFEFF' + content], { type: 'text/csv;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'Puti測驗題目.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function saveToHistory(data) {
-            let history = JSON.parse(localStorage.getItem('questionHistory') || '[]');
-            history.unshift(data);
-            localStorage.setItem('questionHistory', JSON.stringify(history));
-            loadHistory();
-        }
-
-        function loadHistory() {
-            const history = JSON.parse(localStorage.getItem('questionHistory') || '[]');
-            const templates = JSON.parse(localStorage.getItem('questionTemplates') || '[]');
-            const historyList = document.getElementById('historyList');
-            historyList.innerHTML = '<h3>已儲存的範本</h3>';
-
-            templates.forEach((item, index) => {
-                const templateItem = document.createElement('div');
-                templateItem.className = 'history-item';
-                templateItem.innerHTML = `
-                    <div>
-                        <p><strong>主題：</strong>${item.topic}</p>
-                        <p><strong>時間：</strong>${new Date(item.timestamp).toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <button onclick="applyTemplate(${index})">套用</button>
-                        <button class="delete-btn" onclick="deleteTemplate(${index})">刪除</button>
-                    </div>
-                `;
-                historyList.appendChild(templateItem);
-            });
-
-            historyList.innerHTML += '<h3>出題歷史記錄</h3>';
-            
-            history.forEach((item, index) => {
-                const historyItem = document.createElement('div');
-                historyItem.className = 'history-item';
-                historyItem.innerHTML = `
-                    <div>
-                        <p><strong>主題：</strong>${item.topic}</p>
-                        <p><strong>時間：</strong>${new Date(item.timestamp).toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <button onclick="applyHistory(${index})">套用</button>
-                        <button class="delete-btn" onclick="deleteHistory(${index})">刪除</button>
-                    </div>
-                `;
-                historyList.appendChild(historyItem);
-            });
-        }
-
-        function applyTemplate(index) {
-            const templates = JSON.parse(localStorage.getItem('questionTemplates') || '[]');
-            const template = templates[index];
-            document.getElementById('topic').value = template.topic;
-            document.getElementById('content').value = template.content;
-            document.getElementById('conditions').value = template.conditions;
-            document.getElementById('grade').value = template.grade;
-            document.getElementById('questionCount').value = template.questionCount;
-            showPage('generate');
-        }
-
-        function deleteTemplate(index) {
-            if (confirm('確定要刪除這個範本嗎？')) {
-                let templates = JSON.parse(localStorage.getItem('questionTemplates') || '[]');
-                templates.splice(index, 1);
-                localStorage.setItem('questionTemplates', JSON.stringify(templates));
-                loadHistory();
-            }
-        }
-
-        function applyHistory(index) {
-            const history = JSON.parse(localStorage.getItem('questionHistory') || '[]');
-            const item = history[index];
-            document.getElementById('topic').value = item.topic;
-            document.getElementById('content').value = item.content;
-            document.getElementById('conditions').value = item.conditions;
-            document.getElementById('grade').value = item.grade;
-            document.getElementById('questionCount').value = item.questionCount;
-            displayQuestions(item.questions);
-            showPage('generate');
-        }
-
-        function deleteHistory(index) {
-            if (confirm('確定要刪除這筆記錄嗎？')) {
-                let history = JSON.parse(localStorage.getItem('questionHistory') || '[]');
-                history.splice(index, 1);
-                localStorage.setItem('questionHistory', JSON.stringify(history));
-                loadHistory();
-            }
-        }
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'questions.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
     </script>
 </body>
 </html>
