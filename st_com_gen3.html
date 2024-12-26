@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Puti-Ai學生期末評語產生器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .trait-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .trait-column {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .trait-btn {
+            margin: 5px;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            font-weight: normal;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .trait-btn:hover {
+            background-color: #ffe69c;
+        }
+        .trait-btn.selected {
+            background-color: #ffd43b;
+            font-weight: bold;
+            font-size: 16px;
+            transform: scale(1.05);
+        }
+        .trait-btn.enabled {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #selectedTraits .trait-btn {
+            background-color: #ffd43b;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        #selectedTraits {
+            min-height: 100px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        #previewArea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        .action-btn:hover {
+            background-color: #0056b3;
+        }
+        .api-key-section {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .api-key-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+        }
+        
+        .students-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 15px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        
+        .custom-traits-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .download-btn {
+            margin-left: 10px;
+        }
+        
+        #downloadOptions {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        
+        #downloadOptions button {
+            display: block;
+            width: 100%;
+            padding: 5px;
+            margin: 5px 0;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+        
+        #downloadOptions button:hover {
+            background-color: #f0f0f0;
+        }
+        .student-buttons {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .student-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .student-btn.selected {
+            background-color: #28a745;
+            color: white;
+            font-weight: bold;
+        }
+
+        .student-btn.has-comment {
+            border: 2px solid #28a745;
+        }
+
+        .clear-btn {
+            background-color: #dc3545;
+            margin-top: 10px;
+        }
+
+        .clear-btn:hover {
+            background-color: #c82333;
+        }
+
+        .custom-trait-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .custom-trait-container .custom-traits-input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        #selectedTraits {
+            scroll-margin-top: 20px;
+        }
+
+        .traits-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .traits-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .traits-actions .action-btn {
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+
+        .style-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .style-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .style-btn:hover {
+            background-color: #ffe69c;
+        }
+
+        .style-btn.selected {
+            background-color: #ffd43b;
+            font-weight: bold;
+            transform: scale(1.05);
+        }
+
+        .style-btn .tooltip {
+            visibility: hidden;
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            width: 200px;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .style-btn:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .word-limit-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .word-limit-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #e9ecef;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+
+        .word-limit-btn:hover {
+            background-color: #ffe69c;
+        }
+
+        .word-limit-btn.selected {
+            background-color: #ffd43b;
+            font-weight: bold;
+            transform: scale(1.05);
+        }
+
+        .notice-section {
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .notice-section h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        .notice-content {
+            color: #666;
+        }
+
+        .notice-content ol {
+            padding-left: 20px;
+        }
+
+        .notice-content ul {
+            padding-left: 20px;
+            margin: 5px 0;
+        }
+
+        .notice-content a {
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .notice-content a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Puti-Ai學生期末評語產生器</h1>
+        
+        <!-- API Key 區域 -->
+        <div class="section notice-section">
+            <h3>🔔 重要提醒</h3>
+            <div class="notice-content">
+                <p><strong>無法生成評語？請檢查：</strong></p>
+                <ol>
+                    <li>API Key 是否正確？
+                        <ul>
+                            <li>請到 <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a> 申請</li>
+                            <li>確認完整複製，不要有空格</li>
+                            <li>需要啟用 Gemini API 服務</li>
+                        </ul>
+                    </li>
+                    <li>使用次數是否超過限制？
+                        <ul>
+                            <li>每個 API Key 每分鐘有次數限制</li>
+                            <li>建議等待一下再試</li>
+                            <li>或申請新的 API Key</li>
+                        </ul>
+                    </li>
+                    <li>網路連線是否正常？
+                        <ul>
+                            <li>確認網路穩定</li>
+                            <li>可能需要科學上網</li>
+                        </ul>
+                    </li>
+                    <li>瀏覽器和系統建議：
+                        <ul>
+                            <li>建議使用 Chrome 或 Edge 瀏覽器</li>
+                            <li>Safari 用戶可能需要允許跨域請求</li>
+                            <li>請確保瀏覽器已更新至最新版本</li>
+                            <li>暫時停用可能造成干擾的擴充功能</li>
+                            <li>建議使用電腦版瀏覽器操作</li>
+                        </ul>
+                    </li>
+                </ol>
+                <p><strong>💡 最佳使用建議：</strong></p>
+                <ul>
+                    <li>使用 Windows/macOS 電腦</li>
+                    <li>選用 Chrome 或 Edge 最新版本</li>
+                    <li>確保網路穩定且可正常訪問 Google 服務</li>
+                    <li>建議準備多個 API Key 以備不時之需</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="api-key-section">
+                <input type="password" id="apiKeyInput" class="api-key-input" 
+                       placeholder="請輸入 Gemini API Key">
+                <button class="action-btn" onclick="saveApiKey()">儲存</button>
+                <button class="action-btn" onclick="toggleApiKey()">顯示/隱藏</button>
+                <button class="action-btn" onclick="resetApiKey()">重設</button>
+            </div>
+        </div>
+
+        <!-- 學生清單輸入區 -->
+        <div class="section">
+            <h3>學生清單（一行一個學生，格式：座號.姓名）</h3>
+            <textarea id="studentsInput" class="students-input" 
+                      placeholder="例如：&#13;&#10;1.黃樂樂&#13;&#10;2.張小明"></textarea>
+            <button class="action-btn" onclick="generateStudentButtons()">產生學生按鈕</button>
+            <div id="studentButtons" class="student-buttons"></div>
+        </div>
+
+        <!-- 特質選擇區 -->
+        <div class="section">
+            <div class="traits-header">
+                <h3>特質選擇：</h3>
+                <button class="action-btn" onclick="resetTraitButtons()">重置特質</button>
+            </div>
+            <div class="trait-section" id="trait-section">
+                <!-- 特質按鈕將由 JavaScript 動態生成 -->
+            </div>
+        </div>
+
+        <!-- 使用者客製特質輸入區 -->
+        <div class="section">
+            <h3>新增自訂特質（最多10個）</h3>
+            <div class="custom-trait-container">
+                <input type="text" id="customTraitInput" class="custom-traits-input" 
+                       placeholder="輸入自訂特質後按Enter">
+                <button class="action-btn" onclick="clearCustomTraits()">清除自訂特質</button>
+            </div>
+        </div>
+
+        <!-- 已選擇的特質區 -->
+        <div class="section">
+            <div class="traits-header">
+                <h3>已選擇的特質：</h3>
+                <div class="traits-actions">
+                    <button class="action-btn" onclick="clearSelectedTraits()">清空已選特質</button>
+                </div>
+            </div>
+            <div id="selectedTraits"></div>
+        </div>
+
+        <!-- 評語風格選擇區 -->
+        <div class="section">
+            <div class="traits-header">
+                <h3>評語風格（最多選擇兩種）：</h3>
+                <button class="action-btn" onclick="resetStyleButtons()">重置風格</button>
+            </div>
+            <div id="styleButtons" class="style-buttons"></div>
+        </div>
+
+        <!-- 評語字數限制 -->
+        <div class="section">
+            <div class="traits-header">
+                <h3>評語字數限制：</h3>
+            </div>
+            <div id="wordLimitButtons" class="word-limit-buttons">
+                <button class="word-limit-btn" onclick="setWordLimit(300)">300字</button>
+                <button class="word-limit-btn" onclick="setWordLimit(200)">200字</button>
+                <button class="word-limit-btn selected" onclick="setWordLimit(150)">150字</button>
+                <button class="word-limit-btn" onclick="setWordLimit(100)">100字</button>
+                <button class="word-limit-btn" onclick="setWordLimit(50)">50字</button>
+                <button class="word-limit-btn" onclick="setWordLimit(16)">16字</button>
+            </div>
+        </div>
+
+        <!-- 生成評語按鈕 -->
+        <button class="action-btn" onclick="generateComment()">生成評語</button>
+
+        <!-- 評語預覽區 -->
+        <div class="section">
+            <h3>評語預覽：</h3>
+            <textarea id="previewArea"></textarea>
+            <button class="action-btn clear-btn" onclick="clearCommentHistory()">清除記錄</button>
+        </div>
+
+        <!-- 下載按鈕 -->
+        <div class="section">
+            <button class="action-btn" onclick="showDownloadOptions()">下載</button>
+            <div id="downloadOptions">
+                <button onclick="downloadFile('txt')">下載 TXT</button>
+                <button onclick="downloadFile('csv')">下載 CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 特質資料
+        const traitData = {
+            headers: ['資質與態度', '個性與品德', '團體與人際', '專長與才藝', '使用者客製'],
+            traits: {
+                資質與態度: ['聰穎靈活', '理解力強', '領悟快速', '認真專注', '勤勉好學', 
+                           '主動求知', '善於思考', '舉一反三', '觀察力佳', '表達清晰', 
+                           '善於溝通', '勇於發表', '不夠認真', '欠缺專注', '怠忽學業', 
+                           '理解較慢', '需多練習', '有待加強', '遲交作業'],
+                個性與品德: ['性格溫和', '溫順文靜', '誠實', '守規矩', '有禮貌', 
+                           '開朗活潑', '樂觀', '負責盡職', '做事認真', '守分負責', 
+                           '性格內向', '不善交際', '羞怯膽小', '不夠自律', '做事粗心'],
+                團體與人際: ['待人和善', '人緣良好', '善解人意', '樂於助人', '熱心服務', 
+                           '具領導力', '友愛同學', '願意分享', '樂於合作', '不太合群', 
+                           '較少互動', '不善合作', '較少參與'],
+                專長與才藝: ['語文能力強', '寫作表達佳', '數理能力佳', '邏輯思維強', 
+                           '計算能力好', '表演才能優', '美術天分佳', '音樂感佳', 
+                           '運動能力強', '體能活動好', '動作協調佳', '創意思維佳', 
+                           '想像力豐富', '創意點子多'],
+                使用者客製: []
+            }
+        };
+
+        // 評語風格資料
+        const styleData = [
+            {
+                name: '口語人性化',
+                description: '以自然親切的語氣表達，讓學生感到親近與關懷。',
+                example: '你這學期的表現很棒！偶爾會小小分心，但進步超級明顯，繼續保持這個勢頭哦！'
+            },
+            {
+                name: '鼓勵型',
+                description: '著重於肯定與激勵學生成長。',
+                example: '你在這學期表現出穩步成長，持續努力一定會取得更大進步，加油！'
+            },
+            {
+                name: '幽默',
+                description: '增加輕鬆感，適合融洽的師生關係。',
+                example: '你的幽默總能讓班上充滿笑聲，但記得作業也要像笑話一樣精彩！'
+            },
+            {
+                name: '溫馨',
+                description: '著重於情感交流，適合關心學生身心發展。',
+                example: '看到你的自信與笑容逐漸綻放，老師深感欣慰，繼續保持這份熱情！'
+            },
+            {
+                name: '分析型',
+                description: '詳細指出學生優勢與改進方向。',
+                example: '你的數理邏輯表現突出，但在語文理解方面可多加強，期待你在下學期取得更全面的發展。'
+            },
+            {
+                name: '詩意',
+                description: '用語優美，適合重視文學氣息的師生。',
+                example: '你就像晨曦中的露珠，閃耀著純真與希望，讓學習旅程充滿光彩。'
+            },
+            {
+                name: '個性化',
+                description: '根據學生的具體特質量身打造，凸顯個別特色。',
+                example: '你總是用創意與熱情感染大家，是班上的靈魂人物，老師為你感到驕傲！'
+            },
+            {
+                name: '目標導向',
+                description: '明確指出未來方向與建議。',
+                example: '繼續保持專注力與堅持不懈的精神，這將幫助你在未來的挑戰中取得成功！'
+            },
+            {
+                name: '故事型',
+                description: '以小故事或情境描述學生表現，增強趣味性。',
+                example: '還記得你第一次勇敢舉手回答問題的時刻嗎？那份自信值得你繼續保持並發揚光大！'
+            },
+            {
+                name: '十六箴言',
+                description: '採用四字詞語組成的評語，簡潔而富含哲理。',
+                example: '勤奮刻苦，持之以恆；虛心學習，勇於挑戰。'
+            }
+        ];
+
+        let selectedStyles = new Set();
+
+        // 初始化頁面
+        window.onload = function() {
+            loadApiKey();
+            loadStudentList();
+            loadCustomTraits();
+            updateTraits();
+            setupCustomTraitInput();
+            initializeStyleButtons();
+        }
+
+        let selectedTraits = new Set();
+        let customTraitCount = 0;
+        let selectedStudent = null;
+        let commentHistory = {};
+        let customTraits = [];
+
+        // API Key 相關函數
+        function saveApiKey() {
+            const apiKey = document.getElementById('apiKeyInput').value;
+            if (apiKey) {
+                localStorage.setItem('geminiApiKey', apiKey);
+                alert('API Key 已儲存！');
+            } else {
+                alert('請輸入 API Key！');
+            }
+        }
+
+        function loadApiKey() {
+            const apiKey = localStorage.getItem('geminiApiKey');
+            if (apiKey) {
+                document.getElementById('apiKeyInput').value = apiKey;
+            }
+        }
+
+        function toggleApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function resetApiKey() {
+            localStorage.removeItem('geminiApiKey');
+            document.getElementById('apiKeyInput').value = '';
+            alert('API Key 已重設！');
+        }
+
+        // 特質相關函數
+        function updateTraits() {
+            const traitSection = document.getElementById('trait-section');
+            traitSection.innerHTML = '';
+            
+            traitData.headers.forEach(header => {
+                const column = document.createElement('div');
+                column.className = 'trait-column';
+                
+                const title = document.createElement('h3');
+                title.textContent = header;
+                column.appendChild(title);
+                
+                const traitsContainer = document.createElement('div');
+                traitData.traits[header].forEach(trait => {
+                    const button = document.createElement('button');
+                    button.className = 'trait-btn';
+                    button.textContent = trait;
+                    if (selectedTraits.has(trait)) {
+                        button.classList.add('selected');
+                    }
+                    button.onclick = () => addTrait(trait, button);
+                    traitsContainer.appendChild(button);
+                });
+                
+                column.appendChild(traitsContainer);
+                traitSection.appendChild(column);
+            });
+        }
+
+        function setupCustomTraitInput() {
+            const input = document.getElementById('customTraitInput');
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const trait = input.value.trim();
+                    if (trait) {
+                        if (!customTraits.includes(trait)) {
+                            if (customTraits.length >= 10) {
+                                customTraits.shift();
+                            }
+                            customTraits.push(trait);
+                            traitData.traits['使用者客製'] = customTraits;
+                            customTraitCount = customTraits.length;
+                            saveCustomTraits();
+                            updateTraits();
+                            input.value = '';
+                        }
+                    }
+                }
+            });
+        }
+
+        function addTrait(trait, button) {
+            if (!selectedStudent) {
+                alert('請先選擇學生！');
+                return;
+            }
+            
+            if (selectedTraits.has(trait)) {
+                // 如果特質已被選中，則移除它
+                selectedTraits.delete(trait);
+                button.classList.remove('selected');
+            } else {
+                // 如果特質未被選中，則添加它
+                selectedTraits.add(trait);
+                button.classList.add('selected');
+            }
+            updateSelectedTraitsDisplay();
+        }
+
+        function updateSelectedTraitsDisplay() {
+            const container = document.getElementById('selectedTraits');
+            container.innerHTML = '';
+            selectedTraits.forEach(trait => {
+                const span = document.createElement('span');
+                span.className = 'trait-btn';
+                span.textContent = trait;
+                span.onclick = () => removeTrait(trait);
+                container.appendChild(span);
+            });
+        }
+
+        function removeTrait(trait) {
+            selectedTraits.delete(trait);
+            // 同時更新原始特質按鈕的狀態
+            const traitButtons = document.querySelectorAll('.trait-btn');
+            traitButtons.forEach(button => {
+                if (button.textContent === trait) {
+                    button.classList.remove('selected');
+                }
+            });
+            updateSelectedTraitsDisplay();
+        }
+
+        // 評語生成相關函數
+        async function generateComment() {
+            if (!selectedStudent) {
+                alert('請先選擇學生！');
+                return;
+            }
+            
+            const apiKey = localStorage.getItem('geminiApiKey');
+            if (!apiKey) {
+                alert('請先設定 API Key！');
+                return;
+            }
+
+            if (selectedTraits.size === 0) {
+                alert('請先選擇學生特質！');
+                return;
+            }
+
+            const traits = Array.from(selectedTraits).join('、');
+            const styles = Array.from(selectedStyles).join('、');
+            const stylePrompt = styles ? `，請使用${styles}風格` : '';
+            
+            try {
+                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + apiKey, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{
+                                text: `請根據以下學生特質，為學生「${selectedStudent}」生成一段${currentWordLimit}字的期末評語${stylePrompt}。評語要有創意，使用正向鼓勵的語��和溫暖親切的口氣。請使用第二人稱「你」來稱呼學生，不要用第三人稱。特質：${traits}`
+                            }]
+                        }]
+                    })
+                });
+
+                // 加入 HTTP 狀態碼檢查
+                if (!response.ok) {
+                    if (response.status === 403) {
+                        throw new Error('API Key 無效或已過期，請確認是否正確複製或重新申請');
+                    } else if (response.status === 429) {
+                        throw new Error('已超過 API 使用限制，請稍後再試或申請新的 API Key');
+                    } else {
+                        throw new Error(`API 請求失敗 (狀態碼: ${response.status})`);
+                    }
+                }
+
+                const data = await response.json();
+                if (!data.candidates || !data.candidates[0]?.content?.parts[0]?.text) {
+                    throw new Error('AI 回應格式異常，請重新生成');
+                }
+                
+                const comment = data.candidates[0].content.parts[0].text;
+                document.getElementById('previewArea').value = comment;
+                commentHistory[selectedStudent] = comment;
+                updateStudentButtonStatus();
+            } catch (error) {
+                // 更友善的錯誤提示
+                let errorMessage = '生成評語時發生錯誤：\n\n';
+                if (error.message.includes('API Key')) {
+                    errorMessage += '1. 請確認 API Key 是否正確\n';
+                    errorMessage += '2. 建議重新申請 API Key\n';
+                    errorMessage += '3. 確認 API Key 已啟用 Gemini API 服務';
+                } else if (error.message.includes('限制')) {
+                    errorMessage += '1. 每個 API Key 有使用次數限制\n';
+                    errorMessage += '2. 建議等待一段時間後再試\n';
+                    errorMessage += '3. 或申請新的 API Key';
+                } else {
+                    errorMessage += error.message;
+                }
+                alert(errorMessage);
+            }
+        }
+
+        // 下載相關函數
+        function showDownloadOptions() {
+            const options = document.getElementById('downloadOptions');
+            options.style.display = options.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function downloadFile(type) {
+            const studentsText = document.getElementById('studentsInput').value;
+            
+            if (!studentsText) {
+                alert('請先輸入學生資料！');
+                return;
+            }
+
+            const students = studentsText.split('\n').filter(line => line.trim());
+            let content = '';
+            
+            if (type === 'txt') {
+                content = students.map(student => 
+                    `${student}\n${commentHistory[student] || '尚未產生評語'}\n\n`
+                ).join('');
+                downloadTextFile(content, 'student_comments.txt');
+            } else if (type === 'csv') {
+                content = '座號,姓名,評語\n';
+                content += students.map(student => {
+                    const [number, name] = student.split('.');
+                    return `${number},${name},"${commentHistory[student] || ''}"`;
+                }).join('\n');
+                downloadTextFile(content, 'student_comments.csv');
+            }
+        }
+
+        function downloadTextFile(content, filename) {
+            // 加入 BOM 標記，解決 CSV 中文亂碼問題
+            const bom = '\uFEFF';
+            const blob = new Blob([bom + content], { 
+                type: filename.endsWith('.csv') 
+                    ? 'text/csv;charset=utf-8' 
+                    : 'text/plain;charset=utf-8' 
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function generateStudentButtons() {
+            const studentsText = document.getElementById('studentsInput').value;
+            const studentButtons = document.getElementById('studentButtons');
+            studentButtons.innerHTML = '';
+            
+            if (!studentsText.trim()) {
+                alert('請先輸入學生資料！');
+                return;
+            }
+            
+            saveStudentList();
+            
+            const students = studentsText.split('\n').filter(line => line.trim());
+            
+            students.forEach(student => {
+                const button = document.createElement('button');
+                button.className = 'student-btn';
+                button.textContent = student;
+                if (commentHistory[student]) {
+                    button.classList.add('has-comment');
+                }
+                button.onclick = () => selectStudent(student, button);
+                studentButtons.appendChild(button);
+            });
+            
+            // 重置選擇的學生
+            selectedStudent = null;
+            // 清空已選特質
+            selectedTraits.clear();
+            updateSelectedTraitsDisplay();
+            // 禁用所有特質按鈕
+            disableTraitButtons();
+        }
+
+        function selectStudent(student, button) {
+            // 移除其他學生按鈕的選中狀態
+            const allStudentButtons = document.querySelectorAll('.student-btn');
+            allStudentButtons.forEach(btn => btn.classList.remove('selected'));
+            
+            // 選中當前學生按鈕
+            button.classList.add('selected');
+            selectedStudent = student;
+            
+            // 啟用特質按鈕
+            enableTraitButtons();
+            
+            // 清空已選特質
+            selectedTraits.clear();
+            updateSelectedTraitsDisplay();
+            
+            // 顯示該學生的評語（如果有的話）
+            const previewArea = document.getElementById('previewArea');
+            previewArea.value = commentHistory[student] || '';
+        }
+
+        function enableTraitButtons() {
+            const traitButtons = document.querySelectorAll('.trait-btn');
+            traitButtons.forEach(button => {
+                button.classList.add('enabled');
+            });
+        }
+
+        function disableTraitButtons() {
+            const traitButtons = document.querySelectorAll('.trait-btn');
+            traitButtons.forEach(button => {
+                button.classList.remove('enabled');
+                button.classList.remove('selected');
+            });
+        }
+
+        // 新增：儲存和載入學生清單的函數
+        function saveStudentList() {
+            const studentsText = document.getElementById('studentsInput').value;
+            localStorage.setItem('studentList', studentsText);
+        }
+
+        function loadStudentList() {
+            const savedList = localStorage.getItem('studentList');
+            if (savedList) {
+                document.getElementById('studentsInput').value = savedList;
+            }
+        }
+
+        // 新增：更新學生按鈕狀態的函數
+        function updateStudentButtonStatus() {
+            const buttons = document.querySelectorAll('.student-btn');
+            buttons.forEach(button => {
+                if (commentHistory[button.textContent]) {
+                    button.classList.add('has-comment');
+                } else {
+                    button.classList.remove('has-comment');
+                }
+            });
+        }
+
+        // 新增：清除記錄按鈕的處理函數
+        function clearCommentHistory() {
+            if (confirm('確定要清除所有評語記錄嗎？\n（自訂特質將保留）')) {
+                commentHistory = {};
+                document.getElementById('previewArea').value = '';
+                updateStudentButtonStatus();
+            }
+        }
+
+        // 新增：儲存和載入自訂特質的函數
+        function saveCustomTraits() {
+            localStorage.setItem('customTraits', JSON.stringify(customTraits));
+        }
+
+        function loadCustomTraits() {
+            const saved = localStorage.getItem('customTraits');
+            if (saved) {
+                customTraits = JSON.parse(saved);
+                traitData.traits['使用者客製'] = customTraits;
+                customTraitCount = customTraits.length;
+            }
+        }
+
+        // 新增：清除自訂特質的函數
+        function clearCustomTraits() {
+            if (confirm('確定要清除所有自訂特質嗎？')) {
+                customTraits = [];
+                traitData.traits['使用者客製'] = [];
+                customTraitCount = 0;
+                saveCustomTraits();
+                updateTraits();
+            }
+        }
+
+        // 新增：重置特質按鈕函數
+        function resetTraitButtons() {
+            if (!selectedStudent) {
+                alert('請先選擇學生！');
+                return;
+            }
+            
+            const traitButtons = document.querySelectorAll('.trait-btn');
+            traitButtons.forEach(button => {
+                button.classList.remove('selected');
+            });
+            selectedTraits.clear();
+            updateSelectedTraitsDisplay();
+        }
+
+        // 新增：清空已選特質函數
+        function clearSelectedTraits() {
+            if (!selectedStudent) {
+                alert('請先選擇學生！');
+                return;
+            }
+            
+            selectedTraits.clear();
+            updateTraits();
+            updateSelectedTraitsDisplay();
+        }
+
+        function initializeStyleButtons() {
+            const styleButtonsContainer = document.getElementById('styleButtons');
+            styleData.forEach(style => {
+                const button = document.createElement('button');
+                button.className = 'style-btn';
+                button.textContent = style.name;
+                
+                // 添加提示框
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.innerHTML = `${style.description}<br><br>例：${style.example}`;
+                button.appendChild(tooltip);
+                
+                button.onclick = () => toggleStyle(style.name, button);
+                styleButtonsContainer.appendChild(button);
+            });
+        }
+
+        function toggleStyle(styleName, button) {
+            if (selectedStyles.has(styleName)) {
+                selectedStyles.delete(styleName);
+                button.classList.remove('selected');
+            } else {
+                if (selectedStyles.size >= 2) {
+                    alert('最多只能選擇兩種風格！');
+                    return;
+                }
+                selectedStyles.add(styleName);
+                button.classList.add('selected');
+            }
+        }
+
+        function resetStyleButtons() {
+            selectedStyles.clear();
+            document.querySelectorAll('.style-btn').forEach(button => {
+                button.classList.remove('selected');
+            });
+        }
+
+        let currentWordLimit = 150;  // 預設 150 字
+
+        function setWordLimit(limit) {
+            currentWordLimit = limit;
+            // 更新按鈕狀態
+            document.querySelectorAll('.word-limit-btn').forEach(button => {
+                button.classList.remove('selected');
+                if (button.textContent === `${limit}字`) {
+                    button.classList.add('selected');
+                }
+            });
+        }
+    </script>
+</body>
+</html> 
