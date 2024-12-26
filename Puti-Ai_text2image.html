@@ -1,0 +1,313 @@
+<html><head><base href="." />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puti-Ai 文字轉圖片產生器</title>
+<style>
+body {
+    font-family: "Microsoft JhengHei", Arial, sans-serif;
+    background: #f0f2f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    max-width: 800px;
+    width: 90%;
+}
+
+textarea {
+    width: 100%;
+    height: 150px;
+    margin: 1rem 0;
+    padding: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    resize: vertical;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+select, input[type="number"] {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+button {
+    background: #1877f2;
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #166fe5;
+}
+
+#output {
+    margin-top: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    min-height: 200px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.download-btn {
+    background: #42b72a;
+    margin-top: 1rem;
+}
+
+.download-btn:hover {
+    background: #36a420;
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.emoji-btn {
+    background: #f0f2f5;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 0.5rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.3s;
+}
+
+.emoji-btn:hover {
+    background: #e4e6eb;
+    transform: scale(1.1);
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Puti-Ai 文字轉圖片產生器</h1>
+    <p>將文字轉換成圖片，避免被社群媒體過濾 (自動加入相關表情符號)</p>
+    
+    <textarea id="inputText" placeholder="請輸入要轉換的文字..."></textarea>
+    
+    <div class="emoji-grid" id="emojiGrid"></div>
+    
+    <div class="controls">
+        <select id="fontFamily">
+            <option value="Microsoft JhengHei">微軟正黑體</option>
+            <option value="PMingLiU">新細明體</option>
+            <option value="DFKai-SB">標楷體</option>
+        </select>
+        
+        <input type="number" id="fontSize" value="24" min="12" max="72" step="2">
+        
+        <select id="bgColor">
+            <option value="#FFFFFF">白色背景</option>
+            <option value="#000000">黑色背景</option>
+            <option value="#F0F2F5">臉書灰</option>
+        </select>
+        
+        <select id="textColor">
+            <option value="#000000">黑色文字</option>
+            <option value="#FFFFFF">白色文字</option>
+            <option value="#1877F2">臉書藍</option>
+        </select>
+    </div>
+    
+    <button onclick="generateImage()">生成圖片</button>
+    
+    <div id="output"></div>
+    <button class="download-btn" onclick="downloadImage()" style="display:none">下載圖片</button>
+</div>
+
+<script>
+const emojiList = {
+    '🤖': 'AI/機器人',
+    '🧠': '智能/思考',
+    '💻': '電腦/程式',
+    '📱': '手機/應用',
+    '🔍': '搜尋/探索',
+    '📊': '數據分析',
+    '🌐': '網路/全球',
+    '⚙️': '設定/系統',
+    '📈': '成長/進步',
+    '💡': '創意/想法',
+    '🎯': '目標/精準',
+    '🚀': '快速/發展',
+    '🔒': '安全/隱私',
+    '🎓': '學習/教育',
+    '📚': '知識/資訊',
+    '🔗': '連結/整合',
+    '🌟': '創新/亮點',
+    '🔄': '更新/循環',
+    '📡': '通訊/傳輸',
+    '💭': '思考/想法',
+    '🎮': '互動/遊戲',
+    '🔋': '能源/電力',
+    '📝': '筆記/紀錄',
+    '🎨': '設計/創作',
+    '🔬': '研究/科學',
+    '📲': '通訊/連接',
+    '🌍': '全球化',
+    '💪': '強化/提升',
+    '🎵': '聲音/音訊',
+    '🔨': '工具/開發',
+    '😊': '微笑',
+    '😂': '笑哭',
+    '🤔': '思考',
+    '😅': '尷尬',
+    '😎': '酷',
+    '🥺': '可憐',
+    '😤': '生氣',
+    '🙄': '白眼',
+    '😴': '睡覺'
+};
+
+// 初始化表情符號按鈕
+const emojiGrid = document.getElementById('emojiGrid');
+Object.entries(emojiList).forEach(([emoji, description]) => {
+    const button = document.createElement('button');
+    button.className = 'emoji-btn';
+    button.innerHTML = emoji;
+    button.title = description;
+    button.onclick = () => insertEmoji(emoji);
+    emojiGrid.appendChild(button);
+});
+
+function insertEmoji(emoji) {
+    const textarea = document.getElementById('inputText');
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end);
+    textarea.value = before + emoji + after;
+    textarea.focus();
+    textarea.selectionStart = textarea.selectionEnd = start + emoji.length;
+}
+
+const emojiMap = {
+    '開心': '😊',
+    '快樂': '😄',
+    '生氣': '😠',
+    '憤怒': '😡',
+    '傷心': '😢',
+    '難過': '😭',
+    '愛': '❤️',
+    '喜歡': '😍',
+    '讚': '👍',
+    '厲害': '💪',
+    '加油': '💪',
+    '笑': '😆',
+    '哈哈': '🤣',
+    '錢': '💰',
+    '金錢': '💵',
+    '工作': '💼',
+    '電腦': '💻',
+    '手機': '📱',
+    '睡覺': '😴',
+    '吃': '🍴',
+    '食物': '🍱',
+    '飲料': '🥤',
+    '音樂': '🎵',
+    '運動': '🏃',
+    '購物': '🛍️',
+    '驚訝': '😮',
+    '疑問': '❓',
+    '時間': '⏰',
+    '太陽': '☀️',
+    '月亮': '🌙',
+    '下雨': '🌧️',
+    '旅行': '✈️',
+    '家': '🏠',
+    '書': '📚',
+    '學習': '📝',
+    '天氣': '🌤️'
+};
+
+function addEmojis(text) {
+    let result = text;
+    for (let key in emojiMap) {
+        if (text.includes(key)) {
+            result += ' ' + emojiMap[key];
+        }
+    }
+    return result;
+}
+
+function generateImage() {
+    const text = document.getElementById('inputText').value;
+    const textWithEmojis = addEmojis(text);
+    const fontFamily = document.getElementById('fontFamily').value;
+    const fontSize = document.getElementById('fontSize').value;
+    const bgColor = document.getElementById('bgColor').value;
+    const textColor = document.getElementById('textColor').value;
+    
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    ctx.font = `${fontSize}px ${fontFamily}`;
+    
+    const lines = textWithEmojis.split('\n');
+    let maxWidth = 0;
+    for(let line of lines) {
+        const metrics = ctx.measureText(line);
+        maxWidth = Math.max(maxWidth, metrics.width);
+    }
+    
+    const lineHeight = fontSize * 1.5;
+    canvas.width = maxWidth + 40;
+    canvas.height = lines.length * lineHeight + 40;
+    
+    ctx.font = `${fontSize}px ${fontFamily}`;
+    
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    ctx.fillStyle = textColor;
+    ctx.textBaseline = 'top';
+    lines.forEach((line, index) => {
+        ctx.fillText(line, 20, 20 + (index * lineHeight));
+    });
+    
+    const output = document.getElementById('output');
+    output.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = canvas.toDataURL('image/png');
+    output.appendChild(img);
+    
+    document.querySelector('.download-btn').style.display = 'block';
+}
+
+function downloadImage() {
+    const output = document.getElementById('output');
+    const img = output.querySelector('img');
+    if(!img) return;
+    
+    const link = document.createElement('a');
+    link.download = '文字圖片.png';
+    link.href = img.src;
+    link.click();
+}
+</script>
+</body></html>
