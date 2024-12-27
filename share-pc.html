@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>投影接收端</title>
+</head>
+<body>
+    <h1>投影接收端</h1>
+    <video id="remoteVideo" autoplay></video>
+
+    <script>
+        const remoteVideo = document.getElementById('remoteVideo');
+
+        function startWebRTC() {
+            // 創建 RTCPeerConnection
+            const pc = new RTCPeerConnection();
+
+            // 接收遠端流並顯示在視頻標籤中
+            pc.ontrack = event => {
+                remoteVideo.srcObject = event.streams[0];
+            };
+
+            // 處理來自手機端的 offer
+            // 例如：receiveFromServer(offer => {
+            //     pc.setRemoteDescription(offer).then(() => {
+            //         return pc.createAnswer();
+            //     }).then(answer => {
+            //         return pc.setLocalDescription(answer);
+            //     }).then(() => {
+            //         // 將 answer 發送到信令服務器
+            //         // 例如：sendToServer(pc.localDescription);
+            //     });
+            // });
+
+            // 添加信令服務器交互代碼
+            // 例如：WebSocket 或其他方式接收 offer 並發送 answer
+        }
+
+        startWebRTC();
+    </script>
+</body>
+</html>
