@@ -1,52 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>手機屏幕捕獲</title>
+    <title>手機畫面分享</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        #startButton {
+            font-size: 20px;
+            padding: 10px;
+            margin: 20px;
+        }
+        #localVideo {
+            max-width: 100%;
+            margin: 10px;
+        }
+    </style>
 </head>
 <body>
-    <h1>手機屏幕捕獲</h1>
-    <button id="startCapture">開始捕獲</button>
-    <video id="localVideo" autoplay></video>
+    <button id="startButton">開始分享畫面</button>
+    <video id="localVideo" autoplay playsinline></video>
 
     <script>
-        const startCaptureButton = document.getElementById('startCapture');
+        const startButton = document.getElementById('startButton');
         const localVideo = document.getElementById('localVideo');
-
-        let localStream;
-
-        async function startCapture() {
+        
+        startButton.addEventListener('click', async () => {
             try {
-                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                localVideo.srcObject = localStream;
+                // 請求螢幕分享權限
+                const stream = await navigator.mediaDevices.getDisplayMedia({
+                    video: true
+                });
+                
+                // 顯示本地預覽
+                localVideo.srcObject = stream;
+                
+                // 處理使用者停止分享
+                stream.getVideoTracks()[0].addEventListener('ended', () => {
+                    localVideo.srcObject = null;
+                });
 
-                // 將視頻流傳輸到遠端（電腦）
-                startWebRTC();
             } catch (err) {
-                console.error("Error: " + err);
+                console.error('Error: ' + err);
+                alert('無法取得螢幕分享權限');
             }
-        }
-
-        function startWebRTC() {
-            // 創建 RTCPeerConnection
-            const pc = new RTCPeerConnection();
-
-            // 添加本地流到 RTCPeerConnection
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-            // 創建 offer 並設置本地描述
-            pc.createOffer().then(offer => {
-                return pc.setLocalDescription(offer);
-            }).then(() => {
-                // 將 offer 發送到信令服務器
-                // 這裡可以使用 WebSocket 或其他方式將 offer 傳輸給電腦端
-                // 例如：sendToServer(pc.localDescription);
-            });
-
-            // 處理來自電腦端的 answer
-            // 例如：receiveFromServer(answer => pc.setRemoteDescription(answer));
-        }
-
-        startCaptureButton.addEventListener('click', startCapture);
+        });
     </script>
 </body>
 </html>
