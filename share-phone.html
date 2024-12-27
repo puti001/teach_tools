@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>手機屏幕捕獲</title>
+</head>
+<body>
+    <h1>手機屏幕捕獲</h1>
+    <button id="startCapture">開始捕獲</button>
+    <video id="localVideo" autoplay></video>
+
+    <script>
+        const startCaptureButton = document.getElementById('startCapture');
+        const localVideo = document.getElementById('localVideo');
+
+        let localStream;
+
+        async function startCapture() {
+            try {
+                localStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                localVideo.srcObject = localStream;
+
+                // 將視頻流傳輸到遠端（電腦）
+                startWebRTC();
+            } catch (err) {
+                console.error("Error: " + err);
+            }
+        }
+
+        function startWebRTC() {
+            // 創建 RTCPeerConnection
+            const pc = new RTCPeerConnection();
+
+            // 添加本地流到 RTCPeerConnection
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+            // 創建 offer 並設置本地描述
+            pc.createOffer().then(offer => {
+                return pc.setLocalDescription(offer);
+            }).then(() => {
+                // 將 offer 發送到信令服務器
+                // 這裡可以使用 WebSocket 或其他方式將 offer 傳輸給電腦端
+                // 例如：sendToServer(pc.localDescription);
+            });
+
+            // 處理來自電腦端的 answer
+            // 例如：receiveFromServer(answer => pc.setRemoteDescription(answer));
+        }
+
+        startCaptureButton.addEventListener('click', startCapture);
+    </script>
+</body>
+</html>
