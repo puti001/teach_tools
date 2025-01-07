@@ -1,0 +1,333 @@
+<html><head><base href="https://cdn.jsdelivr.net/"><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><style>
+/* 現有樣式保持不變，但加入一些優化 */
+body {
+  font-family: "Microsoft JhengHei", sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  min-height: 100vh;
+}
+
+.container {
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  transition: transform 0.3s ease;
+}
+
+.container:hover {
+  transform: translateY(-2px);
+}
+
+h1 {
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 2rem;
+  position: relative;
+  padding-bottom: 15px;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, #3498db, #2ecc71);
+  border-radius: 3px;
+}
+
+.controls {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+button {
+  padding: 0.7rem 2rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1.2em;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+button:active {
+  transform: translateY(2px);
+}
+
+.num-btn {
+  background: linear-gradient(145deg, #3498db, #2980b9);
+  color: white;
+}
+
+.num-btn:hover {
+  background: linear-gradient(145deg, #2980b9, #2471a3);
+}
+
+.num-btn.active {
+  background: linear-gradient(145deg, #f1c40f, #f39c12) !important;
+  color: #000 !important;
+  font-weight: bold;
+  transform: scale(0.95);
+}
+
+.gender-btn {
+  background: linear-gradient(145deg, #e74c3c, #c0392b);
+  color: white;
+}
+
+.gender-btn:hover {
+  background: linear-gradient(145deg, #c0392b, #a93226);
+}
+
+.gender-btn.active {
+  background: linear-gradient(145deg, #f1c40f, #f39c12) !important;
+  color: #000 !important;
+  font-weight: bold;
+  transform: scale(0.95);
+}
+
+.prefix-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.5rem;
+  font-size: 1.2em;
+  padding: 0.5rem 1rem;
+  background: #f8f9fa;
+  border-radius: 5px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.generate-btn {
+  background: linear-gradient(145deg, #2ecc71, #27ae60);
+  color: white;
+  font-size: 1.3em;
+  min-width: 150px;
+}
+
+.generate-btn:hover {
+  background: linear-gradient(145deg, #27ae60, #219a52);
+}
+
+.result-area {
+  min-height: 200px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+  background: #fafafa;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.result-area:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52,152,219,0.5);
+}
+
+.action-btns {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.copy-btn, .download-btn {
+  background: linear-gradient(145deg, #95a5a6, #7f8c8d);
+  color: white;
+  min-width: 120px;
+}
+
+.copy-btn:hover, .download-btn:hover {
+  background: linear-gradient(145deg, #7f8c8d, #6c7a7d);
+}
+
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 1rem 2rem;
+  background: rgba(46, 204, 113, 0.95);
+  color: white;
+  border-radius: 5px;
+  display: none;
+  animation: fadeIn 0.3s, fadeOut 0.3s 1.7s;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-20px); }
+}
+
+@media (max-width: 600px) {
+  .controls {
+    gap: 1rem;
+  }
+  
+  button {
+    padding: 0.6rem 1.5rem;
+    font-size: 1.1em;
+  }
+  
+  .container {
+    padding: 1rem;
+  }
+}
+</style></head><body>
+
+<div class="container">
+  <h1>Puti-Ai 中文姓名產生器</h1>
+  
+  <div class="controls">
+    <div>
+      <button class="num-btn active" data-num="1">1個</button>
+      <button class="num-btn" data-num="5">5個</button>
+      <button class="num-btn" data-num="10">10個</button>
+      <button class="num-btn" data-num="20">20個</button>
+    </div>
+    <div>
+      <button class="gender-btn" data-gender="male">男性</button>
+      <button class="gender-btn" data-gender="female">女性</button>
+      <button class="gender-btn active" data-gender="mixed">混合</button>
+    </div>
+    <div class="prefix-toggle">
+      <input type="checkbox" id="prefix-check">
+      <label for="prefix-check">前綴編號</label>
+    </div>
+    <button class="generate-btn">產生姓名</button>
+  </div>
+
+  <div class="result-area" id="result" contenteditable="true"></div>
+
+  <div class="action-btns">
+    <button class="copy-btn">複製結果</button>
+    <button class="download-btn">下載文字檔</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">已複製到剪貼板</div>
+
+<script>
+const surnames = '陳林黃張李王吳劉蔡楊許鄭謝郭洪曾邱廖賴徐周葉蘇莊呂江何范施羅董梁簡沈潘朱顏蕭游傅柯翁魏方孫戴范歐陽鍾鄧湯姚白康伍石方任馬傅盧華王古阮唐藍高金龔'.split('');
+
+const maleNames = ['昱翔', '正宇', '建宏', '俊豪', '家豪', '志豪', '彥廷', '柏翰', '宗翰', '明翔', '俊宇', '承翰', '志偉', '冠宇', '哲瑋', '維哲', '承恩', '紹宇', '柏軒', '柏翔', '宇軒', '宇翔', '家瑜', '冠廷', '家銘', '冠霖', '子軒', '宏安', '宏翰', '志銘'];
+
+const femaleNames = ['采璇', '楷媗', '巧芸', '雅婷', '佳琪', '雅雯', '佩珊', '怡君', '雅惠', '淑娟', '美琪', '佳玲', '雅玲', '惠雯', '欣怡', '怡伶', '玉婷', '淑玲', '美玉', '佳穎', '佳宜', '怡婷', '惠玲', '淑華', '佳雯', '佳慧', '佳蓉', '佳玉', '雅慧', '惠婷'];
+
+let selectedNum = 1;
+let selectedGender = 'mixed';
+let usePrefix = false;
+
+// 初始化按鈕狀態
+document.querySelector('[data-num="1"]').classList.add('active');
+document.querySelector('[data-gender="mixed"]').classList.add('active');
+
+document.querySelectorAll('.num-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.num-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    selectedNum = parseInt(e.target.dataset.num);
+    generateAndDisplay();
+  });
+});
+
+document.querySelectorAll('.gender-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    selectedGender = e.target.dataset.gender;
+    generateAndDisplay();
+  });
+});
+
+document.getElementById('prefix-check').addEventListener('change', (e) => {
+  usePrefix = e.target.checked;
+  generateAndDisplay();
+});
+
+function generateNames(count) {
+  const result = [];
+  const usedNames = new Set();
+  
+  for(let i = 0; i < count; i++) {
+    let fullName;
+    do {
+      const surname = surnames[Math.floor(Math.random() * surnames.length)];
+      let name;
+      
+      if (selectedGender === 'mixed') {
+        const gender = Math.random() < 0.5 ? 'male' : 'female';
+        const namesList = gender === 'male' ? maleNames : femaleNames;
+        name = namesList[Math.floor(Math.random() * namesList.length)];
+      } else {
+        const namesList = selectedGender === 'male' ? maleNames : femaleNames;
+        name = namesList[Math.floor(Math.random() * namesList.length)];
+      }
+      
+      fullName = surname + name;
+    } while (usedNames.has(fullName));
+    
+    usedNames.add(fullName);
+    
+    if (usePrefix) {
+      fullName = `${(i + 1).toString().padStart(2, '0')}. ${fullName}`;
+    }
+    result.push(fullName);
+  }
+  return result;
+}
+
+function generateAndDisplay() {
+  const names = generateNames(selectedNum);
+  document.getElementById('result').textContent = names.join('\n');
+}
+
+document.querySelector('.generate-btn').addEventListener('click', generateAndDisplay);
+
+document.querySelector('.copy-btn').addEventListener('click', () => {
+  const text = document.getElementById('result').textContent;
+  if (!text.trim()) return;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(() => {
+      toast.style.display = 'none';
+    }, 2000);
+  });
+});
+
+document.querySelector('.download-btn').addEventListener('click', () => {
+  const text = document.getElementById('result').textContent;
+  if (!text.trim()) return;
+  
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '中文姓名.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+// 初始產生一次名字
+generateAndDisplay();
+</script></body></html>
