@@ -1,0 +1,52 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-Ai 大量亂數產生器</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="title-container">
+      <h1>Puti-Ai 大量亂數產生器</h1>
+      <div class="dice-animation"></div>
+    </div>
+    
+    <div class="input-container">
+      <div class="input-group">
+        <label>
+          <span class="label-text">範圍</span>
+          <div class="range-inputs">
+            <input type="number" id="min" placeholder="最小值" required>
+            <div class="range-separator">～</div>
+            <input type="number" id="max" placeholder="最大值" required>
+          </div>
+        </label>
+      </div>
+
+      <div class="input-group">
+        <label>
+          <span class="label-text">直欄</span>
+          <input type="number" id="cols" min="1" placeholder="直欄數" required>
+        </label>
+      </div>
+
+      <div class="input-group">
+        <label>
+          <span class="label-text">橫列</span>
+          <input type="number" id="rows" min="1" placeholder="橫列數" required>
+        </label>
+      </div>
+    </div>
+
+    <button id="generate">
+      <span class="button-text">產生亂數並複製</span>
+      <span class="button-icon">🎲</span>
+    </button>
+
+    <div id="result"></div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
