@@ -1,0 +1,68 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-Ai文字前加符號產生器</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Puti-Ai文字前加符號產生器</h1>
+    
+    <div class="options-section">
+      <div class="option">
+        <input type="checkbox" id="numbers" checked>
+        <label for="numbers">數字 (01, 02, 03...)</label>
+      </div>
+      <div class="option">
+        <input type="checkbox" id="lowerAlpha">
+        <label for="lowerAlpha">小寫字母 (a, b, c...)</label>
+      </div>
+      <div class="option">
+        <input type="checkbox" id="upperAlpha">
+        <label for="upperAlpha">大寫字母 (A, B, C...)</label>
+      </div>
+      <div class="option">
+        <input type="checkbox" id="bullets">
+        <label for="bullets">項目符號 (•)</label>
+      </div>
+      <div class="option">
+        <input type="checkbox" id="listMarks">
+        <label for="listMarks">清單符號 (-, +, *)</label>
+      </div>
+      <div class="option">
+        <input type="checkbox" id="emoji">
+        <label for="emoji">表情符號 (😊, 👍, ⭐...)</label>
+      </div>
+      <div class="option">
+        <input type="checkbox" id="pairTexts">
+        <label for="pairTexts">一對一配對文本 1+2</label>
+      </div>
+    </div>
+
+    <div class="input-grid">
+      <div class="input-section">
+        <label for="inputText1">文本 1</label>
+        <textarea id="inputText1" placeholder="請輸入文字，每行一個..."></textarea>
+      </div>
+      <div class="input-section">
+        <label for="inputText2">文本 2</label>
+        <textarea id="inputText2" placeholder="請輸入文字，每行一個..."></textarea>
+        <div id="warningText" class="warning-text">※ 警告：文本 1 和文本 2 的行數不相等</div>
+      </div>
+    </div>
+
+    <div class="button-group">
+      <button id="processBtn">檢視結果</button>
+      <button id="copyBtn">複製結果</button>
+      <button id="downloadBtn">下載TXT</button>
+    </div>
+
+    <div class="output-section">
+      <pre id="outputText"></pre>
+    </div>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
