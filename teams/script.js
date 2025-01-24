@@ -29,7 +29,6 @@ class StudentGrouper {
 
     this.setupPersonalScoring();
     this.setupThemeSwitcher();
-    this.setupSoundEffects();
   }
 
   initEventListeners() {
@@ -363,14 +362,18 @@ class StudentGrouper {
   }
 
   setupAudio() {
-    this.addScoreSound = new Audio('data:audio/wav;base64,UklGRn4AAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVoAAAAMABwAKgA0AD4ARwBMAEwASgBEADsAMAAlABkACwD9/+//4v/V/8r/wP+4/7H/rf+r/63/s/+7/8T/0f/g//L/BgAYACwAQABTAGYAeACHAJQAnwCoAK4AsgA=');
-    this.subtractScoreSound = new Audio('data:audio/wav;base64,UklGRoAAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVwAAACoAJ4AkwCIAHwAbgBgAFIAQwA0ACUAFgAIAPn/6//d/9D/xP+5/7D/qf+k/6H/oP+i/6f/rf+2/8H/zf/b/+r/+v8KABsALAA9AE4AXwBvAH8AjQCaAKYA');
-    this.victorySound = new Audio('data:audio/wav;base64,UklGRqAAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVwAAACMAKQAvADTAOgA+gAJARQBGwEeARwBFwEOAQIB8gDgAMwAtgCfAIcAbQBSADYAGQD8/+D/xP+q/5D/eP9i/07/O/8r/x7/Ff8Q/w7/EP8V/x3/KP82/0f/');
+    this.addScoreSound = new Audio('https://puti001.github.io/teach_tools/teams/correct.wav');
+    this.subtractScoreSound = new Audio('https://puti001.github.io/teach_tools/teams/error.wav');
+    this.victorySound = new Audio('https://puti001.github.io/teach_tools/teams/Clap.wav');
     
-    // Preload sounds
-    this.addScoreSound.load();
-    this.subtractScoreSound.load();
-    this.victorySound.load();
+    // Add hover sound effect
+    this.hoverSound = new Audio('data:audio/wav;base64,UklGRlYAAABXQVZFZm10IBAAAAABAAEARK4AABCxAgACABAAZGF0YTIAAABgAIwArADEANQA5ADwAPwABAEIAQwBEAEMAQgBBAH8APgA8ADsAOgA4wDeANkA1ADQAM0A');
+    
+    // Preload all sounds
+    [this.addScoreSound, this.subtractScoreSound, this.victorySound, this.hoverSound].forEach(sound => {
+      sound.load();
+      sound.volume = 0.5;
+    });
   }
 
   setupTargetScore() {
@@ -651,22 +654,10 @@ class StudentGrouper {
   }
 
   setupSoundEffects() {
-    // Update sound effects to be more engaging
-    this.addScoreSound = new Audio('data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEARK4AABCxAgACABAAZGF0YVYAAAAMABwAKgA0AD4ARwBMAEwASgBEADsAMAAlABkACwD9/+//4v/V/8r/wP+4/7H/rf+r/63/s/+7/8T/0f/g//L/BgAYACwAQABTAGYAeACHAJQAnwCoAK4AsgA=');
-    
-    this.subtractScoreSound = new Audio('data:audio/wav;base64,UklGRoAAAABXQVZFZm10IBAAAAABAAEARK4AABCxAgACABAAZGF0YVwAAACuAKQAmgCQAIYAfAByAGgAXgBUAEoAQAA2ACwAIgAYAA4ABAAAAPj/9P/w/+z/6P/k/+D/3P/Y/9T/0P/M/8j/xP/A/7z/uP+0/7D/rP+o/6T/oP+c/5gA');
-    
-    this.victorySound = new Audio('data:audio/wav;base64,UklGRpQAAABXQVZFZm10IBAAAAABAAEARK4AABCxAgACABAAZGF0YXAAAABmAHcAiACZAKoAvADNAN4A7wABAREBIQExAUEBUQFhAXEBgQGRAaEBsQHBAcEBsQGhAZEBgQFxAWEBUQFBAR4B8ADEAJgAbABAABQA6P+8/5D/ZP84/wz/4P60/oj/XP8w/wT/2P6s/oD/');
-    
-    // Add animation sound effects
-    this.hoverSound = new Audio('data:audio/wav;base64,UklGRlYAAABXQVZFZm10IBAAAAABAAEARK4AABCxAgACABAAZGF0YTIAAABgAIwArADEANQA5ADwAPwABAEIAQwBEAEMAQgBBAH8APgA8ADsAOgA4wDeANkA1ADQAM0A');
-    
-    // Preload all sounds
-    [this.addScoreSound, this.subtractScoreSound, this.victorySound, this.hoverSound].forEach(sound => {
-      sound.load();
-      sound.volume = 0.5;
-    });
+    // This method is now redundant since setupAudio() handles the sound setup
+    // You can remove this method or keep it as a placeholder
   }
+
 }
 
 // Make grouper instance globally available for personal score buttons
