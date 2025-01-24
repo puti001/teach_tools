@@ -1,0 +1,105 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>Puti-Ai 學生分組與計分器 | Student Grouping & Scoring System</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <div class="language-switcher">
+      <button data-lang="zh-TW" class="active">中文</button>
+      <button data-lang="en">English</button>
+    </div>
+    <div class="theme-switcher">
+      <button class="theme-btn active" data-theme="default" style="background: linear-gradient(135deg, #2c3e50, #3498db);" title="Default"></button>
+      <button class="theme-btn" data-theme="ocean" style="background: linear-gradient(135deg, #1a4b6e, #2a9d8f);" title="Ocean"></button>
+      <button class="theme-btn" data-theme="forest" style="background: linear-gradient(135deg, #2d5a27, #85b479);" title="Forest"></button>
+      <button class="theme-btn" data-theme="sunset" style="background: linear-gradient(135deg, #c0392b, #e67e22);" title="Sunset"></button>
+      <button class="theme-btn" data-theme="purple" style="background: linear-gradient(135deg, #4a235a, #9b59b6);" title="Purple Rain"></button>
+    </div>
+    
+    <h1>Puti-Ai 學生分組與計分器</h1>
+    
+    <div class="input-section">
+      <textarea id="studentList" placeholder="請輸入學生名單（每行一個）"></textarea>
+      <div>
+        <input type="checkbox" id="rememberList">
+        <label for="rememberList" data-i18n="rememberList">記憶清單</label>
+      </div>
+    </div>
+
+    <div class="mode-section">
+      <h3 data-i18n="groupingMode">分組模式</h3>
+      <div class="mode-buttons">
+        <button id="randomMode" data-i18n="randomMode">隨機分組</button>
+      </div>
+    </div>
+
+    <div class="group-section">
+      <h3 data-i18n="numberOfGroups">分組數量</h3>
+      <div class="group-buttons">
+        <button class="group-btn" data-groups="2" data-i18n="groups2">2組</button>
+        <button class="group-btn" data-groups="3" data-i18n="groups3">3組</button>
+        <button class="group-btn" data-groups="4" data-i18n="groups4">4組</button>
+        <button class="group-btn" data-groups="5" data-i18n="groups5">5組</button>
+        <button id="customGroupBtn" data-i18n="custom">自訂</button>
+      </div>
+    </div>
+    
+    <div class="save-load-section">
+      <h3 data-i18n="saveLoad">儲存/載入分組</h3>
+      <input type="text" id="saveName" data-i18n-placeholder="saveName" placeholder="儲存名稱">
+      <button id="saveBtn" data-i18n="save">儲存</button>
+      <select id="loadSelect">
+        <option value="" data-i18n="loadGroups">載入分組</option>
+      </select>
+      <button id="loadBtn" data-i18n="load">載入</button>
+    </div>
+
+    <div class="reset-section">
+      <button id="resetBtn" data-i18n="reset">重置</button>
+      <button id="clearSavesBtn" data-i18n="clearMemory">清除分組記憶</button>
+    </div>
+
+    <div id="studentsContainer" class="students-container"></div>
+    <div id="groupsContainer" class="groups-container"></div>
+
+    <div class="race-track-container">
+      <h2 data-i18n="raceTitle">🏁 競賽排行榜 🏁</h2>
+      <div class="podium">
+        <div class="podium-spot" id="second">2</div>
+        <div class="podium-spot" id="first">1</div>
+        <div class="podium-spot" id="third">3</div>
+      </div>
+      <div id="raceTrack" class="race-track"></div>
+    </div>
+
+    <button id="togglePersonalScores" data-i18n="showPersonalScores">顯示個人得分</button>
+
+    <!-- Personal scores container will be inserted here by JavaScript -->
+
+    <div class="instructions-container">
+      <h3 data-i18n="instructions">使用說明</h3>
+      <ol>
+        <li data-i18n="instruction1">在文字框中輸入學生名單（每行一個名字）</li>
+        <li data-i18n="instruction2">可勾選「記憶清單」以保存名單</li>
+        <li data-i18n="instruction3">選擇分組數量（2-5組或自訂）</li>
+        <li data-i18n="instruction4">點擊「隨機分組」進行自動分組</li>
+        <li data-i18n="instruction8">可手動拖曳學生名單至各組，或先手動拖曳組長後再隨機分配其他成員</li>
+        <li data-i18n="instruction5">使用 +1/-1 按鈕為各組加減分數</li>
+        <li data-i18n="instruction6">可設定目標分數，首先達到的組別獲勝</li>
+        <li data-i18n="instruction9">點擊「個人得分」按鈕可查看/隱藏個人累積得分</li>
+        <li data-i18n="instruction10">個人得分區可針對個人加減分數，並自動儲存</li>
+        <li data-i18n="instruction7">可儲存分組結果，方便下次載入使用</li>
+      </ol>
+    </div>
+
+    <div class="copyright">
+      <p data-i18n="copyright">屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎推廣。嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="script.js" type="module"></script>
+</body>
+</html>
