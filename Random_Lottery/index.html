@@ -1,0 +1,64 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-AI 隨機抽籤器</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="language-switch">
+    <button class="language-btn">English</button>
+  </div>
+  
+  <div class="container">
+    <h1>Puti-AI 隨機抽籤器</h1>
+    
+    <div class="input-section">
+      <input type="number" id="ballCount" min="1" max="100" placeholder="請輸入號碼球數量(1-100)">
+      <div class="draw-options">
+        <input type="number" id="drawCount" min="1" placeholder="一次抽幾個號碼" class="draw-count">
+        <label class="checkbox-container">
+          <input type="checkbox" id="drawAllAtOnce">
+          <span class="checkbox-text">一次抽完</span>
+        </label>
+      </div>
+      <button id="generateBtn">產生號碼球</button>
+    </div>
+
+    <div class="lottery-container">
+      <div id="circularContainer" class="circular-container">
+        <div class="exit-gate"></div>
+      </div>
+      <button id="drawBtn" disabled>開始抽籤</button>
+    </div>
+
+    <div class="results">
+      <div class="result-section">
+        <h2>已抽中的號碼</h2>
+        <div id="drawnNumbers" class="number-list"></div>
+      </div>
+      <div class="result-section">
+        <h2>未抽中的號碼</h2>
+        <div id="remainingNumbers" class="number-list"></div>
+      </div>
+    </div>
+
+    <div class="instructions">
+      <h2>使用說明</h2>
+      <ul>
+        <li>輸入要產生的號碼球總數（1-100）</li>
+        <li>輸入每次要抽取的號碼數量</li>
+        <li>可選擇勾選「一次抽完」自動連續抽取所有號碼</li>
+        <li>點擊「產生號碼球」產生號碼</li>
+        <li>點擊「開始抽籤」開始抽取號碼</li>
+        <li>最新抽中的號碼會以黃色底色突顯3秒鐘</li>
+      </ul>
+    </div>
+
+    <div class="copyright">
+      屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎推廣。嚴禁商用與任何侵權、不尊重著作權的行為。
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
