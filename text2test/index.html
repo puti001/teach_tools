@@ -1,0 +1,150 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-AI 文本轉測驗題</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="language-switch">
+      <button id="langToggle">English</button>
+    </div>
+
+    <h1>Puti-AI 文本轉測驗題</h1>
+    
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="main">主要功能</button>
+      <button class="tab-btn" data-tab="help">使用說明</button>
+    </div>
+
+    <div id="helpContent" class="tab-content" style="display: none;">
+      <div class="help-section">
+        <h2>🌟 歡迎使用 Puti-AI 文本轉測驗題!</h2>
+        
+        <h3>🎯 這是什麼神奇的工具?</h3>
+        <p>想要把枯燥的文本變成有趣的測驗題?本工具就是你的最佳助手!只要輸入文本,AI 就會自動幫你生成各種類型的選擇題,讓學習變得更有趣!</p>
+
+        <h3>✨ 超酷功能一覽</h3>
+        <ul>
+          <li>🤖 智能題目生成:自動分析文本並生成高品質測驗題</li>
+          <li>🎨 多樣題型風格:生活情境、專業學術、淺白易懂,隨你挑選</li>
+          <li>📊 自訂難度等級:從易到難,完全符合你的需求</li>
+          <li>📝 錯題複習功能:記錄錯題,幫助你查漏補缺</li>
+          <li>📂 批量文件處理:輕鬆處理多個文本檔案</li>
+          <li>💾 自動保存功能:文本內容永不遺失</li>
+          <li>📥 匯出下載功能:題目、答案、解析一鍵打包</li>
+        </ul>
+
+        <h3>🎮 如何使用?</h3>
+        <ol>
+          <li>1️⃣ 首先,輸入你的 Gemini API Key</li>
+          <li>2️⃣ 貼上想要轉換的文本,或選擇文件</li>
+          <li>3️⃣ 設定題目數量、難度、長度和風格</li>
+          <li>4️⃣ 點擊「產生題目」,等待魔法發生!</li>
+          <li>5️⃣ 完成測驗後,查看結果和詳細解析</li>
+        </ol>
+
+        <h3>💡 小貼士</h3>
+        <ul>
+          <li>⏰ 題目越多,生成時間越長,請耐心等待</li>
+          <li>📚 可以先下載提示詞,到其他 AI 工具使用</li>
+          <li>📋 錯題會自動保存,方便之後複習</li>
+          <li>🔄 可以隨時切換題目風格,找到最適合的方式</li>
+        </ul>
+      </div>
+    </div>
+
+    <div id="mainContent" class="tab-content">
+      <div class="api-key-section">
+        <div class="api-key-input">
+          <label for="apiKey">Google Gemini API Key:</label>
+          <input type="password" id="apiKey" placeholder="輸入您的 API Key">
+          <button id="toggleApiKey">顯示</button>
+          <button id="saveApiKey">儲存</button>
+          <button id="resetApiKey">重設</button>
+        </div>
+      </div>
+
+      <div class="main-section">
+        <div class="file-section">
+          <div class="file-controls">
+            <input type="file" id="fileInput" accept=".txt" multiple webkitdirectory directory>
+            <button id="selectFolder">選擇資料夾</button>
+          </div>
+          <div id="fileList" class="file-list"></div>
+        </div>
+
+        <textarea id="textInput" placeholder="請輸入要轉換成題目的文本內容..."></textarea>
+        
+        <div class="options">
+          <label for="questionCount">題數:</label>
+          <select id="questionCount">
+            <option value="5">5題</option>
+            <option value="10">10題</option>
+            <option value="15">15題</option>
+            <option value="20">20題</option>
+            <option value="30">30題</option>
+            <option value="40">40題</option>
+            <option value="50">50題</option>
+          </select>
+
+          <label for="difficulty">難度:</label>
+          <select id="difficulty">
+            <option value="easy">容易</option>
+            <option value="medium" selected>中等</option>
+            <option value="hard">困難</option>
+          </select>
+
+          <label for="questionLength">題幹長度:</label>
+          <select id="questionLength">
+            <option value="25">約25字</option>
+            <option value="35">約35字</option>
+            <option value="45" selected>約45字</option>
+            <option value="55">約55字</option>
+            <option value="custom">自訂</option>
+          </select>
+          <input type="number" id="customLength" class="hidden" placeholder="自訂字數" min="10" max="100">
+
+          <label for="questionStyle">題目風格:</label>
+          <select id="questionStyle">
+            <option value="default" selected>一般題型</option>
+            <option value="scenario">生活情境</option>
+            <option value="professional">專業學術</option>
+            <option value="simple">淺白易懂</option>
+          </select>
+          
+          <button id="generateQuestions">產生題目</button>
+          <button id="downloadContent" class="secondary-button" title="下載文本和題目">下載內容</button>
+          <button id="downloadPrompt" class="secondary-button" title="下載生成題目的提示詞">下載提示詞</button>
+        </div>
+
+        <div id="quizContainer" class="hidden">
+          <div id="questions"></div>
+          <button id="submitQuiz">提交答案</button>
+        </div>
+
+        <div id="results" class="hidden">
+          <h2>測驗結果</h2>
+          <div id="score"></div>
+          <div id="explanations"></div>
+        </div>
+
+        <div id="wrongQuestions" class="hidden">
+          <h2>錯題記錄</h2>
+          <div id="wrongQuestionsList"></div>
+          <button id="reviewWrongQuestions">複習錯題</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <p>屏東縣後庄國小黃朝榮老師作品,免費分享,歡迎擴散推廣</p>
+      <p>嚴禁商用與任何侵權、不尊重著作權的行為</p>
+      <p>更多 Puti-AI教學工具:<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank">https://padlet.com/clongwh/puti_ai_tools</a></p>
+    </footer>
+  </div>
+
+  <script src="script.js" type="module"></script>
+</body>
+</html>
