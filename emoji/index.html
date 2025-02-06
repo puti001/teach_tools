@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 社群貼文助手</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 Puti-AI 社群貼文助手</h1>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('main')">主要功能</button>
+                <button class="tab-btn" onclick="switchTab('help')">使用說明</button>
+            </div>
+        </header>
+        
+        <div id="main-tab" class="tab-content active">
+            <div class="api-key-section">
+                <div class="input-group">
+                    <input type="password" id="apiKey" placeholder="輸入 Gemini API Key">
+                    <button id="toggleApiKey">👁️</button>
+                    <button id="saveApiKey">💾</button>
+                    <button id="resetApiKey">🔄</button>
+                </div>
+            </div>
+
+            <main>
+                <div class="input-section">
+                    <textarea id="postInput" placeholder="在這裡輸入您的貼文內容..."></textarea>
+                    <button id="generateBtn">✨ 產生貼文</button>
+                </div>
+
+                <div class="preview-section">
+                    <h2>預覽結果</h2>
+                    <div id="previewContent" class="preview-content"></div>
+                    <button id="copyBtn">📋 複製結果</button>
+                </div>
+            </main>
+        </div>
+
+        <div id="help-tab" class="tab-content">
+            <div class="help-content">
+                <h2>🎯 使用說明</h2>
+                <ol>
+                    <li>首先需要取得 Gemini API Key：
+                        <ul>
+                            <li>前往 <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></li>
+                            <li>登入 Google 帳號</li>
+                            <li>點擊「Create API key」取得金鑰</li>
+                        </ul>
+                    </li>
+                    <li>將 API Key 輸入並儲存（僅會儲存在您的瀏覽器中）</li>
+                    <li>在文字框中輸入您想要優化的貼文內容</li>
+                    <li>點擊「產生貼文」，系統會自動：
+                        <ul>
+                            <li>✨ 加入適當的表情符號</li>
+                            <li>🏷️ 產生相關主題標籤</li>
+                            <li>🌏 翻譯成英文版本</li>
+                        </ul>
+                    </li>
+                    <li>點擊「複製結果」即可將完整內容複製到剪貼板</li>
+                </ol>
+                
+                <h3>💡 小提醒</h3>
+                <ul>
+                    <li>建議每次處理一則貼文內容</li>
+                    <li>可以透過重新整理頁面來清除預覽區的內容</li>
+                    <li>若遇到問題，請檢查 API Key 是否正確</li>
+                </ul>
+            </div>
+        </div>
+
+        <footer>
+            <div class="copyright">
+                <p>屏東縣後庄國小黃朝榮老師作品</p>
+                <p>免費分享，歡迎擴散推廣</p>
+                <p>嚴禁商用與任何侵權、不尊重著作權的行為</p>
+                <p>更多 Puti-AI 教學工具：<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank">https://padlet.com/clongwh/puti_ai_tools</a></p>
+            </div>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 

@@ -1,0 +1,180 @@
+:root {
+    --primary-color: #FF6B6B;
+    --secondary-color: #4ECDC4;
+    --background-color: #f8f9fa;
+    --text-color: #2d3436;
+}
+
+body {
+    font-family: 'Segoe UI', '微軟正黑體', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+h1 {
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin: 0;
+}
+
+.api-key-section {
+    margin-bottom: 2rem;
+}
+
+.input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+input[type="password"],
+textarea {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+input[type="password"]:focus,
+textarea:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+button {
+    padding: 0.8rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    background-color: #ff8585;
+}
+
+textarea {
+    min-height: 150px;
+    margin-bottom: 1rem;
+}
+
+.preview-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.preview-content {
+    white-space: pre-wrap;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+#copyBtn {
+    background-color: var(--secondary-color);
+}
+
+.tabs {
+    margin: 2rem 0;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+}
+
+.tab-btn {
+    padding: 0.8rem 2rem;
+    border-radius: 20px;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+.tab-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.help-content {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.help-content h2 {
+    color: var(--primary-color);
+    margin-top: 0;
+}
+
+.help-content h3 {
+    color: var(--secondary-color);
+    margin-top: 2rem;
+}
+
+.help-content ol, 
+.help-content ul {
+    padding-left: 1.5rem;
+    line-height: 1.6;
+}
+
+.help-content li {
+    margin-bottom: 1rem;
+}
+
+.help-content a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.help-content a:hover {
+    text-decoration: underline;
+}
+
+footer {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    color: #666;
+}
+
+.copyright {
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.copyright a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.copyright a:hover {
+    text-decoration: underline;
+} 
