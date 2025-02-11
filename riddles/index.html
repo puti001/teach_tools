@@ -1,0 +1,143 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-AI 元宵猜謎樂</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="lantern-container">
+      <div class="lantern left"></div>
+      <div class="lantern center"></div>
+      <div class="lantern right"></div>
+    </div>
+
+    <h1>Puti-AI 元宵猜謎樂</h1>
+    
+    <div class="top-buttons">
+      <button id="toggleInput">題庫管理</button>
+      <button id="helpButton">使用說明</button>
+      <button id="toggleMusic">音樂管理</button>
+    </div>
+
+    <div id="riddleInput" class="hidden input-section">
+      <div class="file-upload">
+        <input type="file" id="fileInput" accept=".txt" multiple>
+        <label for="fileInput" class="upload-label">新增題庫</label>
+      </div>
+      <div id="riddleSets" class="riddle-sets"></div>
+    </div>
+
+    <div id="musicSection" class="hidden music-section">
+      <div class="file-upload">
+        <input type="file" id="musicInput" accept="audio/*">
+        <label for="musicInput" class="upload-label">選擇音樂</label>
+      </div>
+      <div class="music-controls">
+        <button id="playMusic" class="hidden">播放音樂</button>
+        <button id="stopMusic" class="hidden">停止播放</button>
+      </div>
+      <p id="currentMusic" class="current-music"></p>
+    </div>
+
+    <div id="mainContent" class="game-section">
+      <div class="riddle-display">
+        <div class="riddle-content">
+          <p id="currentRiddle">請選擇題庫開始猜燈謎！</p>
+        </div>
+      </div>
+      
+      <div class="buttons">
+        <button id="nextRiddle">出題</button>
+        <button id="showAnswer">看答案</button>
+      </div>
+      
+      <div class="answer-buttons hidden">
+        <button id="correct">答對了</button>
+        <button id="incorrect">答錯了</button>
+      </div>
+    </div>
+
+    <div id="helpContent" class="help-section hidden">
+      <h2>使用說明</h2>
+      <div class="help-text">
+        <h3>1. 基本操作</h3>
+        <ul>
+          <li>題庫管理：點擊「題庫管理」可以開啟題庫選單</li>
+          <li>音樂管理：點擊「音樂管理」可以設定背景音樂</li>
+          <li>出題：選擇題庫後，點擊「出題」按鈕開始猜謎</li>
+          <li>看答案：點擊「看答案」按鈕顯示謎底</li>
+          <li>答對/答錯：可點擊相應按鈕，會有音效與動畫效果</li>
+        </ul>
+
+        <h3>2. 題庫管理</h3>
+        <p>系統已內建多個題庫，您也可以自行新增題庫：</p>
+        <ul>
+          <li>點擊「新增題庫」上傳文字檔</li>
+          <li>可同時上傳多個題庫檔案</li>
+          <li>題庫會自動儲存在瀏覽器中</li>
+          <li>點擊題庫按鈕旁的「×」可刪除該題庫</li>
+        </ul>
+        
+        <h3>3. 音樂管理</h3>
+        <ul>
+          <li>點擊「選擇音樂」可上傳音樂檔案</li>
+          <li>支援常見音樂格式（mp3、wav等）</li>
+          <li>可使用「播放音樂」和「停止播放」控制音樂</li>
+          <li>音樂會循環播放，直到手動停止</li>
+        </ul>
+
+        <h3>4. 題庫格式說明</h3>
+        <p>題庫檔案需為純文字檔（.txt），並符合以下格式：</p>
+        <ul>
+          <li>每題包含兩行文字</li>
+          <li>第一行為謎題</li>
+          <li>第二行為答案</li>
+          <li>直接換行即可分隔下一題</li>
+        </ul>
+        
+        <h3>5. 範例檔案</h3>
+        <div class="example-content">
+          <pre>
+天上一個月，地上一個月。
+明月
+
+古代詩人做詩
+作家            
+          </pre>
+        </div>
+        
+        <div class="example-downloads">
+          <h3>下載範例題庫</h3>
+          <div class="download-buttons">
+            <a href="文字篇.txt" download class="download-btn">文字篇</a>
+            <a href="動物篇.txt" download class="download-btn">動物篇</a>
+            <a href="腦筋急轉彎篇.txt" download class="download-btn">腦筋急轉彎篇</a>
+            <a href="台灣地名篇.txt" download class="download-btn">台灣地名篇</a>
+            <a href="成語篇.txt" download class="download-btn">成語篇</a>
+            <a href="物品篇.txt" download class="download-btn">物品篇</a>
+            <a href="食物篇.txt" download class="download-btn">食物篇</a>
+          </div>
+        </div>
+      </div>
+      <button id="backToGame" class="back-button">返回遊戲</button>
+    </div>
+
+    <div id="result" class="result hidden">
+      <span class="result-text"></span>
+    </div>
+
+    <div class="copyright">
+      <p>屏東縣後庄國小黃朝榮老師作品</p>
+      <p>免費分享，歡迎擴散推廣</p>
+      <p>嚴禁商用與任何侵權、不尊重著作權的行為</p>
+      <p><a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener noreferrer">更多 Puti-AI 教學工具</a></p>
+    </div>
+  </div>
+
+  <div class="fireworks"></div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
