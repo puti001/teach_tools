@@ -1,0 +1,22 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-AI 貼文轉文字檔</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Puti-AI 貼文轉文字檔</h1>
+
+    <div class="input-group">
+      <label for="content">貼文內容: <span class="note">（第一行文字將作為檔案名稱）</span></label>
+      <textarea id="content" rows="10" placeholder="請輸入或貼上文章內容&#13;&#10;注意：第一行內容將作為檔案名稱"></textarea>
+    </div>
+
+    <button id="download" onclick="downloadText()">下載文字檔</button>
+  </div>
+  
+  <script src="script.js"></script>
+</body>
+</html>
