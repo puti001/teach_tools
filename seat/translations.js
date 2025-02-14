@@ -34,6 +34,7 @@ export const translations = {
     instruction8: "完成後可以下載TXT或CSV格式的座位表，或使用螢幕截圖功能擷取畫面",
     instruction9: "使用鏡像文字功能可以從黑板前方輕鬆辨識學生",
     mirrorText: "鏡像文字",
+    screenshot: "截圖",
   },
   en: {
     title: "🎓 Puti-AI Classroom Seating Chart Generator",
@@ -70,5 +71,6 @@ export const translations = {
     instruction8: "Download seating chart in TXT or CSV formats, or use screenshot to capture the layout",
     instruction9: "Use mirror text feature for easy student identification from the front",
     mirrorText: "Mirror Text",
+    screenshot: "Screenshot",
   }
 };

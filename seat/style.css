@@ -302,6 +302,16 @@ h1 {
   font-size: 1.5em;
 }
 
+.blackboard-area.mirrored,
+.bulletin-board-area.mirrored {
+  transform: perspective(1000px) rotateX(2deg) rotate(180deg);
+}
+
+.blackboard-area.mirrored::after,
+.bulletin-board-area.mirrored::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+
 .bulletin-board-area {
   background: linear-gradient(45deg, #8e44ad, #9b59b6);
   color: white;

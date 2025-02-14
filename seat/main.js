@@ -29,6 +29,10 @@ class SeatingChart {
       exportCsv: document.getElementById('exportCsv'),
       clearSeats: document.getElementById('clearSeats'),
       mirrorText: document.getElementById('mirrorText'),
+      screenshot: document.getElementById('screenshot'),
+      seatingContainer: document.getElementById('seatingContainer'),
+      blackboardArea: document.querySelector('.blackboard-area'),
+      bulletinBoardArea: document.querySelector('.bulletin-board-area'),
     };
   }
 
@@ -49,14 +53,8 @@ class SeatingChart {
       localStorage.setItem('studentInput', this.elements.studentInput.value);
     });
 
-    this.elements.mirrorText.addEventListener('click', () => {
-      this.isMirrored = !this.isMirrored;
-      this.seats.forEach(seat => {
-        if (seat.hasAttribute('data-student')) {
-          seat.classList.toggle('mirrored', this.isMirrored);
-        }
-      });
-    });
+    this.elements.mirrorText.addEventListener('click', () => this.mirrorText());
+    this.elements.screenshot.addEventListener('click', () => this.takeScreenshot());
   }
 
   loadStudentInput() {
@@ -406,6 +404,40 @@ class SeatingChart {
     link.download = filename;
     link.click();
     URL.revokeObjectURL(url);
+  }
+
+  async takeScreenshot() {
+    try {
+      const container = this.elements.seatingContainer;
+      const canvas = await html2canvas(container, {
+        backgroundColor: '#fff',
+        scale: 2,
+        useCORS: true,
+        logging: false
+      });
+      
+      const link = document.createElement('a');
+      link.download = 'seating-chart-screenshot.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Screenshot failed:', error);
+    }
+  }
+
+  mirrorText() {
+    this.isMirrored = !this.isMirrored;
+    
+    // Mirror seats with students
+    this.seats.forEach(seat => {
+      if (seat.hasAttribute('data-student')) {
+        seat.classList.toggle('mirrored', this.isMirrored);
+      }
+    });
+
+    // Mirror blackboard and bulletin board
+    this.elements.blackboardArea.classList.toggle('mirrored', this.isMirrored);
+    this.elements.bulletinBoardArea.classList.toggle('mirrored', this.isMirrored);
   }
 
   initializeLanguageSwitch() {
