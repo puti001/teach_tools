@@ -1,0 +1,115 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>Puti-AI 班級座位表產生器</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="language-switch">
+    <button id="zhTW" class="lang-btn active">中文</button>
+    <button id="en" class="lang-btn">English</button>
+  </div>
+
+  <div class="container">
+    <h1 data-translate="title">🎓 Puti-AI 班級座位表產生器</h1>
+    
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="main" data-translate="mainTab">座位表</button>
+      <button class="tab-btn" data-tab="instructions" data-translate="instructionsTab">使用說明</button>
+    </div>
+
+    <div id="main" class="tab-content active">
+      <div class="controls">
+        <button id="toggleInput" class="btn" data-translate="toggleInput">顯示/隱藏輸入區</button>
+        <div id="inputArea">
+          <textarea id="studentInput" data-translate-placeholder="studentInputPlaceholder" placeholder="第一行輸入清單名稱&#13;&#10;從第二行開始輸入學生名單(每行一個)..."></textarea>
+          <button id="processStudents" class="btn" data-translate="confirmList">確認名單</button>
+        </div>
+
+        <div class="layout-controls">
+          <select id="rows" class="select">
+            <option value="3">3 排</option>
+            <option value="4">4 排</option>
+            <option value="5">5 排</option>
+            <option value="6">6 排</option>
+            <option value="7">7 排</option>
+            <option value="8">8 排</option>
+          </select>
+          <select id="cols" class="select">
+            <option value="3">3 列</option>
+            <option value="4">4 列</option>
+            <option value="5">5 列</option>
+            <option value="6">6 列</option>
+            <option value="7">7 列</option>
+            <option value="8">8 列</option>
+            <option value="9">9 列</option>
+            <option value="10">10 列</option>
+          </select>
+          <button id="generateSeats" class="btn" data-translate="generateSeats">產生座位</button>
+          <button id="randomAssign" class="btn" data-translate="randomAssign">隨機分配</button>
+          <button id="mirrorText" class="btn" data-translate="mirrorText">鏡像文字</button>
+          <button id="clearSeats" class="btn btn-danger" data-translate="clearSeats">清空座位</button>
+        </div>
+
+        <div class="export-controls">
+          <button id="exportTxt" class="btn" data-translate="downloadTxt">下載 TXT</button>
+          <button id="exportCsv" class="btn" data-translate="downloadCsv">下載 CSV</button>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <div id="studentPool" class="student-pool" data-translate="dragArea">
+          <!-- Student buttons will be here -->
+        </div>
+        
+        <div class="seating-container" id="seatingContainer">
+          <div class="resize-handle"></div>
+          <div class="blackboard-area" data-translate="blackboard">黑板區</div>
+          <div id="seatingChart" class="seating-chart">
+            <!-- Seating chart will be here -->
+          </div>
+          <div class="bulletin-board-area" data-translate="bulletinBoard">佈告欄區</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="instructions" class="tab-content">
+      <div class="instructions-content">
+        <h2 data-translate="featuresTitle">功能特色</h2>
+        <ul>
+          <li data-translate="feature1">✨ 直覺拖放介面，輕鬆安排座位</li>
+          <li data-translate="feature2">🎲 一鍵隨機分配座位</li>
+          <li data-translate="feature3">📱 支援手機、平板與電腦操作</li>
+          <li data-translate="feature4">🖼️ 可匯出座位表為TXT或CSV格式，也可利用螢幕截圖功能擷取座位表</li>
+          <li data-translate="feature5">👫 點擊座位可切換男女生顏色</li>
+          <li data-translate="feature6">📏 可自由調整教室大小</li>
+          <li data-translate="feature7">🔄 鏡像文字功能方便教師從黑板前辨識學生</li>
+        </ul>
+
+        <h2 data-translate="instructionsTitle">使用說明</h2>
+        <ol>
+          <li data-translate="instruction1">在輸入區的第一行輸入清單名稱</li>
+          <li data-translate="instruction2">從第二行開始輸入學生名單（每行一個）</li>
+          <li data-translate="instruction3">點擊「確認名單」後，學生名單會出現在左側區域</li>
+          <li data-translate="instruction4">選擇教室排列方式後，點擊「產生座位」</li>
+          <li data-translate="instruction5">可以拖曳學生到座位上，或使用「隨機分配」</li>
+          <li data-translate="instruction6">點擊座位可切換男女生顏色</li>
+          <li data-translate="instruction7">可以拖曳調整教室大小</li>
+          <li data-translate="instruction8">完成後可以下載TXT或CSV格式的座位表，或使用螢幕截圖功能擷取畫面</li>
+          <li data-translate="instruction9">使用鏡像文字功能可以從黑板前方輕鬆辨識學生</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <footer class="copyright">
+    <p>屏東縣後庄國小黃朝榮老師作品</p>
+    <p>免費分享，歡迎擴散推廣</p>
+    <p>嚴禁商用與任何侵權、不尊重著作權的行為</p>
+    <p>更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank">https://padlet.com/clongwh/puti_ai_tools</a></p>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
