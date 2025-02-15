@@ -3,7 +3,6 @@
   <meta charset="UTF-8">
   <title>Puti-AI 班級座位表產生器</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.5.0-beta4/html2canvas.min.js"></script>
 </head>
 <body>
   <div class="language-switch">
@@ -28,6 +27,7 @@
         </div>
 
         <div class="layout-controls">
+          <input type="file" id="photoInput" accept="image/*" multiple class="file-input" data-translate="uploadPhotos">
           <select id="rows" class="select">
             <option value="3">3 排</option>
             <option value="4">4 排</option>
@@ -55,7 +55,6 @@
         <div class="export-controls">
           <button id="exportTxt" class="btn" data-translate="downloadTxt">下載 TXT</button>
           <button id="exportCsv" class="btn" data-translate="downloadCsv">下載 CSV</button>
-          <button id="screenshot" class="btn" data-translate="screenshot">截圖</button>
         </div>
       </div>
 
@@ -82,17 +81,19 @@
           <li data-translate="feature1">✨ 直覺拖放介面，輕鬆安排座位</li>
           <li data-translate="feature2">🎲 一鍵隨機分配座位</li>
           <li data-translate="feature3">📱 支援手機、平板與電腦操作</li>
-          <li data-translate="feature4">🖼️ 可匯出座位表為TXT或CSV格式，也可利用螢幕截圖功能擷取座位表</li>
+          <li data-translate="feature4">🖼️ 可匯出座位表為TXT或CSV格式</li>
           <li data-translate="feature5">👫 點擊座位可切換男女生顏色</li>
           <li data-translate="feature6">📏 可自由調整教室大小</li>
           <li data-translate="feature7">🔄 鏡像文字功能方便教師從黑板前辨識學生</li>
+          <li>📸 支援批次上傳學生相片，自動與學生名單配對顯示</li>
         </ul>
 
         <h2 data-translate="instructionsTitle">使用說明</h2>
         <ol>
           <li data-translate="instruction1">在輸入區的第一行輸入清單名稱</li>
-          <li data-translate="instruction2">從第二行開始輸入學生名單（每行一個）</li>
+          <li data-translate="instruction2">從第二行開始輸入學生名單（每行一個），學生名字前需包含編號（如：01王小明）</li>
           <li data-translate="instruction3">點擊「確認名單」後，學生名單會出現在左側區域</li>
+          <li>如要上傳學生相片，請將相片檔案名稱加上 對應的學生編號（如：01.jpg），再使用「上傳學生相片」功能批次上傳</li>
           <li data-translate="instruction4">選擇教室排列方式後，點擊「產生座位」</li>
           <li data-translate="instruction5">可以拖曳學生到座位上，或使用「隨機分配」</li>
           <li data-translate="instruction6">點擊座位可切換男女生顏色</li>

@@ -5,6 +5,7 @@ class SeatingChart {
     this.students = [];
     this.seats = [];
     this.isMirrored = false;  
+    this.studentPhotos = new Map(); // Store student photos
     this.initializeElements();
     this.addEventListeners();
     this.loadStudentInput();
@@ -29,11 +30,13 @@ class SeatingChart {
       exportCsv: document.getElementById('exportCsv'),
       clearSeats: document.getElementById('clearSeats'),
       mirrorText: document.getElementById('mirrorText'),
-      screenshot: document.getElementById('screenshot'),
       seatingContainer: document.getElementById('seatingContainer'),
       blackboardArea: document.querySelector('.blackboard-area'),
       bulletinBoardArea: document.querySelector('.bulletin-board-area'),
+      photoInput: document.getElementById('photoInput'),
     };
+    
+    this.elements.photoInput.addEventListener('change', (e) => this.handlePhotoUpload(e));
   }
 
   addEventListeners() {
@@ -54,7 +57,6 @@ class SeatingChart {
     });
 
     this.elements.mirrorText.addEventListener('click', () => this.mirrorText());
-    this.elements.screenshot.addEventListener('click', () => this.takeScreenshot());
   }
 
   loadStudentInput() {
@@ -82,7 +84,14 @@ class SeatingChart {
   createStudentButton(student) {
     const button = document.createElement('button');
     button.className = 'student-button';
-    button.textContent = student;
+    
+    const studentNumber = this.findStudentNumber(student);
+    if (studentNumber && this.studentPhotos.has(studentNumber)) {
+      this.updateButtonWithPhoto(button, student, this.studentPhotos.get(studentNumber));
+    } else {
+      button.textContent = student;
+    }
+    
     button.draggable = true;
     
     button.addEventListener('dragstart', (e) => {
@@ -149,13 +158,13 @@ class SeatingChart {
           }
         } else {
           const studentButton = Array.from(this.elements.studentPool.children)
-            .find(btn => btn.textContent === student);
+            .find(btn => btn.textContent === student || btn.querySelector('span')?.textContent === student);
           if (studentButton) {
             studentButton.remove();
           }
         }
 
-        seat.textContent = '';
+        seat.innerHTML = '';
         seat.removeAttribute('data-student');
         seat.classList.remove('occupied');
         const coordinates = document.createElement('div');
@@ -163,13 +172,8 @@ class SeatingChart {
         coordinates.textContent = `(${col}列, ${row}排)`;
         seat.appendChild(coordinates);
 
-        seat.textContent = student;
-        seat.setAttribute('data-student', student);
-        const coordinates2 = document.createElement('div');
-        coordinates2.className = 'seat-coordinates';
-        coordinates2.textContent = `(${col}列, ${row}排)`;
-        seat.appendChild(coordinates2);
-        
+        this.assignStudentToSeat(student, seat);
+
         if (isFromSeat) {
           const button = this.createStudentButton(currentStudent);
           this.elements.studentPool.appendChild(button);
@@ -185,20 +189,13 @@ class SeatingChart {
           }
         } else {
           const studentButton = Array.from(this.elements.studentPool.children)
-            .find(btn => btn.textContent === student);
+            .find(btn => btn.textContent === student || btn.querySelector('span')?.textContent === student);
           if (studentButton) {
             studentButton.remove();
           }
         }
         
-        seat.textContent = '';
-        seat.textContent = student;
-        seat.setAttribute('data-student', student);
-        seat.classList.add('occupied');
-        const coordinates3 = document.createElement('div');
-        coordinates3.className = 'seat-coordinates';
-        coordinates3.textContent = `(${col}列, ${row}排)`;
-        seat.appendChild(coordinates3);
+        this.assignStudentToSeat(student, seat);
       }
       
       seat.classList.remove('drag-over');
@@ -282,22 +279,34 @@ class SeatingChart {
 
   assignStudentToSeat(student, seat) {
     if (!seat.hasAttribute('data-student')) {
-      seat.textContent = student;  
+      seat.innerHTML = ''; // Clear existing content
+      
+      const studentNumber = this.findStudentNumber(student);
+      if (studentNumber && this.studentPhotos.has(studentNumber)) {
+        const img = document.createElement('img');
+        img.src = this.studentPhotos.get(studentNumber);
+        img.alt = student;
+        img.style.width = '40px';
+        img.style.height = '40px';
+        img.style.borderRadius = '50%';
+        img.style.marginBottom = '5px';
+        seat.appendChild(img);
+        
+        const span = document.createElement('span');
+        span.textContent = student;
+        seat.appendChild(span);
+      } else {
+        seat.textContent = student;
+      }
+      
       seat.setAttribute('data-student', student);
       seat.classList.add('occupied');
       if (this.isMirrored) {
         seat.classList.add('mirrored');
       }
       
-      const row = Math.floor(seat.dataset.index / parseInt(this.elements.cols.value)) + 1;
-      const col = (seat.dataset.index % parseInt(this.elements.cols.value)) + 1;
-      const coordinates = document.createElement('div');
-      coordinates.className = 'seat-coordinates';
-      coordinates.textContent = `(${col}列, ${row}排)`;
-      seat.appendChild(coordinates);
-      
       const studentButton = Array.from(this.elements.studentPool.children)
-        .find(btn => btn.textContent === student);
+        .find(btn => btn.textContent === student || btn.querySelector('span')?.textContent === student);
       if (studentButton) {
         studentButton.remove();
       }
@@ -312,7 +321,7 @@ class SeatingChart {
 
     assignedStudents.forEach(student => {
       if (!Array.from(this.elements.studentPool.children)
-          .some(btn => btn.textContent === student)) {
+          .some(btn => btn.textContent === student || btn.querySelector('span')?.textContent === student)) {
         const button = this.createStudentButton(student);
         this.elements.studentPool.appendChild(button);
       }
@@ -329,6 +338,7 @@ class SeatingChart {
       const col = (index % parseInt(this.elements.cols.value)) + 1;
       
       seat.textContent = '';
+      seat.innerHTML = '';
       seat.removeAttribute('data-student');
       seat.classList.remove('occupied');
       
@@ -344,7 +354,7 @@ class SeatingChart {
     
     const emptySeats = this.seats.filter(seat => !seat.hasAttribute('data-student'));
     const unassignedStudents = Array.from(this.elements.studentPool.children)
-      .map(btn => btn.textContent);
+      .map(btn => btn.textContent || btn.querySelector('span')?.textContent);
     
     const shuffledStudents = this.shuffleArray([...unassignedStudents]);
     const maxAssignments = Math.min(emptySeats.length, shuffledStudents.length);
@@ -406,25 +416,6 @@ class SeatingChart {
     URL.revokeObjectURL(url);
   }
 
-  async takeScreenshot() {
-    try {
-      const container = this.elements.seatingContainer;
-      const canvas = await html2canvas(container, {
-        backgroundColor: '#fff',
-        scale: 2,
-        useCORS: true,
-        logging: false
-      });
-      
-      const link = document.createElement('a');
-      link.download = 'seating-chart-screenshot.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    } catch (error) {
-      console.error('Screenshot failed:', error);
-    }
-  }
-
   mirrorText() {
     this.isMirrored = !this.isMirrored;
     
@@ -479,6 +470,73 @@ class SeatingChart {
       });
     });
   }
+
+  async handlePhotoUpload(event) {
+    const files = Array.from(event.target.files);
+    this.studentPhotos.clear();
+
+    // Check if files have numbers in their names
+    const numberPattern = /(\d+)/;
+    const invalidFiles = files.filter(file => !numberPattern.test(file.name));
+    
+    if (invalidFiles.length > 0) {
+      alert(translations[this.currentLang].noPhotoNumberError);
+      return;
+    }
+
+    // Read all files and store them
+    try {
+      for (const file of files) {
+        const number = file.name.match(numberPattern)[1];
+        const photoUrl = await this.readFileAsDataURL(file);
+        this.studentPhotos.set(number, photoUrl);
+      }
+      
+      // Update student buttons with photos
+      this.updateStudentButtonsWithPhotos();
+      alert(translations[this.currentLang].uploadSuccess);
+    } catch (error) {
+      console.error('Error processing photos:', error);
+    }
+  }
+
+  readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  updateStudentButtonsWithPhotos() {
+    const buttons = this.elements.studentPool.querySelectorAll('.student-button');
+    buttons.forEach(button => {
+      const studentName = button.textContent || button.querySelector('span')?.textContent;
+      const studentNumber = this.findStudentNumber(studentName);
+      if (studentNumber && this.studentPhotos.has(studentNumber)) {
+        this.updateButtonWithPhoto(button, studentName, this.studentPhotos.get(studentNumber));
+      }
+    });
+  }
+
+  findStudentNumber(studentName) {
+    // Assuming student name format includes number: "01 John Smith" or similar
+    const match = studentName.match(/^(\d+)/);
+    return match ? match[1] : null;
+  }
+
+  updateButtonWithPhoto(button, studentName, photoUrl) {
+    button.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = photoUrl;
+    img.alt = studentName;
+    const span = document.createElement('span');
+    span.textContent = studentName;
+    button.appendChild(img);
+    button.appendChild(span);
+  }
+
 }
 
 document.addEventListener('DOMContentLoaded', () => {

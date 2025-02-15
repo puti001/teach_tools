@@ -149,8 +149,12 @@ h1 {
 }
 
 .student-button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  padding: 12px;
+  padding: 8px;
   margin: 8px 0;
   background: var(--secondary-color);
   color: white;
@@ -162,9 +166,38 @@ h1 {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.student-button img {
+  width: 80px;
+  height: 80px;
+  border-radius: 0;  
+  margin-bottom: 5px;
+  object-fit: cover;
+  background: white;
+}
+
+.student-button span {
+  display: block;
+  text-align: center;
+  width: 100%;
+}
+
 .student-button:hover {
   transform: scale(1.03);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.student-button.dragging {
+  animation: bounce 0.5s infinite;
+  opacity: 0.8;
+}
+
+.file-input {
+  padding: 8px;
+  margin: 5px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 14px;
+  width: 200px;
 }
 
 .seat {
@@ -174,6 +207,7 @@ h1 {
   min-height: 60px;
   min-width: 90px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   background: var(--boy-seat-color);
@@ -185,6 +219,20 @@ h1 {
   margin: 0;
   transform-style: preserve-3d;
   transition: transform 0.3s, background 0.3s;
+}
+
+.seat img {
+  width: 40px;
+  height: 40px;
+  border-radius: 0;  
+  margin-bottom: 5px;
+  object-fit: cover;
+}
+
+.seat span {
+  display: block;
+  text-align: center;
+  width: 100%;
 }
 
 .seat.girl {
@@ -253,11 +301,6 @@ h1 {
   0% { transform: scale(0.8); }
   50% { transform: scale(1.1); }
   100% { transform: scale(1); }
-}
-
-.student-button.dragging {
-  animation: bounce 0.5s infinite;
-  opacity: 0.8;
 }
 
 .layout-controls, .export-controls {
