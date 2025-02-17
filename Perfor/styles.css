@@ -1,0 +1,214 @@
+:root {
+  --primary-color: #4CAF50;
+  --hover-color: #45a049;
+  --card-bg: #fff;
+  --selected-card: #e8f5e9;
+  --positive-btn: #2196F3;
+  --negative-btn: #F44336;
+  --custom-btn: #FFC107;
+  --confirm-btn: #2196F3;
+  --download-btn: #F44336;
+  --negative-score: #F44336;
+}
+
+body {
+  font-family: 'Microsoft JhengHei', sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f0f2f5;
+}
+
+h1 {
+  text-align: center;
+  color: var(--primary-color);
+  font-size: 2.5em;
+  margin-bottom: 30px;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+#class-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+button {
+  padding: 12px 24px;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 1.1em;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+#class-buttons button {
+  background-color: var(--primary-color);
+}
+
+button.active {
+  background-color: #2E7D32;
+  transform: scale(1.05);
+}
+
+.score-btn.positive {
+  background-color: var(--positive-btn);
+}
+
+.score-btn.negative {
+  background-color: var(--negative-btn);
+}
+
+#student-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.student-card {
+  background-color: var(--card-bg);
+  padding: 20px;
+  border-radius: 15px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.student-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.student-card.selected {
+  background-color: var(--selected-card);
+  border: 2px solid var(--primary-color);
+}
+
+.student-score {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  font-weight: bold;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 20px;
+  transition: background-color 0.3s ease;
+}
+
+.student-score.negative {
+  background-color: var(--negative-score);
+}
+
+#scoring-controls {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+}
+
+#score-history {
+  background-color: var(--card-bg);
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.history-entry {
+  margin-bottom: 12px;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+#custom-score {
+  background-color: var(--custom-btn);
+}
+
+#submit-score {
+  background-color: var(--confirm-btn);
+}
+
+#export-csv {
+  background-color: var(--download-btn);
+}
+
+#login-section {
+  position: relative;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+#password-toggle {
+  background: none;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  color: var(--primary-color);
+}
+
+#password-toggle svg {
+  width: 24px;
+  height: 24px;
+}
+
+#password-form {
+  display: none;
+  max-width: 300px;
+  margin: 0 auto;
+  padding: 15px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#password-form.visible {
+  display: block;
+}
+
+#password-form input[type="password"] {
+  width: 100%;
+  padding: 8px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+#password-form label {
+  display: block;
+  margin-top: 10px;
+}
+
+#login-message {
+  color: var(--primary-color);
+  margin: 10px 0;
+  font-weight: bold;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.pop-animation {
+  animation: pop 0.3s ease-out;
+}

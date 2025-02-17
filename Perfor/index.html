@@ -1,0 +1,57 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-AI 學生表現登記系統</title>
+  <link href="styles.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+  <script src="app.js" type="module"></script>
+</head>
+<body>
+  <div id="app">
+    <h1>Puti-AI 學生表現登記系統</h1>
+    
+    <div id="login-section">
+      <button id="password-toggle">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 17a2 2 0 100-4 2 2 0 000 4z"/>
+          <path d="M12 1c-5 0-9 3-11 7 2 4 6 7 11 7s9-3 11-7c-2-4-6-7-11-7zm0 12a4 4 0 110-8 4 4 0 010 8z"/>
+        </svg>
+      </button>
+      
+      <form id="password-form">
+        <input type="password" id="password" placeholder="請輸入密碼" required>
+        <label>
+          <input type="checkbox" id="remember-password"> 記住密碼
+        </label>
+        <button type="submit">登入</button>
+      </form>
+      
+      <div id="login-message"></div>
+    </div>
+    
+    <div id="class-buttons">
+      <button data-class="一忠">一忠</button>
+      <button data-class="二忠">二忠</button>
+      <button data-class="三忠">三忠</button>
+      <button data-class="四忠">四忠</button>
+      <button data-class="五忠">五忠</button>
+      <button data-class="六忠">六忠</button>
+    </div>
+
+    <div id="student-cards"></div>
+
+    <div id="scoring-controls">
+      <button data-score="2" class="score-btn positive">+2</button>
+      <button data-score="1" class="score-btn positive">+1</button>
+      <button data-score="-1" class="score-btn negative">-1</button>
+      <button data-score="-2" class="score-btn negative">-2</button>
+      <button id="custom-score" class="score-btn">自訂分數</button>
+      <button id="submit-score">確定</button>
+      <button id="export-csv">下載紀錄</button>
+    </div>
+
+    <div id="score-history"></div>
+  </div>
+</body>
+</html>
