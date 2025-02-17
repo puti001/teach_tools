@@ -237,3 +237,27 @@ h1 {
 .record-item:hover {
   background: #f1f8e9;
 }
+
+.btn.leave-btn.sick-leave {
+  background: #ff7043;  
+}
+
+.btn.leave-btn.sick-leave:hover {
+  background: #f4511e;
+}
+
+.btn.leave-btn.personal-leave {
+  background: #7e57c2;  
+}
+
+.btn.leave-btn.personal-leave:hover {
+  background: #673ab7;
+}
+
+.btn.custom-leave {
+  background: #26a69a;  
+}
+
+.btn.custom-leave:hover {
+  background: #00897b;
+}

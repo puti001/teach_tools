@@ -13,7 +13,6 @@ class AbsenceTracker {
 
   initElements() {
     // Buttons
-    this.confirmBtn = document.getElementById('confirm');
     this.viewRecordsBtn = document.getElementById('viewRecords');
     this.downloadCSVBtn = document.getElementById('downloadCSV');
     this.customLeaveBtn = document.getElementById('customLeave');
@@ -43,10 +42,6 @@ class AbsenceTracker {
   }
 
   bindEvents() {
-    this.confirmBtn.addEventListener('click', () => {
-      this.promptForLeaveType();
-    });
-
     this.viewRecordsBtn.addEventListener('click', () => {
       this.toggleRecords();
     });
