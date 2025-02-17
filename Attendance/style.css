@@ -1,0 +1,236 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  padding: 20px;
+  background: #e8f5e9;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.monster-logo {
+  animation: bounce 2s infinite ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.antenna {
+  animation: wave 3s infinite ease-in-out;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(5deg); }
+}
+
+h1 {
+  text-align: center;
+  color: #2e7d32;
+  font-size: 2em;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 25px;
+  background: #81c784;
+  color: white;
+  cursor: pointer;
+  margin: 5px;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1em;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+  background: #66bb6a;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn.primary {
+  background: #4caf50;
+}
+
+.btn.primary:hover {
+  background: #43a047;
+}
+
+.btn.danger {
+  background: #e57373;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn.danger:hover {
+  background: #ef5350;
+}
+
+.btn.danger .monster-eyes::before,
+.btn.danger .monster-eyes::after {
+  background: #ffebee;
+}
+
+.monster-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.monster-eyes::before,
+.monster-eyes::after {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+  top: 8px;
+  animation: blink 3s infinite;
+}
+
+.monster-eyes::before {
+  left: 10px;
+}
+
+.monster-eyes::after {
+  left: 22px;
+}
+
+@keyframes blink {
+  0%, 48%, 52%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
+}
+
+.hidden {
+  display: none;
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.student-card {
+  padding: 20px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.student-card::before {
+  content: '';
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  background: #e8f5e9;
+  border-radius: 50%;
+  transition: all 0.3s;
+  opacity: 0;
+}
+
+.student-card:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.student-card:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.student-card:hover::before {
+  opacity: 1;
+  top: -10px;
+}
+
+.student-card.selected {
+  background: #c8e6c9;
+  border: 2px solid #4caf50;
+}
+
+.controls {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.leave-types {
+  margin-bottom: 20px;
+}
+
+.records-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+#records {
+  position: relative;
+  margin-top: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+}
+
+#recordsList {
+  margin: 15px 0;
+}
+
+.record-checkbox {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.record-item {
+  padding: 12px;
+  border-bottom: 2px solid #e8f5e9;
+  transition: background 0.3s;
+  display: flex;
+  align-items: center;
+}
+
+.record-item span {
+  flex: 1;
+}
+
+.record-item:hover {
+  background: #f1f8e9;
+}
