@@ -160,6 +160,23 @@ class AbsenceTracker {
       return;
     }
     
+    // Add select all checkbox
+    const selectAllContainer = document.createElement('div');
+    selectAllContainer.className = 'record-item select-all';
+    
+    const selectAllCheckbox = document.createElement('input');
+    selectAllCheckbox.type = 'checkbox';
+    selectAllCheckbox.id = 'selectAll';
+    
+    const selectAllLabel = document.createElement('label');
+    selectAllLabel.htmlFor = 'selectAll';
+    selectAllLabel.textContent = '全選';
+    
+    selectAllContainer.appendChild(selectAllCheckbox);
+    selectAllContainer.appendChild(selectAllLabel);
+    this.recordsList.appendChild(selectAllContainer);
+    
+    // Add records with checkboxes
     this.records.forEach((record, index) => {
       const item = document.createElement('div');
       item.className = 'record-item';
@@ -175,6 +192,14 @@ class AbsenceTracker {
       item.appendChild(checkbox);
       item.appendChild(text);
       this.recordsList.appendChild(item);
+    });
+
+    // Handle select all functionality
+    selectAllCheckbox.addEventListener('change', (e) => {
+      const checkboxes = document.querySelectorAll('.record-checkbox');
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = e.target.checked;
+      });
     });
   }
 
@@ -223,21 +248,21 @@ class AbsenceTracker {
   }
 
   handleDeleteRecords() {
-    const selectedCheckboxes = document.querySelectorAll('.record-checkbox:checked');
+    const selectedRecords = document.querySelectorAll('.record-checkbox:checked');
     
-    if (selectedCheckboxes.length === 0) {
+    if (selectedRecords.length === 0) {
       alert('請選擇要刪除的紀錄');
       return;
     }
 
     const inputPassword = prompt('請輸入管理員密碼：');
     if (inputPassword === this.password) {
-      if (confirm(`確定要刪除選取的 ${selectedCheckboxes.length} 筆紀錄嗎？這個動作無法還原。`)) {
-        const indicesToDelete = Array.from(selectedCheckboxes)
+      if (confirm(`確定要刪除選取的 ${selectedRecords.length} 筆紀錄嗎？這個動作無法還原。`)) {
+        const indicesToRemove = Array.from(selectedRecords)
           .map(checkbox => parseInt(checkbox.dataset.index))
-          .sort((a, b) => b - a); // Sort in descending order to delete from end to start
+          .sort((a, b) => b - a); // Sort in descending order to remove from end first
         
-        indicesToDelete.forEach(index => {
+        indicesToRemove.forEach(index => {
           this.records.splice(index, 1);
         });
         
