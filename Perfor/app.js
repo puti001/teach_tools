@@ -2,6 +2,7 @@
 const CLASSES = ['一忠', '二忠', '三忠', '四忠', '五忠', '六忠'];
 const STORAGE_KEY = 'studentScores';
 const PASSWORD_KEY = 'rememberedPassword';
+const SCORE_LIMIT_PER_STUDENT = 20;
 
 // Password configuration
 const PASSWORDS = {
@@ -67,8 +68,15 @@ async function updateStudentCards(className) {
   const students = await initializeClass(className);
   if (!students.length) return;
 
+  const totalScore = getClassTotalScore(className);
+  const limit = await getClassScoreLimit(className);
+  
+  // Add warning if close to limit
+  if (totalScore >= limit * 0.9) {
+    alert(`貴班的上限是${limit}，目前已經是${totalScore}。`);
+  }
+
   // Add "All Students" card
-  const totalScore = Object.values(studentScores[className] || {}).reduce((a, b) => a + b, 0);
   createStudentCard('全班學生', totalScore, container, true);
 
   // Add individual student cards
@@ -236,10 +244,10 @@ function initializeUI() {
       if (e.target.id === 'custom-score') {
         const score = prompt('請輸入分數：');
         if (score && !isNaN(score)) {
-          applyScore(Number(score));
+          await applyScore(Number(score));
         }
       } else if (e.target.dataset.score) {
-        applyScore(Number(e.target.dataset.score));
+        await applyScore(Number(e.target.dataset.score));
       }
     }
   });
@@ -264,6 +272,10 @@ function initializeUI() {
       rows.push([student, score]);
     });
     
+    // Add total score
+    const totalScore = getClassTotalScore(currentClass);
+    rows.push(['全班總分', totalScore]);
+    
     const csvContent = rows.map(row => row.join(',')).join('\n');
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -275,9 +287,45 @@ function initializeUI() {
   });
 }
 
+// Calculate class score limit
+async function getClassScoreLimit(className) {
+  const students = await initializeClass(className);
+  return students.length * SCORE_LIMIT_PER_STUDENT;
+}
+
+// Get current total class score
+function getClassTotalScore(className) {
+  if (!studentScores[className]) return 0;
+  return Object.values(studentScores[className]).reduce((a, b) => a + b, 0);
+}
+
+// Check if score addition would exceed limit
+async function checkScoreLimit(className, scoreToAdd) {
+  const limit = await getClassScoreLimit(className);
+  const currentTotal = getClassTotalScore(className);
+  const selectedCount = Array.from(selectedStudents).filter(s => s !== '全班學生').length;
+  const potentialAdd = scoreToAdd * selectedCount;
+  const newTotal = currentTotal + potentialAdd;
+
+  if (newTotal > limit) {
+    alert(`將超過上限，不執行加分`);
+    return false;
+  }
+
+  if (newTotal >= limit * 0.9) {
+    alert(`貴班的上限是${limit}，目前已經是${newTotal}。`);
+  }
+
+  return true;
+}
+
 // Apply score to selected students
-function applyScore(score) {
+async function applyScore(score) {
   if (!currentClass || !selectedStudents.size) return;
+  
+  // Check score limit before applying
+  const canApply = await checkScoreLimit(currentClass, score);
+  if (!canApply) return;
   
   if (!studentScores[currentClass]) {
     studentScores[currentClass] = {};
