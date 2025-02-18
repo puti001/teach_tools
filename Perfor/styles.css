@@ -4,11 +4,9 @@
   --card-bg: #fff;
   --selected-card: #e8f5e9;
   --positive-btn: #2196F3;
-  --negative-btn: #F44336;
   --custom-btn: #FFC107;
   --confirm-btn: #2196F3;
   --download-btn: #F44336;
-  --negative-score: #F44336;
 }
 
 body {
@@ -67,10 +65,6 @@ button.active {
   background-color: var(--positive-btn);
 }
 
-.score-btn.negative {
-  background-color: var(--negative-btn);
-}
-
 #student-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -107,11 +101,6 @@ button.active {
   color: white;
   padding: 5px 10px;
   border-radius: 20px;
-  transition: background-color 0.3s ease;
-}
-
-.student-score.negative {
-  background-color: var(--negative-score);
 }
 
 #scoring-controls {

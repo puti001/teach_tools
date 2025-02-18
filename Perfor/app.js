@@ -92,11 +92,9 @@ function createStudentCard(name, score, container, isAllStudents = false) {
   card.className = 'student-card';
   if (isAllStudents) card.dataset.allStudents = 'true';
   
-  const scoreClass = score < 0 ? 'student-score negative' : 'student-score';
-  
   card.innerHTML = `
     <div class="student-name">${name}</div>
-    <div class="${scoreClass}">${score}</div>
+    <div class="student-score">${score}</div>
   `;
 
   card.addEventListener('click', () => {
@@ -244,7 +242,12 @@ function initializeUI() {
       if (e.target.id === 'custom-score') {
         const score = prompt('請輸入分數：');
         if (score && !isNaN(score)) {
-          await applyScore(Number(score));
+          const numScore = Number(score);
+          if (numScore < 0) {
+            alert('不可輸入負分數');
+            return;
+          }
+          await applyScore(numScore);
         }
       } else if (e.target.dataset.score) {
         await applyScore(Number(e.target.dataset.score));
@@ -333,7 +336,8 @@ async function applyScore(score) {
   
   selectedStudents.forEach(student => {
     if (student !== '全班學生') {
-      studentScores[currentClass][student] = (studentScores[currentClass][student] || 0) + score;
+      const currentScore = studentScores[currentClass][student] || 0;
+      studentScores[currentClass][student] = Math.max(0, currentScore + score);
     }
   });
   
