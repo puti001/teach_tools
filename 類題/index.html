@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 類題產生器</title>
+    <style>
+        :root {
+            --primary-color: #2D5AF0;
+            --secondary-color: #0E1C40;
+            --accent-color: #5C7FFF;
+            --background-color: #F0F2F5;
+            --card-background: rgba(255, 255, 255, 0.9);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(45, 90, 240, 0.1) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(92, 127, 255, 0.1) 0%, transparent 20%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--card-background);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(14, 28, 64, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            color: var(--secondary-color);
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-section {
+            background: var(--card-background);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(14, 28, 64, 0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 20px;
+        }
+
+        .textarea-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid rgba(92, 127, 255, 0.2);
+            border-radius: 12px;
+            font-size: 16px;
+            resize: vertical;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(92, 127, 255, 0.2);
+        }
+
+        .word-count {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(45, 90, 240, 0.1);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+
+        .word-count.warning {
+            color: #f0ad4e;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(45, 90, 240, 0.3);
+        }
+
+        .generate-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result-section {
+            background: var(--card-background);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(14, 28, 64, 0.1);
+            backdrop-filter: blur(10px);
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-section h2 {
+            color: var(--secondary-color);
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(92, 127, 255, 0.2);
+        }
+
+        .result-content {
+            white-space: pre-wrap;
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--secondary-color);
+            background: rgba(255, 255, 255, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .action-buttons .generate-btn {
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Puti-AI 類題產生器</h1>
+        </div>
+        
+        <div class="input-section">
+            <div class="textarea-container">
+                <textarea id="questionInput" placeholder="請輸入原始題目文本..."></textarea>
+                <div class="word-count">字數：0 (建議：3,000-5,000字)</div>
+            </div>
+            <button class="generate-btn" onclick="generateSimilarQuestions()">生成類似題</button>
+        </div>
+
+        <div class="result-section" id="resultSection">
+            <h2>試題卷</h2>
+            <div class="result-content" id="questionResult"></div>
+            <h2>答案卷</h2>
+            <div class="result-content" id="answerResult"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
