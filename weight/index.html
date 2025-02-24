@@ -1,0 +1,64 @@
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-AI 健康小幫手</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Puti-AI 健康小幫手</h1>
+    </header>
+    
+    <div class="tabs">
+      <div class="tab-buttons">
+        <!-- 分頁按鈕由 JS 動態生成 -->
+      </div>
+    </div>
+
+    <main class="main-content">
+      <!-- 內容區域由 JS 動態生成 -->
+    </main>
+  </div>
+
+  <!-- 新增/編輯體重的對話框 -->
+  <dialog id="weightDialog">
+    <form method="dialog">
+      <h2>記錄體重</h2>
+      <div class="weight-slider">
+        <div class="previous-weight">前一日: <span></span> kg</div>
+        <div class="weight-input-container">
+          <input type="number" id="weightInput" step="0.1" required>
+          <span class="unit">kg</span>
+        </div>
+        <input type="range" id="weightSlider" step="0.1">
+      </div>
+      <div class="dialog-buttons">
+        <button type="button" class="cancel-btn">取消</button>
+        <button type="submit" class="confirm-btn">確認</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 編輯使用者名稱的對話框 -->
+  <dialog id="userDialog">
+    <form method="dialog">
+      <h2>編輯使用者名稱</h2>
+      <div class="input-group">
+        <label for="nameInput">使用者名稱</label>
+        <input type="text" id="nameInput" required>
+      </div>
+      <div class="dialog-buttons">
+        <button type="button" class="cancel-btn">取消</button>
+        <button type="submit" class="confirm-btn">確認</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- 檔案上傳用的隱藏input -->
+  <input type="file" id="fileInput" accept=".csv" style="display: none">
+  <script src="app.js"></script>
+</body>
+</html>
