@@ -1,0 +1,293 @@
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 閱讀闖關遊戲</title>
+    <link rel="stylesheet" href="style.css">
+    <script type="importmap">
+    {
+      "imports": {
+        "marked": "https://cdn.jsdelivr.net/npm/marked@6.0.0/lib/marked.esm.js"
+      }
+    }
+    </script>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Puti-AI 閱讀闖關遊戲</h1>
+            <div class="language-toggle" id="languageToggle">
+                <span class="active" data-lang="zh">中文</span> | <span data-lang="en">English</span>
+            </div>
+            <div class="help-button" id="helpButton">❓</div>
+            <div class="settings-icon" id="settingsIcon">⚙️</div>
+        </header>
+
+        <div class="ai-settings-panel" id="aiSettingsPanel">
+            <h2>設置 AI</h2>
+            <div class="setting-input">
+                <label for="apiKey">API Key:</label>
+                <input type="password" id="apiKey" placeholder="輸入你的 Gemini API Key">
+                <button id="saveApiKey">儲存</button>
+            </div>
+            <div class="api-status" id="apiStatus">未設定</div>
+            <div class="api-instructions" id="apiInstructions">
+                <p id="apiInstructionsText">如何取得 Gemini API Key：</p>
+                <ol>
+                    <li>前往 <a href="https://ai.google.dev/" target="_blank">Google AI Studio</a></li>
+                    <li>登入 Google 帳號</li>
+                    <li>點擊右上角「Get API key」</li>
+                    <li>創建新的 API key</li>
+                    <li>複製 API key 並貼上到上方輸入框</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="game-dashboard">
+            <div class="player-stats">
+                <div class="player-info">
+                    <div class="player-avatar" id="playerAvatar">
+                        <svg width="60" height="60" viewBox="0 0 60 60">
+                            <circle cx="30" cy="20" r="12" fill="#FFD700"/>
+                            <circle cx="30" cy="20" r="9" fill="#FFF"/>
+                            <path d="M10,60 C10,40 50,40 50,60" fill="#FFD700"/>
+                        </svg>
+                    </div>
+                    <div class="player-level">
+                        <span id="playerLevel">閱讀小菜鳥</span>
+                        <div class="level-progress">
+                            <div class="level-bar" id="levelBar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="player-currency">
+                    <div class="coins">
+                        <svg width="24" height="24" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+                            <text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" fill="#FFF">¥</text>
+                        </svg>
+                        <span id="coinCount">0</span>
+                    </div>
+                    <div class="medals">
+                        <svg width="24" height="24" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" fill="#C0C0C0" stroke="#808080" stroke-width="2"/>
+                            <polygon points="12,5 14,10 19,10 15,14 17,19 12,16 7,19 9,14 5,10 10,10" fill="#FFD700"/>
+                        </svg>
+                        <span id="medalCount">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-panel">
+                <div class="panel-section">
+                    <h3>年級</h3>
+                    <div class="button-group" id="gradeButtons">
+                        <button class="option-button" data-grade="middle">中年級</button>
+                        <button class="option-button" data-grade="high">高年級</button>
+                        <button class="option-button" data-grade="junior">國中</button>
+                        <button class="option-button" data-grade="senior">高中</button>
+                        <button class="option-button" data-grade="custom">自訂</button>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <h3>字數</h3>
+                    <div class="button-group" id="wordCountButtons">
+                        <button class="option-button" data-words="600">600</button>
+                        <button class="option-button" data-words="800">800</button>
+                        <button class="option-button" data-words="1000">1000</button>
+                        <button class="option-button" data-words="1200">1200</button>
+                        <button class="option-button" data-words="custom">自訂</button>
+                    </div>
+                    <div class="custom-input" id="customWordsInput" style="display: none;">
+                        <input type="number" id="customWords" min="100" max="2000" placeholder="字數">
+                        <button id="confirmCustomWords">確定</button>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <h3>出題方式</h3>
+                    <div class="button-group" id="questionTypeButtons">
+                        <button class="option-button" data-type="auto">AI自動出題</button>
+                        <button class="option-button" data-type="topic">自訂主題</button>
+                    </div>
+                    <div class="custom-input" id="customTopicInput" style="display: none;">
+                        <input type="text" id="customTopic" placeholder="輸入主題">
+                        <button id="confirmCustomTopic">確定</button>
+                    </div>
+                </div>
+                
+                <button class="start-button" id="startButton">開始闖關</button>
+            </div>
+            
+            <div class="badges-showcase">
+                <h3>我的成就</h3>
+                <div class="badges-container" id="badgesContainer">
+                    <!-- 勳章將動態生成 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="game-stage" id="gameStage" style="display: none;">
+            <div class="stage-header">
+                <div class="back-button" id="backButton">← 返回</div>
+                <h2>閱讀挑戰</h2>
+                <div class="timer" id="timer">00:00</div>
+            </div>
+            
+            <div class="reading-section">
+                <div class="reading-content" id="readingContent"></div>
+            </div>
+            
+            <div class="questions-section" id="questionsSection">
+                <!-- 題目將動態生成 -->
+            </div>
+            
+            <button class="submit-button" id="submitButton">提交答案</button>
+        </div>
+
+        <div class="result-screen" id="resultScreen" style="display: none;">
+            <div class="result-container">
+                <h2>挑戰結果</h2>
+                <div class="result-stats">
+                    <div class="result-score">
+                        <span>得分：</span>
+                        <span id="resultScore">0/3</span>
+                    </div>
+                    <div class="result-time">
+                        <span>用時：</span>
+                        <span id="resultTime">00:00</span>
+                    </div>
+                </div>
+                
+                <div class="rewards-container" id="rewardsContainer">
+                    <div class="reward-item">
+                        <svg width="30" height="30" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+                            <text x="12" y="16" text-anchor="middle" font-size="12" font-weight="bold" fill="#FFF">¥</text>
+                        </svg>
+                        <span id="earnedCoins">+0</span>
+                    </div>
+                    <div class="reward-item">
+                        <svg width="30" height="30" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" fill="#C0C0C0" stroke="#808080" stroke-width="2"/>
+                            <polygon points="12,5 14,10 19,10 15,14 17,19 12,16 7,19 9,14 5,10 10,10" fill="#FFD700"/>
+                        </svg>
+                        <span id="earnedMedals">+0</span>
+                    </div>
+                </div>
+                
+                <h3>答案與解析</h3>
+                <div class="explanation-container" id="explanationContainer">
+                    <!-- 答案與解析會動態生成在這裡 -->
+                </div>
+                
+                <div class="earned-badge" id="earnedBadge" style="display: none;">
+                    <h3>獲得新徽章！</h3>
+                    <div class="badge-display" id="newBadgeDisplay"></div>
+                </div>
+                
+                <div class="result-buttons">
+                    <button id="tryAgainButton">再次挑戰</button>
+                    <button id="backToMenuButton">返回主選單</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="spinner"></div>
+            <p>AI 正在出題中...</p>
+        </div>
+        
+        <div class="instructions-overlay" id="instructionsOverlay" style="display: none;">
+            <div class="instructions-container">
+                <div class="instructions-header">
+                    <h2>遊戲說明</h2>
+                    <button class="close-button" id="closeInstructions">×</button>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>遊戲目標</h3>
+                    <p>Puti-AI 閱讀闖關遊戲旨在幫助學生提升閱讀理解能力，透過有趣的挑戰和獎勵機制，讓學習變得更加有趣！</p>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>遊戲流程</h3>
+                    <ol>
+                        <li>選擇適合的年級難度</li>
+                        <li>選擇文章字數</li>
+                        <li>選擇出題方式（AI自動或自訂主題）</li>
+                        <li>點擊「開始闖關」生成閱讀文章和問題</li>
+                        <li>閱讀文章並回答 3 個基於 PIRLS 閱讀素養評量架構的題目</li>
+                        <li>提交答案，獲得即時評分和獎勵</li>
+                    </ol>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>PIRLS 閱讀素養層次</h3>
+                    <p>每個問題都基於以下四個認知層次：</p>
+                    <ul>
+                        <li><strong>檢索訊息</strong>：找出明確陳述的資訊</li>
+                        <li><strong>直接推論</strong>：根據文章內容進行簡單的推論</li>
+                        <li><strong>詮釋整合</strong>：整合文章不同部分，進行詮釋和理解</li>
+                        <li><strong>評鑑反思</strong>：評估文章內容，連結個人經驗進行反思</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>等級系統</h3>
+                    <p>完成閱讀挑戰可以積累經驗，提升你的閱讀等級：</p>
+                    <ul>
+                        <li><span class="instruction-icon">🌱</span>閱讀小菜鳥（初始等級）</li>
+                        <li><span class="instruction-icon">🌿</span>閱讀探險家（完成 5 個挑戰）</li>
+                        <li><span class="instruction-icon">🌲</span>閱讀達人（完成 15 個挑戰）</li>
+                        <li><span class="instruction-icon">🏆</span>閱讀專家（完成 30 個挑戰）</li>
+                        <li><span class="instruction-icon">👑</span>閱讀大師（完成 50 個挑戰）</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>獎勵機制</h3>
+                    <p>遊戲中有兩種主要獎勵：</p>
+                    <ul>
+                        <li><span class="instruction-icon">💰</span><strong>金幣</strong>：根據得分、答題速度獲得，完美得分可獲得額外獎勵</li>
+                        <li><span class="instruction-icon">🏅</span><strong>勳章</strong>：獲得完美得分可獲得勳章</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>成就系統</h3>
+                    <p>完成特定目標可以解鎖獨特的成就徽章：</p>
+                    <ul>
+                        <li><span class="instruction-icon">🏆</span><strong>初次勝利</strong>：成功完成第一次挑戰</li>
+                        <li><span class="instruction-icon">🔥</span><strong>三連勝</strong>：連續完成三次挑戰</li>
+                        <li><span class="instruction-icon">⭐</span><strong>滿分成就</strong>：獲得完美得分</li>
+                        <li><span class="instruction-icon">⚡</span><strong>閃電閱讀</strong>：2分鐘內完成挑戰</li>
+                        <li><span class="instruction-icon">💰</span><strong>閱讀富翁</strong>：累積100枚金幣</li>
+                        <li>...以及更多等你探索！</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3>小技巧</h3>
+                    <ul>
+                        <li>仔細閱讀文章，留意關鍵細節</li>
+                        <li>注意每個問題的認知層次，幫助你思考答案</li>
+                        <li>挑戰更高難度的年級，獲得更多金幣和成就</li>
+                        <li>查看問題解析，了解正確答案的思考邏輯</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="copyright-footer">
+            <p>屏東縣後庄國小黃朝榮老師作品</p>
+            <p>免費分享，歡迎擴散推廣</p>
+            <p>嚴禁商用與任何侵權、不尊重著作權的行為</p>
+            <p>更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank">https://padlet.com/clongwh/puti_ai_tools</a></p>
+        </div>
+    </div>
+
+    <script src="script.js" type="module"></script>
+</body>
+</html>
