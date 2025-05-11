@@ -1,0 +1,111 @@
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-Ai學生期末評語提示詞產生器v6</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Add Google Font for better typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1>Puti-Ai學生期末評語提示詞產生器v6</h1>
+        
+        <div class="instructions">
+            <p>1. 拖曳學生到類型分組區</p>
+            <p>2. 以生成的「評語提示詞」複製貼上自己的AI，可一次快速生成全班評語</p>
+        </div>
+
+        <div class="settings">
+            <div class="setting-item">
+                <label>字數限制:</label>
+                <input type="number" id="wordCount" min="50" max="300" value="150">
+            </div>
+            
+            <div class="setting-item">
+                <label>年級:</label>
+                <select id="grade">
+                    <option value="1">1年級</option>
+                    <option value="2">2年級</option>
+                    <option value="3">3年級</option>
+                    <option value="4">4年級</option>
+                    <option value="5">5年級</option>
+                    <option value="6">6年級</option>
+                    <option value="7">7年級</option>
+                    <option value="8">8年級</option>
+                    <option value="9">9年級</option>
+                    <option value="10">10年級</option>
+                    <option value="11">11年級</option>
+                    <option value="12">12年級</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="student-input">
+            <label>學生名單 (一行一個):</label>
+            <textarea id="studentList" rows="5"></textarea>
+            <button id="confirmStudents">確認學生名單</button>
+        </div>
+
+        <div class="workspace">
+            <div class="students-container" id="studentButtons"></div>
+            
+            <div class="types-container">
+                <div class="type-zone" data-type="品學兼優型">
+                    <h3>品學兼優型</h3>
+                    <div class="drop-zone"></div>
+                </div>
+                <div class="type-zone" data-type="穩健認真型">
+                    <h3>穩健認真型</h3>
+                    <div class="drop-zone"></div>
+                </div>
+                <div class="type-zone" data-type="負責服務型">
+                    <h3>負責服務型</h3>
+                    <div class="drop-zone"></div>
+                </div>
+                <div class="type-zone" data-type="合群友善型">
+                    <h3>合群友善型</h3>
+                    <div class="drop-zone"></div>
+                </div>
+                <div class="type-zone" data-type="創意思維型">
+                    <h3>創意思維型</h3>
+                    <div class="drop-zone"></div>
+                </div>
+                <div class="type-zone" data-type="陽光體育型">
+                    <h3>陽光體育型</h3>
+                    <div class="drop-zone"></div>
+                </div>
+                <div class="type-zone" data-type="潛力待發型">
+                    <h3>潛力待發型</h3>
+                    <div class="drop-zone"></div>
+                </div>
+                <div class="type-zone" data-type="欠缺努力型">
+                    <h3>欠缺努力型</h3>
+                    <div class="drop-zone"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button id="generate">生成評語提示詞</button>
+            <button id="copy">複製提示詞</button>
+            <a href="https://student.magicschool.ai/s/join?joinCode=GYDRVQ" target="_blank">
+                <button id="aiGenerate">貼上AI生成</button>
+            </a>
+        </div>
+
+        <div class="preview">
+            <h3>提示詞預覽</h3>
+            <div id="promptPreview"></div>
+        </div>
+
+        <footer>
+            <p>屏東縣後庄國小黃朝榮老師作品</p>
+            <p>免費分享，歡迎擴散推廣</p>
+            <p>嚴禁商用與任何侵權、不尊重著作權的行為</p>
+            <p>更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank">https://padlet.com/clongwh/puti_ai_tools</a></p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
