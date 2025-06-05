@@ -1,0 +1,301 @@
+:root {
+    --primary-color: #2196F3;
+    --ability-color: #E3F2FD;
+    --personality-color: #F3E5F5;
+    --social-color: #E8F5E9;
+    --talent-color: #FFF3E0;
+    --custom-color: #FFF8E1;
+    --selected-bg: #1976D2;
+    --selected-text: white;
+}
+
+body {
+    font-family: 'Microsoft JhengHei', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f5f5f5;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+h1, h2 {
+    text-align: center;
+    color: var(--primary-color);
+}
+
+h2 {
+    font-size: 1.2em;
+    margin-bottom: 30px;
+}
+
+.input-section {
+    display: grid;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.grade-select, .word-count {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+select, input[type="number"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.student-list textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.student-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.student-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 20px;
+    background: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.student-button.selected {
+    background: var(--selected-bg);
+    color: var(--selected-text);
+    font-weight: bold;
+}
+
+.traits-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.trait-group {
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.ability { background-color: var(--ability-color); }
+.personality { background-color: var(--personality-color); }
+.social { background-color: var(--social-color); }
+.talent { background-color: var(--talent-color); }
+.custom { background-color: var(--custom-color); }
+
+.trait-group h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+}
+
+.buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.trait-button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 15px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.trait-button.selected {
+    background: var(--selected-bg);
+    color: var(--selected-text);
+}
+
+.action-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.action-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: var(--primary-color);
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.action-buttons button:hover {
+    opacity: 0.9;
+}
+
+#reset {
+    background: #f44336;
+}
+
+.preview {
+    margin: 20px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    color: #666;
+}
+
+footer a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#promptPreview {
+    white-space: pre-wrap;
+    line-height: 1.6;
+    font-size: 1.1em;
+}
+
+/* 自定義特質相關樣式 */
+.custom-input-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+#customTraitInput {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    resize: vertical;
+    font-family: 'Microsoft JhengHei', sans-serif;
+    line-height: 1.4;
+}
+
+#customTraitInput:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.2);
+}
+
+.custom-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+}
+
+#addCustomTraits, #clearCustomTraits {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+#addCustomTraits {
+    background: var(--primary-color);
+    color: white;
+    flex: 1;
+    max-width: 150px;
+}
+
+#addCustomTraits:hover {
+    background: #1976D2;
+}
+
+#clearCustomTraits {
+    background: #ff9800;
+    color: white;
+    flex: 1;
+    max-width: 120px;
+}
+
+#clearCustomTraits:hover {
+    background: #f57f17;
+}
+
+.custom-trait-button {
+    position: relative;
+    padding-right: 25px !important;
+}
+
+.delete-trait {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #f44336;
+    color: white;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.delete-trait:hover {
+    background: #d32f2f;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* 響應式設計調整 */
+@media (max-width: 768px) {
+    .custom-input-section {
+        gap: 10px;
+    }
+    
+    #customTraitInput {
+        min-height: 80px;
+    }
+    
+    .custom-buttons {
+        flex-direction: column;
+    }
+    
+    #addCustomTraits, #clearCustomTraits {
+        max-width: none;
+        width: 100%;
+    }
+}
