@@ -1,0 +1,510 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Puti-AI 幾何網格繪圖板</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 300;
+        }
+
+        .controls {
+            margin: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            max-width: 800px;
+            justify-content: center;
+        }
+
+        .grid-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: rgba(103, 126, 234, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(103, 126, 234, 0.2);
+        }
+
+        select, button, input[type="range"] {
+            padding: 10px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        select {
+            background: white;
+            min-width: 80px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #canvas {
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .color-controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            padding: 15px;
+            background: rgba(118, 75, 162, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(118, 75, 162, 0.2);
+        }
+
+        .color-controls label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #667eea;
+        }
+
+        input[type="range"] {
+            width: 100px;
+            height: 6px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+
+        .grid-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #667eea;
+            border-radius: 50%;
+            transform: translate(-5px, -5px);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .grid-point:hover {
+            background: #764ba2;
+            transform: translate(-6px, -6px);
+            width: 12px;
+            height: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        #gridContainer {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: auto;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            box-shadow: 0 -8px 32px rgba(0,0,0,0.1);
+            border-radius: 15px 15px 0 0;
+        }
+
+        footer p {
+            margin: 8px 0;
+            color: #555;
+            font-weight: 500;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+            color: #764ba2;
+        }
+
+        .download-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .download-controls button {
+            font-size: 13px;
+            padding: 8px 12px;
+        }
+
+        label {
+            font-weight: 500;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h1>Puti-AI 幾何網格繪圖板</h1>
+    <div class="controls">
+        <div class="grid-controls">
+            <label>欄數:
+                <select id="gridCols">
+                    <option value="8">8</option>
+                    <option value="10" selected>10</option>
+                    <option value="12">12</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                </select>
+            </label>
+            <label>列數:
+                <select id="gridRows">
+                    <option value="8">8</option>
+                    <option value="10" selected>10</option>
+                    <option value="12">12</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                </select>
+            </label>
+        </div>
+        <div class="color-controls">
+            <label>填充顏色:
+                <input type="color" id="fillColor" value="#FF6B6B">
+            </label>
+            <label>
+                <input type="checkbox" id="transparentFill" checked> 透明填充
+            </label>
+            <label>透明度:
+                <input type="range" id="opacity" min="0" max="100" value="50">
+            </label>
+        </div>
+        <button id="resetBtn">重置</button>
+        <div class="download-controls">
+            <button id="downloadJPG">下載 JPG</button>
+            <button id="downloadPNG">下載透明 PNG</button>
+            <button id="downloadSVG">下載 SVG</button>
+        </div>
+    </div>
+    <div id="gridContainer">
+        <canvas id="canvas" width="500" height="500"></canvas>
+    </div>
+    <footer>
+        <p>屏東縣後庄國小黃朝榮老師作品</p>
+        <p>免費分享，歡迎擴散推廣</p>
+        <p>嚴禁商用與任何侵權、不尊重著作權的行為</p>
+        <p><a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank">更多 Puti-AI 教學工具</a></p>
+    </footer>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const gridContainer = document.getElementById('gridContainer');
+        const gridColsSelect = document.getElementById('gridCols');
+        const gridRowsSelect = document.getElementById('gridRows');
+        const fillColorInput = document.getElementById('fillColor');
+        let gridCols = parseInt(gridColsSelect.value);
+        let gridRows = parseInt(gridRowsSelect.value);
+        let cellWidth = canvas.width / gridCols;
+        let cellHeight = canvas.height / gridRows;
+        
+        let currentPath = [];
+        let paths = [];
+        let gridPoints = [];
+
+        function createGridPoints() {
+            // Remove existing points
+            gridPoints.forEach(point => point.remove());
+            gridPoints = [];
+            
+            // Create new points at grid intersections
+            for(let y = 0; y <= gridRows; y++) {
+                for(let x = 0; x <= gridCols; x++) {
+                    const point = document.createElement('div');
+                    point.className = 'grid-point';
+                    point.style.left = (x * cellWidth) + 'px';
+                    point.style.top = (y * cellHeight) + 'px';
+                    
+                    point.addEventListener('click', () => {
+                        handlePointClick(x, y);
+                    });
+                    
+                    gridContainer.appendChild(point);
+                    gridPoints.push(point);
+                }
+            }
+        }
+
+        function handlePointClick(x, y) {
+            if(currentPath.length > 0) {
+                // If clicking near the start point, close the path
+                const startPoint = currentPath[0];
+                if(currentPath.length > 2 && 
+                   x === startPoint.x && y === startPoint.y) {
+                    paths.push([...currentPath]);
+                    currentPath = [];
+                    drawGrid();
+                    drawPaths();
+                    return;
+                }
+            }
+            
+            currentPath.push({x, y});
+            drawGrid();
+            drawPaths();
+            drawCurrentPath();
+        }
+
+        function drawCurrentPath() {
+            if(currentPath.length > 0) {
+                ctx.beginPath();
+                ctx.moveTo(currentPath[0].x * cellWidth, currentPath[0].y * cellHeight);
+                currentPath.forEach(p => ctx.lineTo(p.x * cellWidth, p.y * cellHeight));
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#ddd';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            
+            for(let i = 0; i <= gridCols; i++) {
+                const x = i * cellWidth;
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+            }
+            
+            for(let i = 0; i <= gridRows; i++) {
+                const y = i * cellHeight;
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+            }
+            
+            ctx.stroke();
+        }
+
+        function drawPaths() {
+            paths.forEach(path => {
+                if(path.length > 2) {
+                    ctx.beginPath();
+                    ctx.moveTo(path[0].x * cellWidth, path[0].y * cellHeight);
+                    for(let i = 1; i < path.length; i++) {
+                        ctx.lineTo(path[i].x * cellWidth, path[i].y * cellHeight);
+                    }
+                    ctx.closePath();
+
+                    // Get base color from color picker
+                    const baseColor = fillColorInput.value;
+                    const opacity = document.getElementById('opacity').value / 100;
+                    
+                    if (document.getElementById('transparentFill').checked) {
+                        // Convert hex to rgba for transparent fill
+                        const r = parseInt(baseColor.substr(1,2), 16);
+                        const g = parseInt(baseColor.substr(3,2), 16);
+                        const b = parseInt(baseColor.substr(5,2), 16);
+                        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${opacity})`;
+                    } else {
+                        ctx.fillStyle = baseColor;
+                    }
+                    
+                    ctx.fill();
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function getGridPosition(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / cellWidth);
+            const y = Math.floor((e.clientY - rect.top) / cellHeight);
+            return {x, y};
+        }
+
+        gridColsSelect.addEventListener('change', () => {
+            gridCols = parseInt(gridColsSelect.value);
+            cellWidth = canvas.width / gridCols;
+            paths = [];
+            currentPath = [];
+            drawGrid();
+            createGridPoints();
+        });
+
+        gridRowsSelect.addEventListener('change', () => {
+            gridRows = parseInt(gridRowsSelect.value);
+            cellHeight = canvas.height / gridRows;
+            paths = [];
+            currentPath = [];
+            drawGrid();
+            createGridPoints();
+        });
+
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            paths = [];
+            currentPath = [];
+            drawGrid();
+        });
+
+        document.getElementById('downloadJPG').addEventListener('click', () => {
+            // Create a temporary canvas with white background
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Fill white background
+            tempCtx.fillStyle = 'white';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // Draw the original canvas content on top
+            tempCtx.drawImage(canvas, 0, 0);
+            
+            const link = document.createElement('a');
+            link.download = 'drawing.jpg';
+            link.href = tempCanvas.toDataURL('image/jpeg');
+            link.click();
+        });
+
+        document.getElementById('downloadPNG').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.download = 'drawing.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        });
+
+        document.getElementById('downloadSVG').addEventListener('click', () => {
+            let svg = `<svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg">`;
+            
+            // Add grid lines
+            for(let i = 0; i <= gridCols; i++) {
+                const x = i * cellWidth;
+                svg += `<line x1="${x}" y1="0" x2="${x}" y2="${canvas.height}" stroke="#ddd"/>`;
+            }
+            for(let i = 0; i <= gridRows; i++) {
+                const y = i * cellHeight;
+                svg += `<line x1="0" y1="${y}" x2="${canvas.width}" y2="${y}" stroke="#ddd"/>`;
+            }
+            
+            // Add paths
+            paths.forEach(path => {
+                if(path.length > 2) {
+                    let d = `M ${path[0].x * cellWidth} ${path[0].y * cellHeight}`;
+                    path.forEach((p, i) => {
+                        if(i > 0) d += ` L ${p.x * cellWidth} ${p.y * cellHeight}`;
+                    });
+                    d += ' Z';
+                    
+                    const baseColor = fillColorInput.value;
+                    const opacity = document.getElementById('opacity').value / 100;
+                    const fillColor = document.getElementById('transparentFill').checked ? 
+                        baseColor + Math.round(opacity * 255).toString(16).padStart(2, '0') :
+                        baseColor;
+                        
+                    svg += `<path d="${d}" fill="${fillColor}" stroke="black" stroke-width="2"/>`;
+                }
+            });
+            
+            svg += '</svg>';
+            
+            const blob = new Blob([svg], {type: 'image/svg+xml'});
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'drawing.svg';
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Add event listeners for transparency controls
+        document.getElementById('transparentFill').addEventListener('change', () => {
+            drawGrid();
+            drawPaths();
+        });
+
+        document.getElementById('opacity').addEventListener('input', () => {
+            drawGrid();
+            drawPaths();
+        });
+
+        // Initialize
+        drawGrid();
+        createGridPoints();
+    </script>
+</body>
+</html>
