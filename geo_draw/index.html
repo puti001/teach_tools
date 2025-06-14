@@ -18,13 +18,12 @@
             -webkit-backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        /* Custom styles for color input to show selected color */
         input[type="color"]::-webkit-color-swatch-wrapper {
             padding: 0;
         }
         input[type="color"]::-webkit-color-swatch {
             border: none;
-            border-radius: 0.375rem; /* rounded-md */
+            border-radius: 0.375rem;
         }
         #drawingCanvas {
             cursor: crosshair;
@@ -58,6 +57,10 @@
                         <div class="flex items-center space-x-3 mt-3">
                             <label for="rows" class="whitespace-nowrap">列(高):</label>
                             <input type="number" id="rows" value="10" min="2" max="50" class="w-full p-2 rounded-md bg-gray-200 dark:bg-gray-700 border-transparent focus:border-indigo-500 focus:ring-indigo-500">
+                        </div>
+                        <div class="mt-3">
+                            <label for="gridOpacity" class="whitespace-nowrap">格線不透明度: <span id="gridOpacityValue">0.5</span></label>
+                            <input type="range" id="gridOpacity" min="0" max="1" step="0.05" value="0.5" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700">
                         </div>
                     </div>
 
@@ -108,6 +111,8 @@
             const ctx = canvas.getContext('2d');
             const colsInput = document.getElementById('cols');
             const rowsInput = document.getElementById('rows');
+            const gridOpacityInput = document.getElementById('gridOpacity');
+            const gridOpacityValueSpan = document.getElementById('gridOpacityValue');
             const fillColorInput = document.getElementById('fillColor');
             const fillOpacityInput = document.getElementById('fillOpacity');
             const opacityValueSpan = document.getElementById('opacityValue');
@@ -120,8 +125,8 @@
             let cols = parseInt(colsInput.value);
             let rows = parseInt(rowsInput.value);
             let cellWidth, cellHeight;
-            let currentPath = []; // Stores points for the polygon being built [{x, y}, ...]
-            let shapes = []; // Stores completed shapes [{path: [...], color: '...', opacity: '...'}, ...]
+            let currentPath = []; 
+            let shapes = []; 
             let hoveredPoint = null;
 
             // --- Canvas Sizing Function ---
@@ -137,12 +142,15 @@
 
             // --- Drawing Functions ---
 
+            // UPDATED: Grid uses black/white base color for better contrast
             function drawGrid() {
-                ctx.strokeStyle = '#e2e8f0'; // Tailwind gray-200
-                if(document.documentElement.classList.contains('dark')) {
-                   ctx.strokeStyle = '#4b5563'; // Tailwind gray-600
-                }
+                const gridBaseColor = document.documentElement.classList.contains('dark') ? '255, 255, 255' : '0, 0, 0'; // White for dark mode, Black for light mode
+                const gridOpacity = gridOpacityInput.value;
+                
+                ctx.strokeStyle = `rgba(${gridBaseColor}, ${gridOpacity})`;
                 ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]); // Dashed lines
+
                 ctx.beginPath();
                 for (let i = 0; i <= cols; i++) {
                     ctx.moveTo(i * cellWidth, 0);
@@ -153,6 +161,8 @@
                     ctx.lineTo(canvas.width, j * cellHeight);
                 }
                 ctx.stroke();
+                
+                ctx.setLineDash([]); // Reset to solid for other drawings
             }
 
             function drawShape(shape) {
@@ -167,10 +177,7 @@
                 ctx.fillStyle = hexToRgba(shape.color, shape.opacity);
                 ctx.fill();
 
-                ctx.strokeStyle = '#1f2937'; // Tailwind gray-800
-                if(document.documentElement.classList.contains('dark')) {
-                    ctx.strokeStyle = '#f9fafb'; // Tailwind gray-50
-                }
+                ctx.strokeStyle = document.documentElement.classList.contains('dark') ? '#f9fafb' : '#1f2937';
                 ctx.lineWidth = 2.5;
                 ctx.stroke();
             }
@@ -182,7 +189,7 @@
                 for (let i = 1; i < currentPath.length; i++) {
                     ctx.lineTo(currentPath[i].x * cellWidth, currentPath[i].y * cellHeight);
                 }
-                ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)'; // Tailwind red-500
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)';
                 ctx.lineWidth = 3;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
@@ -253,7 +260,6 @@
             
             function handleCanvasClick(e) {
                 const clickedPoint = getSnappedPoint(e);
-
                 if (currentPath.length === 0) {
                     currentPath.push(clickedPoint);
                 } else {
@@ -283,7 +289,6 @@
                 }
             }
             
-            // NEW: Function to cancel the current drawing path
             function handleCancelDrawing() {
                 if (currentPath.length > 0) {
                     currentPath = [];
@@ -291,7 +296,6 @@
                 }
             }
 
-            // NEW: Handler for keyboard events
             function handleKeyDown(e) {
                 if (e.key === 'Escape') {
                     handleCancelDrawing();
@@ -320,6 +324,10 @@
             function updateOpacityValue() {
                 opacityValueSpan.textContent = parseFloat(fillOpacityInput.value).toFixed(2);
             }
+            
+            function updateGridOpacityValue() {
+                gridOpacityValueSpan.textContent = parseFloat(gridOpacityInput.value).toFixed(2);
+            }
 
             // --- Download Functions ---
             function download(href, name) {
@@ -341,7 +349,6 @@
                 tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
                 
                 tempCtx.drawImage(canvas, 0, 0);
-
                 download(tempCanvas.toDataURL('image/jpeg', 0.95), 'puti-ai-drawing.jpg');
             }
 
@@ -349,14 +356,17 @@
                 download(canvas.toDataURL('image/png'), 'puti-ai-drawing.png');
             }
             
+            // UPDATED: SVG download uses black/white for better contrast
             function downloadAsSVG() {
                 let svgString = `<svg width="${canvas.width}" height="${canvas.height}" xmlns="http://www.w3.org/2000/svg" style="background-color: transparent;">`;
-                const gridStroke = document.documentElement.classList.contains('dark') ? '#4b5563' : '#e2e8f0';
-                svgString += `<g id="grid" stroke="${gridStroke}" stroke-width="0.5">`;
-                for (let i = 1; i < cols; i++) {
+                const gridStroke = document.documentElement.classList.contains('dark') ? '#FFFFFF' : '#000000';
+                const gridOpacity = gridOpacityInput.value;
+
+                svgString += `<g id="grid" stroke="${gridStroke}" stroke-width="1" stroke-dasharray="4 4" stroke-opacity="${gridOpacity}">`;
+                for (let i = 0; i <= cols; i++) {
                     svgString += `<line x1="${i * cellWidth}" y1="0" x2="${i * cellWidth}" y2="${canvas.height}" />`;
                 }
-                for (let j = 1; j < rows; j++) {
+                for (let j = 0; j <= rows; j++) {
                     svgString += `<line x1="0" y1="${j * cellHeight}" x2="${canvas.width}" y2="${j * cellHeight}" />`;
                 }
                 svgString += `</g>`;
@@ -381,16 +391,19 @@
             fillOpacityInput.addEventListener('input', updateOpacityValue);
             resetBtn.addEventListener('click', handleReset);
             
+            gridOpacityInput.addEventListener('input', () => {
+                updateGridOpacityValue();
+                redrawAll();
+            });
+            
             canvas.addEventListener('mousedown', handleCanvasClick);
             canvas.addEventListener('mousemove', handleMouseMove);
             canvas.addEventListener('mouseleave', handleMouseLeave);
-            // NEW: Right-click to cancel drawing
             canvas.addEventListener('contextmenu', e => {
                 e.preventDefault();
                 handleCancelDrawing();
             });
 
-            // NEW: Listen for Escape key press
             document.addEventListener('keydown', handleKeyDown);
 
             downloadJPG_Btn.addEventListener('click', downloadAsJPG);
@@ -402,6 +415,7 @@
 
             // --- Initial Setup ---
             updateOpacityValue();
+            updateGridOpacityValue();
             resizeCanvas();
         });
     </script>
