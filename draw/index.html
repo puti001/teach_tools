@@ -1,0 +1,88 @@
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 科任教師抽籤小幫手</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <img src="logo.png" alt="Logo" class="logo">
+            <h1>Puti-AI 科任教師抽籤小幫手</h1>
+        </div>
+        <p class="subtitle">為科任老師設計的多班級學生隨機抽籤系統</p>
+    </header>
+
+    <main>
+        <div class="main-controls">
+            <button id="show-add-class-panel-btn" class="action-btn"><i class="fas fa-plus-circle"></i> 匯入/新增班級</button>
+        </div>
+
+        <div id="add-class-panel" class="panel hidden">
+            <div class="tabs">
+                <button class="tab-link active" onclick="openTab(event, 'manual-add')">手動新增</button>
+                <button class="tab-link" onclick="openTab(event, 'csv-import')">從 CSV 匯入</button>
+            </div>
+
+            <div id="manual-add" class="tab-content" style="display: block;">
+                <p>新增班級學生名單（一行一個）</p>
+                <input type="text" id="class-name-input" placeholder="請輸入班級名稱">
+                <textarea id="student-names-input" rows="10" placeholder="請輸入學生姓名，每行一位"></textarea>
+                <button id="add-class-btn" class="action-btn"><i class="fas fa-save"></i> 儲存班級</button>
+            </div>
+
+            <div id="csv-import" class="tab-content">
+                <p>從 CSV 檔案匯入學生資料（格式：班級名稱,學生姓名）</p>
+                <input type="file" id="csv-file-input" accept=".csv">
+                <button id="import-csv-btn" class="action-btn"><i class="fas fa-file-import"></i> 匯入 CSV</button>
+            </div>
+        </div>
+
+        <div id="class-list" class="class-grid"></div>
+
+        <div id="drawing-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 id="drawing-modal-title"></h2>
+                <div class="form-group">
+                    <label for="num-to-draw-input">抽取數量：</label>
+                    <input type="number" id="num-to-draw-input" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label>抽籤方式：</label>
+                    <input type="radio" id="draw-without-replacement" name="draw-type" value="false" checked>
+                    <label for="draw-without-replacement">不重複</label>
+                    <input type="radio" id="draw-with-replacement" name="draw-type" value="true">
+                    <label for="draw-with-replacement">重複</label>
+                </div>
+                <div class="modal-actions">
+                    <button id="start-draw-btn" class="action-btn primary"><i class="fas fa-magic"></i> 開始抽籤</button>
+                    <button id="reset-pool-btn" class="action-btn secondary"><i class="fas fa-sync-alt"></i> 重置籤筒</button>
+                    <button id="close-drawing-modal-btn" class="action-btn tertiary">關閉</button>
+                </div>
+                 <div id="pool-info"></div>
+            </div>
+        </div>
+        
+        <div id="result-overlay" class="modal-overlay hidden">
+             <div id="result-card"></div>
+        </div>
+
+        <div id="history-section" class="panel hidden">
+            <h3><i class="fas fa-history"></i> 抽籤歷史紀錄</h3>
+            <ul id="history-list"></ul>
+            <button id="clear-history-btn" class="action-btn secondary"><i class="fas fa-trash"></i> 清除紀錄</button>
+        </div>
+
+    </main>
+
+    <footer>
+        <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank">更多工具</a>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
