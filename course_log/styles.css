@@ -1,0 +1,372 @@
+:root {
+    --primary-color: #4a90e2;
+    --secondary-color: #50e3c2;
+    --background-color: #f4f7f6;
+    --text-color: #333;
+    --light-text-color: #fff;
+    --card-bg-color: #ffffff;
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --danger-color: #d0021b;
+
+    --subject-color-1: #4a90e2; /* 自然 */
+    --subject-color-2: #f5a623; /* 社會 */
+    --subject-color-3: #7ed321; /* 健康 */
+    --subject-color-4: #bd10e0; /* 彈性 */
+    --subject-color-default: #9b9b9b;
+    
+    --card-color-default: var(--card-bg-color);
+    --card-color-1: #81D4FA; /* light blue */
+    --card-color-2: #A5D6A7; /* light green */
+    --card-color-3: #FFCC80; /* light orange */
+    --card-color-4: #CE93D8; /* light purple */
+    --card-color-5: #EF9A9A; /* light red */
+}
+
+body {
+    font-family: 'Noto Sans TC', sans-serif;
+    margin: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    overscroll-behavior: none;
+}
+
+header {
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px var(--shadow-color);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.25rem;
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-actions {
+    flex-shrink: 0;
+}
+
+.header-actions button {
+    margin-left: 0.5rem;
+}
+
+main {
+    padding: 1.5rem;
+}
+
+h2, h3 {
+    color: var(--primary-color);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* 列表容器 */
+.list-container {
+    display: grid;
+    gap: 1rem;
+}
+
+/* 班級卡片 */
+.class-card {
+    background-color: var(--card-color-default);
+    color: var(--text-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 5px var(--shadow-color);
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
+    position: relative;
+    border-left: 5px solid var(--primary-color);
+}
+
+.class-card[data-color="default"] {
+    border-left-color: var(--primary-color);
+}
+.class-card[data-color="1"] { background-color: var(--card-color-1); border-left: none; }
+.class-card[data-color="2"] { background-color: var(--card-color-2); border-left: none; }
+.class-card[data-color="3"] { background-color: var(--card-color-3); border-left: none; }
+.class-card[data-color="4"] { background-color: var(--card-color-4); border-left: none; }
+.class-card[data-color="5"] { background-color: var(--card-color-5); border-left: none; }
+
+.class-card.light-text,
+.class-card.light-text h3,
+.class-card.light-text .summary,
+.class-card.light-text .card-actions button {
+    color: var(--light-text-color);
+}
+
+.class-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px var(--shadow-color);
+}
+
+.class-card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    color: inherit;
+}
+
+.class-card .summary {
+    font-size: 0.9rem;
+    color: inherit;
+    opacity: 0.8;
+    min-height: 1.2em;
+}
+
+.card-actions {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.card-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 0.25rem;
+    color: #999;
+}
+.card-actions button:hover {
+    color: var(--primary-color);
+}
+
+.class-card.light-text .card-actions button:hover {
+    opacity: 0.8;
+}
+
+/* FAB 按鈕 */
+.fab {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    color: var(--light-text-color);
+    font-size: 2rem;
+    border: none;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.2s;
+}
+.fab:hover {
+    background-color: #48c9b0;
+    transform: scale(1.05);
+}
+
+/* 詳細視圖 */
+#class-detail-view .view-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+#class-detail-view h2 {
+    margin: 0;
+}
+
+#back-to-list-btn {
+    font-size: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    line-height: 1;
+}
+
+/* 表單 */
+#record-form-container {
+    background: var(--card-bg-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 5px var(--shadow-color);
+}
+
+form {
+    display: grid;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+input[type="text"],
+input[type="date"],
+select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.color-selector {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.color-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.color-dot:hover {
+    transform: scale(1.1);
+}
+
+.color-dot.selected {
+    border-color: var(--primary-color);
+}
+
+.color-dot[data-color="default"] { background-color: var(--card-bg-color); border-color: #ccc; }
+.color-dot[data-color="1"] { background-color: var(--card-color-1); }
+.color-dot[data-color="2"] { background-color: var(--card-color-2); }
+.color-dot[data-color="3"] { background-color: var(--card-color-3); }
+.color-dot[data-color="4"] { background-color: var(--card-color-4); }
+.color-dot[data-color="5"] { background-color: var(--card-color-5); }
+
+button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: var(--primary-color);
+    color: var(--light-text-color);
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+button:hover {
+    opacity: 0.9;
+}
+
+button.secondary-btn {
+    background-color: transparent;
+    border: 1px solid var(--light-text-color);
+    color: var(--light-text-color);
+}
+
+button.danger-btn {
+    background-color: var(--danger-color);
+}
+
+/* 進度歷史 */
+.history-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.record-card {
+    background-color: var(--card-bg-color);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 5px var(--shadow-color);
+    position: relative;
+    border-left: 5px solid var(--primary-color);
+}
+
+.record-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+.record-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+.record-header .date {
+    font-size: 0.9rem;
+    color: #666;
+    font-weight: 500;
+}
+.record-item {
+    margin-bottom: 0.75rem;
+}
+.record-item strong {
+    color: var(--primary-color);
+}
+
+/* 彈出視窗 */
+#modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--card-bg-color);
+    padding: 2rem;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
+}
+
+#modal-form button {
+    margin-top: 1rem;
+    width: 100%;
+}
