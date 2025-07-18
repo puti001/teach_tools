@@ -6,7 +6,7 @@ let state = {
 
 const DEFAULT_STATE = {
     classes: [
-        { id: `c${Date.now()}`, name: "範例班級", records: [], color: 1 }
+        { id: `c${Date.now()}`, name: "範例班級-科目", records: [], color: 1 }
     ],
     currentClassId: null,
     editingRecordId: null,
