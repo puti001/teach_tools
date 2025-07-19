@@ -95,8 +95,10 @@ export function renderProgressHistory(records) {
         return;
     }
 
-    historyEl.innerHTML = [...records].reverse().map(r => `
-        <div class="record-card" data-id="${r.id}">
+    historyEl.innerHTML = [...records].reverse().map((r, index) => {
+        const isExpanded = index === 0;
+        return `
+        <div class="record-card ${isExpanded ? 'expanded' : ''}" data-id="${r.id}">
             <div class="record-header">
                 <h4>${r.date}</h4>
                 <div class="card-actions">
@@ -104,13 +106,15 @@ export function renderProgressHistory(records) {
                     <button data-action="delete-record" title="刪除紀錄">&#128465;</button>
                 </div>
             </div>
-            ${r.textbook ? `<div class="record-item"><strong>課本:</strong> ${r.textbook}</div>` : ''}
-            ${r.workbook ? `<div class="record-item"><strong>習作:</strong> ${r.workbook}</div>` : ''}
-            ${r.homework && r.homework.length > 0 ? `<div class="record-item"><strong>作業:</strong> ${r.homework.join(', ')}</div>` : ''}
-            ${r.assessment ? `<div class="record-item"><strong>評量:</strong> ${r.assessment}</div>` : ''}
-            ${r.notes ? `<div class="record-item"><strong>備註:</strong> ${r.notes}</div>` : ''}
+            <div class="record-body">
+                ${r.textbook ? `<div class="record-item"><strong>課本:</strong> ${r.textbook}</div>` : ''}
+                ${r.workbook ? `<div class="record-item"><strong>習作:</strong> ${r.workbook}</div>` : ''}
+                ${r.homework && r.homework.length > 0 ? `<div class="record-item"><strong>作業:</strong> ${r.homework.join(', ')}</div>` : ''}
+                ${r.assessment ? `<div class="record-item"><strong>評量:</strong> ${r.assessment}</div>` : ''}
+                ${r.notes ? `<div class="record-item"><strong>備註:</strong> ${r.notes}</div>` : ''}
+            </div>
         </div>
-    `).join('');
+    `}).join('');
 }
 
 export function openModal(title, formHTML, submitText) {

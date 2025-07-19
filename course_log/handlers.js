@@ -211,18 +211,26 @@ function handleDeleteRecord(recordId) {
 }
 
 export function handleHistoryClick(e) {
-    const button = e.target.closest('button[data-action]');
-    if (!button) return;
+    const actionButton = e.target.closest('button[data-action]');
+    const recordCard = e.target.closest('.record-card');
 
-    playClickSound();
-    const recordCard = button.closest('.record-card');
-    const recordId = recordCard.dataset.id;
-    const action = button.dataset.action;
+    if (!recordCard) return;
 
-    if (action === 'edit-record') {
-        handleEditRecord(recordId);
-    } else if (action === 'delete-record') {
-        handleDeleteRecord(recordId);
+    if (actionButton) {
+        // Handle edit/delete clicks
+        playClickSound();
+        const recordId = recordCard.dataset.id;
+        const action = actionButton.dataset.action;
+
+        if (action === 'edit-record') {
+            handleEditRecord(recordId);
+        } else if (action === 'delete-record') {
+            handleDeleteRecord(recordId);
+        }
+    } else {
+        // Handle accordion toggle
+        playClickSound();
+        recordCard.classList.toggle('expanded');
     }
 }
 

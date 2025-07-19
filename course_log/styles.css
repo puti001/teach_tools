@@ -303,27 +303,62 @@ button.danger-btn {
 .record-card {
     background-color: var(--card-bg-color);
     border-radius: 8px;
-    padding: 1.5rem;
+    padding: 0 1.5rem;
     box-shadow: 0 2px 5px var(--shadow-color);
     position: relative;
     border-left: 5px solid var(--primary-color);
+    overflow: hidden;
+    transition: padding 0.3s ease;
+}
+
+.record-card.expanded {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
 }
 
 .record-header {
     display: flex;
-    align-items: flex-start;
-    margin-bottom: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0;
+    cursor: pointer;
+    padding: 1rem 0;
 }
+
+.record-card.expanded .record-header {
+    padding-top: 0;
+    padding-bottom: 1rem;
+    cursor: default;
+}
+
 .record-header h4 {
     margin: 0;
     font-size: 1.2rem;
     font-weight: 700;
 }
+
+.record-header .card-actions {
+    cursor: default;
+}
+
 .record-header .date {
     font-size: 0.9rem;
     color: #666;
     font-weight: 500;
 }
+
+.record-body {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, opacity 0.3s ease-in-out;
+}
+
+.record-card.expanded .record-body {
+    max-height: 500px; /* A reasonable max height */
+    opacity: 1;
+}
+
 .record-item {
     margin-bottom: 0.75rem;
 }
