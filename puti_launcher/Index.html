@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 常用工具啟動器V2</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1em;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary { background: #4facfe; color: white; }
+        .btn-secondary { background: #43e97b; color: white; }
+        .btn-warning { background: #fa709a; color: white; }
+        .btn-danger { background: #ff6b6b; color: white; }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            .tools-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+        }
+
+        .tool-card.edit-mode {
+            border: 3px dashed #4facfe;
+            background: #f8f9ff;
+        }
+
+        .tool-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .tool-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+
+        .tool-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .tool-card:hover .tool-actions {
+            opacity: 1;
+        }
+
+        .action-btn {
+            background: rgba(0,0,0,0.7);
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: pointer;
+            margin-left: 2px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .modal h2 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .icon-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .icon-option {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.5em;
+        }
+
+        .icon-option:hover {
+            background: #f0f8ff;
+        }
+
+        .icon-option.selected {
+            background: #4facfe;
+            color: white;
+        }
+
+        .color-selector {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .color-option.selected {
+            border-color: #333;
+            transform: scale(1.1);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .icon-link {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+
+        .icon-link a {
+            color: #4facfe;
+            text-decoration: none;
+        }
+
+        .sortable-ghost {
+            opacity: 0.5;
+        }
+
+        .sortable-chosen {
+            transform: scale(1.05);
+        }
+
+        .sortable-drag {
+            opacity: 0.8;
+            transform: rotate(5deg);
+        }
+            .tools-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 15px;
+            }
+            
+            .tool-card {
+                padding: 15px;
+            }
+            
+            .tool-icon {
+                font-size: 2em;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                gap: 10px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 13px;
+            }
+        }
+
+        .pastels {
+            --pastel-pink: #ffb3d9;
+            --pastel-blue: #b3d9ff;
+            --pastel-green: #b3ffb3;
+            --pastel-yellow: #ffffb3;
+            --pastel-purple: #d9b3ff;
+            --pastel-orange: #ffcc99;
+            --pastel-red: #ffb3b3;
+            --pastel-teal: #99ffcc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Puti-AI 工具啟動器V2</h1>
+            <p>您的專屬工具集合，一鍵啟動所有常用工具 | 💾 資料永久保存</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="showAddModal()">
+                <i class="fas fa-plus"></i> 新增工具
+            </button>
+            <button class="btn btn-secondary" onclick="toggleEditMode()">
+                <i class="fas fa-edit"></i> 編輯模式
+            </button>
+            <button class="btn btn-warning" id="sortBtn" onclick="toggleSortMode()" style="display: none;">
+                <i class="fas fa-arrows-alt"></i> 拖曳排序
+            </button>
+            <button class="btn btn-warning" onclick="exportData()">
+                <i class="fas fa-download"></i> 匯出資料
+            </button>
+            <button class="btn btn-primary" onclick="document.getElementById('importFile').click()">
+                <i class="fas fa-upload"></i> 匯入資料
+            </button>
+        </div>
+
+        <div class="tools-grid" id="toolsGrid">
+            <!-- 工具將在這裡動態生成 -->
+        </div>
+    </div>
+
+    <!-- 新增/編輯工具的模態框 -->
+    <div class="modal" id="toolModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">新增工具</h2>
+            <form id="toolForm">
+                <div class="form-group">
+                    <label for="toolName">工具名稱</label>
+                    <input type="text" id="toolName" required>
+                </div>
+                <div class="form-group">
+                    <label for="toolUrl">工具網址</label>
+                    <input type="url" id="toolUrl" required>
+                </div>
+                <div class="form-group">
+                    <label>選擇圖示</label>
+                    <div style="margin-bottom: 10px;">
+                        <button type="button" onclick="showEmojiIcons()" class="btn">Emoji 圖示</button>
+                        <button type="button" onclick="showFontAwesome()" class="btn">Font Awesome</button>
+                    </div>
+                    <div class="icon-link">
+                        <a href="https://fontawesome.com/icons" target="_blank">🔍 尋找更多 Font Awesome 圖示</a>
+                    </div>
+                    <div class="icon-selector" id="iconSelector">
+                        <!-- 圖示選項將在這裡動態生成 -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>選擇顏色</label>
+                    <div class="color-selector" id="colorSelector">
+                        <!-- 顏色選項將在這裡動態生成 -->
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-danger" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">確定</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <input type="file" id="importFile" class="file-input" accept=".json" onchange="importData(event)">
+
+    <script>
+        // 資料儲存（使用 localStorage）
+        let toolsData = JSON.parse(localStorage.getItem('putiAiTools')) || [
+            {
+                "id": "default-1",
+                "name": "Puti-AI工具庫",
+                "url": "https://padlet.com/clongwh/puti_ai_tools",
+                "icon": "🤖",
+                "iconType": "emoji",
+                "color": "#b3d9ff"
+            },
+            {
+                "id": "tool_1753019328620",
+                "name": "科任教師抽籤",
+                "url": "https://puti001.github.io/teach_tools/draw/",
+                "icon": "🎯",
+                "iconType": "emoji",
+                "color": "rgb(255, 179, 217)"
+            },
+            {
+                "id": "tool_1753019375388",
+                "name": "課程進度記錄",
+                "url": "https://puti001.github.io/teach_tools/course_log/",
+                "icon": "📝",
+                "iconType": "emoji",
+                "color": "#ffffff"
+            },
+            {
+                "id": "tool_1753020855548",
+                "name": "樂透抽籤器",
+                "url": "https://puti001.github.io/teach_tools/Random_Lottery/index.html",
+                "icon": "💰",
+                "iconType": "emoji",
+                "color": "rgb(179, 255, 179)"
+            },
+            {
+                "id": "tool_1753020949716",
+                "name": "分組與計分器",
+                "url": "https://puti001.github.io/teach_tools/teams/index.html",
+                "icon": "📊",
+                "iconType": "emoji",
+                "color": "rgb(255, 239, 213)"
+            },
+            {
+                "id": "tool_1753021137804",
+                "name": "閃卡複習機",
+                "url": "https://puti-ai.my.canva.site/tang-poetry2",
+                "icon": "⚡",
+                "iconType": "emoji",
+                "color": "rgb(240, 255, 240)"
+            },
+            {
+                "id": "tool_1753021208852",
+                "name": "簡易投票器",
+                "url": "https://script.google.com/macros/s/AKfycby2odhSIrd4TMrZysZyGv3zGFBzeLYaM6I544oD4AGGxfK5bt83ycRAvszRhzqT0ILU/exec",
+                "icon": "❤️",
+                "iconType": "emoji",
+                "color": "rgb(179, 217, 255)"
+            },
+            {
+                "id": "tool_1753021511508",
+                "name": "筆順練習網",
+                "url": "https://puti-ai.my.canva.site/order",
+                "icon": "fas fa-pen",
+                "iconType": "fontawesome",
+                "color": "#ffffff"
+            },
+            {
+                "id": "tool_1753021620332",
+                "name": "TeachAI",
+                "url": "https://www.facebook.com/groups/teachai001",
+                "icon": "🌟",
+                "iconType": "emoji",
+                "color": "rgb(224, 255, 255)"
+            }
+        ];
+
+        // 儲存資料到 localStorage
+        function saveData() {
+            localStorage.setItem('putiAiTools', JSON.stringify(toolsData));
+        }
+
+        let editMode = false;
+        let sortMode = false;
+        let currentEditId = null;
+
+        // Emoji 圖示選項
+        const emojiIcons = ['🚀', '⚡', '🔧', '📊', '💡', '🎯', '📝', '🔍', '💻', '📱', '🌟', '🎨', '📷', '🎵', '📚', '🌐', '⚙️', '🔒', '📈', '💰', '🎮', '📧', '🕐', '🌙', '☀️', '🔔', '🏠', '❤️', '🎭', '🍕'];
+
+        // Font Awesome 圖示選項
+        const fontAwesomeIcons = ['fas fa-rocket', 'fas fa-bolt', 'fas fa-tools', 'fas fa-chart-bar', 'fas fa-lightbulb', 'fas fa-bullseye', 'fas fa-pen', 'fas fa-search', 'fas fa-laptop', 'fas fa-mobile-alt', 'fas fa-star', 'fas fa-palette', 'fas fa-camera', 'fas fa-music', 'fas fa-book', 'fas fa-globe', 'fas fa-cog', 'fas fa-lock', 'fas fa-chart-line', 'fas fa-dollar-sign', 'fas fa-gamepad', 'fas fa-envelope', 'fas fa-clock', 'fas fa-moon', 'fas fa-sun', 'fas fa-bell', 'fas fa-home', 'fas fa-heart', 'fas fa-theater-masks', 'fas fa-pizza-slice'];
+
+        // 淡色系顏色選項
+        const pastelColors = ['#ffb3d9', '#b3d9ff', '#b3ffb3', '#ffffb3', '#d9b3ff', '#ffcc99', '#ffb3b3', '#99ffcc', '#ffd1dc', '#e6e6fa', '#f0fff0', '#fff8dc', '#ffe4e1', '#e0ffff', '#f5f5dc', '#ffefd5'];
+
+        // 初始化
+        function init() {
+            renderTools();
+            initSortable();
+        }
+
+        // 渲染工具
+        function renderTools() {
+            const grid = document.getElementById('toolsGrid');
+            grid.innerHTML = '';
+
+            toolsData.forEach(tool => {
+                const toolCard = document.createElement('div');
+                toolCard.className = 'tool-card';
+                toolCard.style.background = tool.color || '#ffffff';
+                toolCard.innerHTML = `
+                    <div class="tool-actions" style="display: ${editMode ? 'block' : 'none'}">
+                        <button class="action-btn" onclick="editTool('${tool.id}')" title="編輯">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn" onclick="deleteTool('${tool.id}')" title="刪除">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="tool-icon">
+                        ${tool.iconType === 'emoji' ? tool.icon : `<i class="${tool.icon}"></i>`}
+                    </div>
+                    <div class="tool-title">${tool.name}</div>
+                `;
+
+                if (!editMode && !sortMode) {
+                    toolCard.onclick = (e) => {
+                        // 只有在沒有拖曳的情況下才開啟連結
+                        if (!toolCard.classList.contains('sortable-chosen') && 
+                            !e.target.closest('.tool-actions')) {
+                            window.open(tool.url, '_blank');
+                        }
+                    };
+                }
+
+                grid.appendChild(toolCard);
+            });
+        }
+
+        // 初始化拖曳排序
+        function initSortable() {
+            const grid = document.getElementById('toolsGrid');
+            if (grid.sortable) {
+                grid.sortable.destroy();
+            }
+            if (sortMode) {
+                grid.sortable = Sortable.create(grid, {
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    onStart: function(evt) {
+                        // 拖曳開始時禁用點擊事件
+                        evt.item.style.pointerEvents = 'none';
+                    },
+                    onEnd: function(evt) {
+                        // 拖曳結束後恢復點擊事件
+                        evt.item.style.pointerEvents = 'auto';
+                        const item = toolsData.splice(evt.oldIndex, 1)[0];
+                        toolsData.splice(evt.newIndex, 0, item);
+                        saveData(); // 儲存排序變更
+                    }
+                });
+            }
+        }
+
+        // 切換編輯模式
+        function toggleEditMode() {
+            editMode = !editMode;
+            const btn = event.target.closest('.btn');
+            const sortBtn = document.getElementById('sortBtn');
+            
+            if (editMode) {
+                btn.innerHTML = '<i class="fas fa-check"></i> 完成編輯';
+                btn.className = 'btn btn-danger';
+                sortBtn.style.display = 'inline-block';
+            } else {
+                btn.innerHTML = '<i class="fas fa-edit"></i> 編輯模式';
+                btn.className = 'btn btn-secondary';
+                sortBtn.style.display = 'none';
+                // 同時關閉排序模式
+                if (sortMode) {
+                    sortMode = false;
+                    const sortBtnEl = document.getElementById('sortBtn');
+                    sortBtnEl.innerHTML = '<i class="fas fa-arrows-alt"></i> 拖曳排序';
+                    sortBtnEl.className = 'btn btn-warning';
+                }
+            }
+            renderTools();
+            initSortable();
+        }
+
+        // 切換排序模式
+        function toggleSortMode() {
+            sortMode = !sortMode;
+            const btn = event.target.closest('.btn');
+            
+            if (sortMode) {
+                btn.innerHTML = '<i class="fas fa-check"></i> 完成排序';
+                btn.className = 'btn btn-danger';
+            } else {
+                btn.innerHTML = '<i class="fas fa-arrows-alt"></i> 拖曳排序';
+                btn.className = 'btn btn-warning';
+            }
+            initSortable();
+        }
+
+        // 顯示新增模態框
+        function showAddModal() {
+            currentEditId = null;
+            document.getElementById('modalTitle').textContent = '新增工具';
+            document.getElementById('toolForm').reset();
+            showEmojiIcons();
+            renderColorSelector();
+            document.getElementById('toolModal').style.display = 'block';
+        }
+
+        // 編輯工具
+        function editTool(id) {
+            const tool = toolsData.find(t => t.id === id);
+            if (!tool) return;
+
+            currentEditId = id;
+            document.getElementById('modalTitle').textContent = '編輯工具';
+            document.getElementById('toolName').value = tool.name;
+            document.getElementById('toolUrl').value = tool.url;
+            
+            if (tool.iconType === 'emoji') {
+                showEmojiIcons();
+            } else {
+                showFontAwesome();
+            }
+            
+            renderColorSelector();
+            
+            // 設置選中的圖示和顏色
+            setTimeout(() => {
+                const iconOptions = document.querySelectorAll('.icon-option');
+                iconOptions.forEach(option => {
+                    if (option.dataset.icon === tool.icon) {
+                        option.classList.add('selected');
+                    }
+                });
+
+                const colorOptions = document.querySelectorAll('.color-option');
+                colorOptions.forEach(option => {
+                    if (option.style.backgroundColor === tool.color) {
+                        option.classList.add('selected');
+                    }
+                });
+            }, 100);
+
+            document.getElementById('toolModal').style.display = 'block';
+        }
+
+        // 刪除工具
+        function deleteTool(id) {
+            if (confirm('確定要刪除這個工具嗎？')) {
+                toolsData = toolsData.filter(t => t.id !== id);
+                saveData(); // 儲存刪除變更
+                renderTools();
+            }
+        }
+
+        // 顯示 Emoji 圖示
+        function showEmojiIcons() {
+            const selector = document.getElementById('iconSelector');
+            selector.innerHTML = '';
+            
+            emojiIcons.forEach(emoji => {
+                const option = document.createElement('div');
+                option.className = 'icon-option';
+                option.dataset.icon = emoji;
+                option.dataset.type = 'emoji';
+                option.textContent = emoji;
+                option.onclick = () => selectIcon(option);
+                selector.appendChild(option);
+            });
+        }
+
+        // 顯示 Font Awesome 圖示
+        function showFontAwesome() {
+            const selector = document.getElementById('iconSelector');
+            selector.innerHTML = '';
+            
+            fontAwesomeIcons.forEach(iconClass => {
+                const option = document.createElement('div');
+                option.className = 'icon-option';
+                option.dataset.icon = iconClass;
+                option.dataset.type = 'fontawesome';
+                option.innerHTML = `<i class="${iconClass}"></i>`;
+                option.onclick = () => selectIcon(option);
+                selector.appendChild(option);
+            });
+        }
+
+        // 選擇圖示
+        function selectIcon(element) {
+            document.querySelectorAll('.icon-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        // 渲染顏色選擇器
+        function renderColorSelector() {
+            const selector = document.getElementById('colorSelector');
+            selector.innerHTML = '';
+            
+            pastelColors.forEach(color => {
+                const option = document.createElement('div');
+                option.className = 'color-option';
+                option.style.backgroundColor = color;
+                option.onclick = () => selectColor(option);
+                selector.appendChild(option);
+            });
+        }
+
+        // 選擇顏色
+        function selectColor(element) {
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        // 關閉模態框
+        function closeModal() {
+            document.getElementById('toolModal').style.display = 'none';
+        }
+
+        // 表單提交
+        document.getElementById('toolForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('toolName').value;
+            const url = document.getElementById('toolUrl').value;
+            const selectedIcon = document.querySelector('.icon-option.selected');
+            const selectedColor = document.querySelector('.color-option.selected');
+            
+            if (!selectedIcon) {
+                alert('請選擇一個圖示');
+                return;
+            }
+            
+            const tool = {
+                id: currentEditId || 'tool_' + Date.now(),
+                name: name,
+                url: url,
+                icon: selectedIcon.dataset.icon,
+                iconType: selectedIcon.dataset.type,
+                color: selectedColor ? selectedColor.style.backgroundColor : '#ffffff'
+            };
+
+            if (currentEditId) {
+                const index = toolsData.findIndex(t => t.id === currentEditId);
+                toolsData[index] = tool;
+            } else {
+                toolsData.push(tool);
+            }
+
+            saveData(); // 儲存新增或編輯的變更
+            renderTools();
+            closeModal();
+        });
+
+        // 匯出資料
+        function exportData() {
+            const dataStr = JSON.stringify(toolsData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'puti-ai-tools.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // 匯入資料
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    if (Array.isArray(importedData)) {
+                        if (confirm('匯入資料將覆蓋現有工具，確定繼續嗎？')) {
+                            toolsData = importedData;
+                            saveData(); // 儲存匯入的資料
+                            renderTools();
+                            alert('匯入成功！');
+                        }
+                    } else {
+                        alert('無效的資料格式');
+                    }
+                } catch (error) {
+                    alert('匯入失敗：' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 點擊模態框背景關閉
+        document.getElementById('toolModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // 初始化應用
+        init();
+    </script>
+</body>
+</html>
