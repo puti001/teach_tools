@@ -1,17 +1,22 @@
 {
-  "name": "Puti-AI 復健日記",
-  "short_name": "復健日記",
-  "start_url": ".",
-  "display": "standalone",
-  "background_color": "#f5f5f5",
-  "theme_color": "#4a90e2",
-  "description": "Puti-AI 椎間盤突出復健日記，追蹤您的運動與症狀。",
-  "icons": [
-    {
-      "src": "icon.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
+    "name": "Puti-AI 椎間盤復健日記",
+    "short_name": "椎間盤日記",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#f0f2f5",
+    "theme_color": "#4a90e2",
+    "description": "椎間盤復健運動打卡與評估記錄APP。",
+    "icons": [
+        {
+            "src": "icon.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icon.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
 }
 
