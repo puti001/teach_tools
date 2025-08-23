@@ -1,0 +1,72 @@
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Puti-AI椎間盤突出復健日記</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <link rel="apple-touch-icon" href="icon.png">
+</head>
+<body>
+    <div id="app-container">
+        <header>
+            <h1>Puti-AI 復健日記</h1>
+        </header>
+
+        <nav>
+            <button id="nav-exercises" class="active">運動打卡</button>
+            <button id="nav-assessments">評估記錄</button>
+        </nav>
+
+        <main>
+            <section id="exercises-view">
+                <h2>今日運動</h2>
+                <ul id="exercise-list">
+                    <!-- Exercises will be dynamically inserted here by JavaScript -->
+                </ul>
+            </section>
+
+            <section id="assessments-view" class="hidden">
+                <h2>麻木評估記錄</h2>
+                <form id="assessment-form">
+                    <h3>新增記錄</h3>
+                    <div class="form-group">
+                        <label for="numbness-datetime">日期與時間</label>
+                        <input type="datetime-local" id="numbness-datetime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="numbness-severity">麻木程度 (1-10)</label>
+                        <div class="severity-slider">
+                           <span>1</span> <input type="range" id="numbness-severity" min="1" max="10" value="5"> <span>10</span>
+                           <output id="numbness-severity-value">5</output>
+                        </div>
+                    </div>
+                     <div class="form-group">
+                        <label for="numbness-notes">備註</label>
+                        <textarea id="numbness-notes" rows="3" placeholder="例如：久坐後發作..."></textarea>
+                    </div>
+                    <button type="submit">新增記錄</button>
+                </form>
+                
+                <div class="assessment-history">
+                    <h3>歷史記錄</h3>
+                    <div id="assessment-list">
+                        <p>目前沒有記錄。</p>
+                    </div>
+                </div>
+
+                <div class="data-management">
+                    <h3>資料管理</h3>
+                    <button id="export-data">匯出資料</button>
+                    <button id="import-data">匯入資料</button>
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

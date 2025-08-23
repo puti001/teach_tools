@@ -1,0 +1,17 @@
+{
+  "name": "Puti-AI 復健日記",
+  "short_name": "復健日記",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#f5f5f5",
+  "theme_color": "#4a90e2",
+  "description": "Puti-AI 椎間盤突出復健日記，追蹤您的運動與症狀。",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+
