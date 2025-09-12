@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 氣球派對</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <div id="instruction-bar">
+            <img id="prohibited-icon" class="hidden" alt="Do not pop icon">
+            <span id="instruction-text"></span>
+        </div>
+        <div id="score-container">
+            分數: <span id="score">0</span> / <span id="target-score">10</span>
+        </div>
+        <div id="start-screen">
+            <h1>Puti-AI 氣球派對</h1>
+            <div class="selection-group">
+                <h2>選擇模式</h2>
+                <div id="mode-selection">
+                    <button class="mode-btn selected" data-mode="color">顏色模式</button>
+                    <button class="mode-btn" data-mode="reverse">反向模式</button>
+                </div>
+            </div>
+            <div class="selection-group">
+                <h2>選擇速度</h2>
+                <div id="speed-selection">
+                    <button class="speed-btn" data-speed="1.0">
+                        <img src="./turtle_icon.png" alt="慢">
+                        <span>慢</span>
+                    </button>
+                    <button class="speed-btn selected" data-speed="1.5">
+                        <img src="./rabbit_icon.png" alt="中">
+                        <span>中</span>
+                    </button>
+                    <button class="speed-btn" data-speed="2.5">
+                        <img src="./cheetah_icon.png" alt="快">
+                        <span>快</span>
+                    </button>
+                </div>
+            </div>
+            <button id="start-button">開始遊戲</button>
+            <button id="report-card-button">我的成績單</button>
+        </div>
+        <div id="end-screen" class="hidden">
+            <h1>太棒了！</h1>
+            <button id="restart-button">再玩一次</button>
+        </div>
+        <div id="pause-overlay" class="hidden">
+            <h1>已暫停</h1>
+        </div>
+        <div id="report-card-screen" class="hidden">
+            <button id="close-report-card-btn">&times;</button>
+            <h1>學習紀錄</h1>
+            <div class="report-tabs">
+                <button class="tab-btn active" data-tab="player-view">我的成績單</button>
+                <button class="tab-btn" data-tab="caregiver-view">成長日誌</button>
+            </div>
+            <div id="player-view" class="tab-content active">
+                <div class="report-section">
+                    <h3>每日簽到</h3>
+                    <div id="calendar-container"></div>
+                </div>
+                <div class="report-section">
+                    <h3>最高紀錄</h3>
+                    <p>你一次最多戳對了 <span id="high-score-display">0</span> 顆氣球，好厲害！</p>
+                </div>
+                <div class="report-section">
+                    <h3>獎盃陳列室</h3>
+                    <div id="trophy-case"></div>
+                </div>
+            </div>
+            <div id="caregiver-view" class="tab-content">
+                 <div class="report-section">
+                    <h3>數據追蹤</h3>
+                    <div id="analytics-container">
+                        <p><strong>總遊玩時間:</strong> <span id="total-play-time">0 分鐘</span></p>
+                        <p><strong>平均反應時間:</strong> <span id="avg-reaction-time">N/A</span></p>
+                        <h4>正確率分析 (顏色):</h4>
+                        <div id="color-accuracy"></div>
+                    </div>
+                 </div>
+                 <div class="report-section">
+                    <h3>匯出週報表</h3>
+                    <button id="export-button">產生報告</button>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="controls-container" class="hidden">
+        <button id="pause-btn" class="control-btn">
+            <img src="./pause_icon.png" alt="暫停">
+        </button>
+        <button id="stop-btn" class="control-btn">
+            <img src="./close_icon.png" alt="停止">
+        </button>
+        <button id="music-btn" class="control-btn">
+            <img src="./music_on_icon.png" alt="音樂">
+        </button>
+        <button id="sfx-btn" class="control-btn">
+            <img src="./sfx_on_icon.png" alt="音效">
+        </button>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "canvas-confetti": "https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.module.mjs"
+        }
+    }
+    </script>
+    <script type="module" src="main.js"></script>
+    <script type="module" src="game.js"></script>
+    <script type="module" src="ui.js"></script>
+    <script type="module" src="analytics.js"></script>
+    <script type="module" src="report.js"></script>
+    <script type="module" src="constants.js"></script>
+</body>
+</html>
