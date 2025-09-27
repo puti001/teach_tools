@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Puti-AI 長截圖自動切割器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cal+Sans:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "jszip": "https://esm.sh/jszip@3.10.1",
+      "pdf-lib": "https://esm.sh/pdf-lib@1.17.1"
+    }
+  }
+  </script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="title">Puti‑AI 長截圖自動切割器</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="uploader" id="dropzone">
+      <input type="file" id="fileInput" accept="image/*" hidden>
+      <div class="uploader-inner">
+        <div class="uploader-icon" aria-hidden="true">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+            <path d="M7 18a4 4 0 1 1 .7-7.94A5.5 5.5 0 0 1 19 10.5a3.5 3.5 0 0 1 .3 6.99H7Z" stroke="currentColor" stroke-width="1.4"/>
+            <path d="M12 7l3 3h-2v4h-2v-4H9l3-3Z" fill="currentColor"/>
+          </svg>
+        </div>
+        <p class="uploader-title">拖曳長截圖到這裡，或<span class="link" id="browseBtn">瀏覽上傳</span></p>
+        <p class="uploader-hint">自動以 2:3 直式比例切割，輸出多張圖、ZIP、或 PDF</p>
+      </div>
+    </section>
+
+    <section class="controls">
+      <div class="ratio">切割比例：<strong>2 : 3</strong>（以原圖寬度為基準）</div>
+      <div class="actions">
+        <button id="btnSlice" class="btn primary" disabled>開始切割</button>
+        <button id="btnZip" class="btn" disabled>下載 ZIP</button>
+        <button id="btnPDF" class="btn" disabled>下載 PDF</button>
+        <button id="btnReset" class="btn subtle" disabled>重置</button>
+      </div>
+    </section>
+
+    <section class="preview" id="preview">
+      <div class="preview-info" id="info">尚未上傳檔案</div>
+      <div class="grid" id="grid"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>本工具於瀏覽器本地端運行，不會上傳您的圖片。</span>
+  </footer>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
