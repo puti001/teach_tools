@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Puti-AI 十點半 (智慧判決版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2c0000 50%, #4a0000 100%);
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.5);
+            transform-origin: center center;
+            background-color: white;
+            will-change: transform;
+        }
+
+        .card-enter {
+            animation: deal 0.4s ease-out forwards;
+        }
+
+        @keyframes deal {
+            from { transform: translateY(-50px) scale(0.5); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            70% { transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .animate-pop-in {
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        .animate-shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+        .glass-panel {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .deck-counter {
+            background: linear-gradient(to bottom, #333, #000);
+            border: 2px solid #555;
+            box-shadow: inset 0 0 10px #000;
+        }
+
+        @keyframes shuffle {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-5deg); }
+            50% { transform: translateX(5px) rotate(5deg); }
+            75% { transform: translateX(-5px) rotate(-5deg); }
+            100% { transform: translateX(0); }
+        }
+        .shuffling {
+            animation: shuffle 0.2s linear infinite;
+        }
+
+        /* PvP Rotation */
+        .rotate-180-ui {
+            transform: rotate(180deg);
+        }
+
+        /* Copyright Link Hover */
+        .copyright-link:hover {
+            color: #fbbf24;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, memo } = React;
+
+        // --- Audio Controller ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const playSound = (type) => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if (type === 'deal') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+                if (navigator.vibrate) navigator.vibrate(10);
+            } else if (type === 'shuffle') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.linearRampToValueAtTime(800, now + 0.3);
+                gainNode.gain.setValueAtTime(0.05, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+                if (navigator.vibrate) navigator.vibrate([20, 20, 20]);
+            } else if (type === 'win') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+                if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+            } else if (type === 'lose') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(50, now + 0.4);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+                if (navigator.vibrate) navigator.vibrate(150);
+            } else if (type === 'redpacket') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(1760, now + 0.2);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+                if (navigator.vibrate) navigator.vibrate([100, 30, 100]);
+            }
+        };
+
+        const BLESSINGS = [
+            "祝你錢包像黑洞一樣，只進不出！💰",
+            "祝你運氣好到連走路都能撿到比特幣！🪙",
+            "祝你發票每期都中，中到被懷疑作弊！🧾",
+            "祝你吃不胖，睡得飽，數錢數到手抽筋！💪",
+            "祝你人生就像開了外掛，一路順風！🚀",
+            "祝你投資的股票，線圖比 101 大樓還高！📈",
+            "祝你煩惱全歸零，快樂無上限！😄",
+            "祝你遇到的好事，比 Wi-Fi 訊號還強！📶",
+            "祝你新的一年，顏值與存款同步飆升！✨"
+        ];
+
+        const SUITS = ['♠', '♥', '♦', '♣'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+
+        const getCardValue = (rank) => {
+            if (['J', 'Q', 'K'].includes(rank)) return 0.5;
+            if (rank === 'A') return 1;
+            return parseInt(rank);
+        };
+
+        const createDeck = () => {
+            let deck = [];
+            for (let suit of SUITS) {
+                for (let rank of RANKS) {
+                    deck.push({ 
+                        suit, 
+                        rank, 
+                        value: getCardValue(rank),
+                        color: (suit === '♥' || suit === '♦') ? 'text-red-600' : 'text-black',
+                        id: `${suit}-${rank}-${Math.random()}` 
+                    });
+                }
+            }
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        };
+
+        const calculateScore = (hand) => hand.reduce((acc, card) => acc + card.value, 0);
+
+        // --- Components ---
+        const Card = memo(({ card, hidden }) => {
+            if (hidden) {
+                return (
+                    <div className="card w-14 h-20 sm:w-16 sm:h-24 bg-red-900 rounded-lg border-2 border-yellow-600 flex items-center justify-center mx-1 shadow-md bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4IiBoZWlnaHQ9IjgiPjxyZWN0IHdpZHRoPSI4IiBoZWlnaHQ9IjgiIGZpbGw9IiM2NjAwMDAiLz48cGF0aCBkPSJNMCAwTDggOFpNOCAwTDAgOFoiIHN0cm9rZT0iIzgwMDAwMCIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9zdmc+')]">
+                        <div className="text-3xl text-yellow-500/50">♠</div>
+                    </div>
+                );
+            }
+            return (
+                <div className="card w-14 h-20 sm:w-16 sm:h-24 bg-white rounded-lg border border-gray-300 flex flex-col items-center justify-between p-1 mx-1 card-enter select-none">
+                    <div className={`text-xs font-bold self-start ${card.color}`}>{card.rank}</div>
+                    <div className={`text-xl ${card.color}`}>{card.suit}</div>
+                    <div className={`text-xs font-bold self-end transform rotate-180 ${card.color}`}>{card.rank}</div>
+                </div>
+            );
+        }, (prev, next) => prev.hidden === next.hidden && prev.card.id === next.card.id);
+
+        const HandDisplay = memo(({ hand, isDealer, scoreHidden, label, rotated }) => (
+            <div className={`flex flex-col items-center w-full transition-transform duration-300 ${rotated ? 'rotate-180-ui' : ''}`}>
+                <div className="mb-1 flex items-center gap-2">
+                    <span className="text-yellow-400 font-bold text-shadow text-base">{label}</span>
+                    {!scoreHidden && (
+                        <span className="bg-black/50 px-2 py-0.5 rounded-full text-xs text-white border border-yellow-500/50">
+                            {calculateScore(hand)} 點
+                        </span>
+                    )}
+                </div>
+                <div className="flex justify-center -space-x-3">
+                    {hand.map((card, idx) => (
+                        <Card key={card.id} card={card} hidden={isDealer && idx === 0 && scoreHidden} />
+                    ))}
+                </div>
+            </div>
+        ));
+
+        // Compact Controls with Disabled State
+        const CompactControls = memo(({ onHit, onStand, active, rotated, disabled }) => (
+            <div className={`flex gap-2 justify-center p-2 transition-opacity duration-300 ${active ? 'opacity-100 pointer-events-auto' : 'opacity-30 pointer-events-none'} ${rotated ? 'rotate-180-ui' : ''}`}>
+                <button 
+                    onClick={onHit} 
+                    disabled={disabled}
+                    className={`px-6 py-2 bg-gradient-to-b from-green-500 to-green-700 rounded-xl font-bold text-white shadow-lg border-b-4 border-green-900 active:border-b-0 active:translate-y-1 text-sm sm:text-base ${disabled ? 'grayscale cursor-not-allowed' : ''}`}
+                >
+                    要牌
+                </button>
+                <button 
+                    onClick={onStand} 
+                    disabled={disabled}
+                    className={`px-6 py-2 bg-gradient-to-b from-red-500 to-red-700 rounded-xl font-bold text-white shadow-lg border-b-4 border-red-900 active:border-b-0 active:translate-y-1 text-sm sm:text-base ${disabled ? 'grayscale cursor-not-allowed' : ''}`}
+                >
+                    停牌
+                </button>
+            </div>
+        ));
+
+        const App = () => {
+            const [gameStage, setGameStage] = useState('menu');
+            const [mode, setMode] = useState('pvc'); 
+            const [deck, setDeck] = useState([]);
+            const [playerHand, setPlayerHand] = useState([]);
+            const [dealerHand, setDealerHand] = useState([]);
+            const [turn, setTurn] = useState('player');
+            const [message, setMessage] = useState('');
+            const [stats, setStats] = useState({ wins: 0, total: 0, streak: 0 });
+            const [showRedPacket, setShowRedPacket] = useState(false);
+            const [blessing, setBlessing] = useState('');
+            const [isShuffling, setIsShuffling] = useState(false);
+            const [isProcessing, setIsProcessing] = useState(false); // Locks UI during timeouts
+
+            const startGame = (selectedMode) => {
+                let currentDeck = [...deck];
+                let shuffleText = "";
+                
+                if (currentDeck.length < 12) {
+                    playSound('shuffle');
+                    currentDeck = createDeck(); 
+                    shuffleText = " (已洗牌)";
+                    setIsShuffling(true);
+                    setTimeout(() => setIsShuffling(false), 500);
+                }
+
+                const pCard = currentDeck.pop();
+                const dCard = currentDeck.pop();
+                
+                playSound('deal');
+                setDeck(currentDeck);
+                setPlayerHand([pCard]);
+                setDealerHand([dCard]);
+                setMode(selectedMode || mode);
+                setTurn('player');
+                setGameStage('playing');
+                setMessage(`輪到閒家(玩家1)${shuffleText}`);
+                setShowRedPacket(false);
+                setIsProcessing(false);
+            };
+
+            const goHome = () => {
+                setGameStage('menu');
+                setDeck([]); 
+                setStats({ wins: 0, total: 0, streak: 0 }); 
+            };
+
+            const handleHit = useCallback(() => {
+                if (deck.length === 0 || isProcessing) return;
+                playSound('deal');
+                const newDeck = [...deck];
+                const card = newDeck.pop();
+                setDeck(newDeck);
+
+                if (turn === 'player') {
+                    const newHand = [...playerHand, card];
+                    setPlayerHand(newHand); 
+                    const score = calculateScore(newHand);
+                    
+                    if (score > 10.5) {
+                        setIsProcessing(true);
+                        setTimeout(() => endGame('player_bust', newHand, dealerHand), 800);
+                    } else if (newHand.length === 5) {
+                        setIsProcessing(true);
+                        setTimeout(() => endGame('player_5_dragon', newHand, dealerHand), 800);
+                    }
+                } else {
+                    const newHand = [...dealerHand, card];
+                    setDealerHand(newHand);
+                    // PvP check logic
+                    if (mode === 'pvp') {
+                        const dScore = calculateScore(newHand);
+                        const pScore = calculateScore(playerHand);
+                        
+                        if (dScore > 10.5) {
+                            setIsProcessing(true);
+                            setTimeout(() => endGame('dealer_bust', playerHand, newHand), 800);
+                        } else if (newHand.length === 5) {
+                            setIsProcessing(true);
+                            setTimeout(() => endGame('dealer_5_dragon', playerHand, newHand), 800);
+                        } else if (dScore > pScore) {
+                            // NEW: PvP Instant Win if Dealer beats Player
+                            setIsProcessing(true);
+                            setMessage('莊家點數勝出！');
+                            setTimeout(() => endGame('compare', playerHand, newHand), 1000);
+                        }
+                    }
+                }
+            }, [deck, turn, playerHand, dealerHand, mode, isProcessing]);
+
+            const handleStand = () => {
+                if (isProcessing) return;
+
+                if (turn === 'player') {
+                    // Check Instant Win for Dealer (PvP) BEFORE switching turn completely
+                    if (mode === 'pvp') {
+                        const pScore = calculateScore(playerHand);
+                        const dScore = calculateScore(dealerHand);
+                        // If Dealer already beats Player (and Player stands), Dealer wins immediately
+                        // Rule: Player wins ties. So Dealer needs dScore > pScore
+                        if (dScore > pScore && dScore <= 10.5) {
+                            // Switch turn state just to reveal card (as HandDisplay depends on turn/dealer state)
+                            setTurn('dealer'); 
+                            setIsProcessing(true);
+                            setMessage('莊家點數勝出！');
+                            setTimeout(() => endGame('compare', playerHand, dealerHand), 1000);
+                            return; 
+                        }
+                    }
+
+                    setTurn('dealer');
+                    if (mode === 'pvc') {
+                        setMessage('莊家掀牌...');
+                    } else {
+                        setMessage('輪到莊家(玩家2)');
+                    }
+                } else {
+                    endGame('compare', playerHand, dealerHand);
+                }
+            };
+
+            // AI Logic
+            useEffect(() => {
+                if (mode === 'pvc' && turn === 'dealer' && gameStage === 'playing') {
+                    const timer = setTimeout(() => {
+                        const dScore = calculateScore(dealerHand);
+                        const pScore = calculateScore(playerHand);
+
+                        if (dScore > 10.5) { endGame('dealer_bust', playerHand, dealerHand); return; }
+                        if (dealerHand.length === 5) { endGame('dealer_5_dragon', playerHand, dealerHand); return; }
+
+                        let shouldHit = dScore <= pScore;
+
+                        if (shouldHit) {
+                            setMessage('GiGi: 再來一張！');
+                            handleHit();
+                        } else {
+                            setMessage('GiGi: 我贏了！');
+                            setTimeout(() => endGame('compare', playerHand, dealerHand), 800);
+                        }
+                    }, 1000);
+                    return () => clearTimeout(timer);
+                }
+            }, [turn, dealerHand, gameStage, playerHand, handleHit, mode]);
+
+            const endGame = (reason, pHand, dHand) => {
+                setIsProcessing(false); // Reset processing state
+                setGameStage('gameover');
+                const pScore = calculateScore(pHand);
+                const dScore = calculateScore(dHand);
+                let resultText = '';
+                let isWin = false;
+
+                switch(reason) {
+                    case 'player_bust': resultText = '閒家爆牌！莊家勝！'; isWin = false; break;
+                    case 'dealer_bust': resultText = '莊家爆牌！閒家勝！'; isWin = true; break;
+                    case 'player_5_dragon': resultText = '閒家過五關！超神！'; isWin = true; break;
+                    case 'dealer_5_dragon': resultText = '莊家過五關！通殺！'; isWin = false; break;
+                    case 'compare':
+                        if (pScore > dScore) { resultText = `閒家(${pScore}) 贏 莊家(${dScore})！`; isWin = true; }
+                        else if (pScore === dScore) { resultText = `平手(${pScore})！閒家勝！🎉`; isWin = true; }
+                        else { resultText = `莊家(${dScore}) 勝 閒家(${pScore})！`; isWin = false; }
+                        break;
+                }
+                setMessage(resultText);
+                setStats(prev => {
+                    const newWins = isWin ? prev.wins + 1 : prev.wins;
+                    const newStreak = isWin ? prev.streak + 1 : 0;
+                    if (isWin && newStreak > 0 && newStreak % 3 === 0) setTimeout(() => triggerRedPacket(), 1500);
+                    if (isWin) playSound('win'); else playSound('lose');
+                    return { wins: newWins, total: prev.total + 1, streak: newStreak };
+                });
+            };
+
+            const triggerRedPacket = () => {
+                playSound('redpacket');
+                setBlessing(BLESSINGS[Math.floor(Math.random() * BLESSINGS.length)]);
+                setShowRedPacket(true);
+            };
+
+            const closeRedPacket = () => { setShowRedPacket(false); startGame(mode); };
+            const getWinRate = () => stats.total === 0 ? '0%' : Math.round((stats.wins / stats.total) * 100) + '%';
+
+            const isPvp = mode === 'pvp';
+
+            return (
+                <div className="flex flex-col h-[100dvh] w-screen overflow-hidden relative bg-gradient-to-br from-gray-900 to-red-900">
+                    
+                    {/* MENU SCREEN */}
+                    {gameStage === 'menu' && (
+                        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center p-6 animate-pop-in">
+                            <div className="text-7xl mb-6 animate-bounce">🧧</div>
+                            <h2 className="text-4xl font-bold text-yellow-400 mb-2 text-center drop-shadow-lg">新春十點半</h2>
+                            <p className="text-yellow-200 mb-8 opacity-80 text-center text-sm">
+                                真實牌堆 • 雙人對戰 • 紅包好禮
+                            </p>
+                            <button onClick={() => startGame('pvc')} className="w-full max-w-xs py-4 bg-gradient-to-r from-yellow-600 to-yellow-500 rounded-2xl mb-4 text-black font-bold text-xl shadow-xl active:scale-95 transition-transform border-2 border-yellow-300">
+                                🤖 單人挑戰 GiGi
+                            </button>
+                            <button onClick={() => startGame('pvp')} className="w-full max-w-xs py-4 bg-gradient-to-r from-red-600 to-red-500 rounded-2xl text-white font-bold text-xl shadow-xl active:scale-95 transition-transform border-2 border-red-300">
+                                👥 雙人面對面激戰
+                            </button>
+
+                            {/* COPYRIGHT FOOTER */}
+                            <div className="mt-8 text-center text-gray-400 text-[10px] leading-relaxed opacity-80 max-w-xs">
+                                <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" className="font-bold text-yellow-500 text-xs mb-1 block copyright-link">©Puti-AI 更多教學工具</a>
+                                <p>屏東縣後庄國小黃朝榮老師作品</p>
+                                <p>免費分享，歡迎擴散推廣</p>
+                                <p className="text-red-300/60 mt-1">嚴禁商用與任何侵權、不尊重著作權的行為</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* GAME UI */}
+                    {gameStage !== 'menu' && (
+                        <div className="flex flex-col h-full w-full">
+                            
+                            {/* TOP AREA (P2 / Dealer) */}
+                            <div className={`flex-1 flex flex-col justify-end pb-2 relative border-b border-white/10 ${isPvp ? 'bg-black/20' : ''}`}>
+                                {isPvp && (
+                                    <div className="absolute top-4 w-full flex justify-center z-10">
+                                        <CompactControls 
+                                            onHit={handleHit} 
+                                            onStand={handleStand} 
+                                            active={turn === 'dealer' && gameStage === 'playing'} 
+                                            rotated={true}
+                                            disabled={isProcessing}
+                                        />
+                                    </div>
+                                )}
+                                
+                                <div className="flex justify-center items-end mb-4">
+                                    <HandDisplay 
+                                        hand={dealerHand} 
+                                        isDealer={true} 
+                                        scoreHidden={gameStage === 'playing' && turn === 'player'} 
+                                        label={isPvp ? "莊家 (P2)" : "🤖 GiGi (莊)"}
+                                        rotated={isPvp}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* MIDDLE AREA (Info Bar) */}
+                            <div className="h-14 bg-black/40 flex items-center justify-between px-3 shrink-0 relative z-20">
+                                <button onClick={goHome} className="text-gray-400 hover:text-white p-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                    </svg>
+                                </button>
+
+                                <div className="absolute left-1/2 transform -translate-x-1/2 max-w-[60%]">
+                                    {message && (
+                                        <div className="bg-yellow-500/10 border border-yellow-500/30 px-3 py-1 rounded-full text-center whitespace-nowrap overflow-hidden text-ellipsis">
+                                            <span className="text-yellow-300 font-bold text-sm">{message}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className={`flex flex-col items-end text-[10px] text-gray-400 ${isShuffling ? 'animate-pulse text-yellow-400' : ''}`}>
+                                    <div className="flex items-center gap-1">
+                                        <span>🂠</span> 剩: {deck.length}
+                                    </div>
+                                    {mode === 'pvc' && <div>勝率: {getWinRate()}</div>}
+                                </div>
+                            </div>
+
+                            {/* BOTTOM AREA (P1 / Player) */}
+                            <div className="flex-1 flex flex-col justify-start pt-2 relative border-t border-white/10">
+                                <div className="flex justify-center items-start mt-4">
+                                    <HandDisplay 
+                                        hand={playerHand} 
+                                        isDealer={false} 
+                                        scoreHidden={false} 
+                                        label={isPvp ? "閒家 (P1)" : "👤 玩家 (閒)"}
+                                        rotated={false}
+                                    />
+                                </div>
+                                
+                                {/* Controls for P1 */}
+                                <div className="absolute bottom-6 w-full flex justify-center z-10">
+                                    {isPvp ? (
+                                        <CompactControls 
+                                            onHit={handleHit} 
+                                            onStand={handleStand} 
+                                            active={turn === 'player' && gameStage === 'playing'} 
+                                            rotated={false}
+                                            disabled={isProcessing}
+                                        />
+                                    ) : (
+                                        turn === 'player' && gameStage === 'playing' ? (
+                                            <div className="flex gap-4 w-full px-8 max-w-md transition-opacity duration-300" style={{opacity: isProcessing ? 0.5 : 1, pointerEvents: isProcessing ? 'none' : 'auto'}}>
+                                                <button onClick={handleHit} disabled={isProcessing} className="flex-1 h-12 bg-gradient-to-b from-green-500 to-green-700 active:from-green-600 active:to-green-800 rounded-xl font-bold text-lg shadow-lg border-b-4 border-green-900 active:border-b-0 active:translate-y-1 text-white">要牌</button>
+                                                <button onClick={handleStand} disabled={isProcessing} className="flex-1 h-12 bg-gradient-to-b from-red-500 to-red-700 active:from-red-600 active:to-red-800 rounded-xl font-bold text-lg shadow-lg border-b-4 border-red-900 active:border-b-0 active:translate-y-1 text-white">停牌</button>
+                                            </div>
+                                        ) : (
+                                            gameStage === 'playing' && (
+                                                <div className="text-yellow-200 animate-pulse font-bold text-lg tracking-widest flex items-center gap-2">
+                                                    <span className="text-xl animate-spin">⚙️</span> GiGi 運算中...
+                                                </div>
+                                            )
+                                        )
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* OVERLAYS */}
+                    {gameStage === 'gameover' && !showRedPacket && (
+                        <div className="absolute inset-0 z-40 flex items-center justify-center p-6">
+                            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"></div>
+                            <div className="bg-gradient-to-b from-gray-900 to-black border-2 border-yellow-500 rounded-3xl p-6 w-full max-w-xs text-center shadow-2xl relative z-50 animate-pop-in">
+                                <div className="text-6xl mb-4">{message.includes('贏') || message.includes('勝') || message.includes('恭喜') ? '🏆' : '💸'}</div>
+                                <h3 className="text-2xl font-bold text-yellow-400 mb-6 leading-relaxed">{message}</h3>
+                                <div className="flex gap-2">
+                                    <button onClick={() => startGame(mode)} className="flex-1 py-3 bg-yellow-500 rounded-xl text-black font-bold shadow-lg hover:bg-yellow-400 active:scale-95 transition-transform text-lg">
+                                        再來一局
+                                    </button>
+                                    <button onClick={goHome} className="flex-1 py-3 bg-gray-700 rounded-xl text-white font-bold shadow-lg hover:bg-gray-600 active:scale-95 transition-transform text-lg">
+                                        回首頁
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showRedPacket && (
+                        <div className="absolute inset-0 z-[60] flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-black/90 backdrop-blur-md"></div>
+                            <div className="relative w-full max-w-sm aspect-[3/4] bg-red-600 rounded-3xl shadow-2xl overflow-hidden flex flex-col items-center text-center p-6 animate-pop-in border-4 border-yellow-500">
+                                <div className="absolute top-0 left-0 right-0 h-32 bg-red-700 rounded-b-[50%] shadow-lg"></div>
+                                <div className="relative z-10 mt-8 w-24 h-24 bg-yellow-400 rounded-full flex items-center justify-center text-4xl shadow-inner border-4 border-yellow-200 font-bold text-red-700 animate-shake">開</div>
+                                <h2 className="relative z-10 mt-6 text-3xl font-bold text-yellow-100">恭喜三連勝！</h2>
+                                <div className="relative z-10 mt-8 p-6 bg-yellow-100 rounded-xl w-full transform -rotate-1 shadow-lg">
+                                    <p className="text-gray-500 text-sm mb-2">來自 GiGi 的祝福：</p>
+                                    <p className="text-xl font-bold text-red-600 leading-relaxed">{blessing}</p>
+                                </div>
+                                <button onClick={closeRedPacket} className="relative z-10 mt-auto mb-4 py-3 px-8 bg-transparent border-2 border-yellow-400/50 text-yellow-400 rounded-full hover:bg-yellow-400/10 transition-colors">收下祝福</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
