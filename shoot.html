@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Puti-AI 射龍門 (雙人極致體驗版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .card {
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.5);
+            transform-origin: center center;
+            background-color: white;
+            will-change: transform;
+        }
+
+        .card-enter {
+            animation: deal 0.5s ease-out forwards;
+        }
+
+        @keyframes deal {
+            from { transform: translateY(-50px) scale(0.5); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8); }
+            70% { transform: scale(1.05); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .animate-pop-in {
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px #fbbf24; }
+            50% { box-shadow: 0 0 25px #f59e0b; }
+        }
+        
+        .pot-glow {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        .animate-shake {
+            animation: shake 0.5s ease-in-out infinite;
+        }
+
+        .chip {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s;
+        }
+        .chip:active {
+            transform: scale(0.95);
+        }
+
+        /* Fire effect for streak */
+        @keyframes fire-flicker {
+            0% { text-shadow: 0 0 4px #facc15, 0 -5px 10px #ef4444; }
+            50% { text-shadow: 0 0 10px #facc15, 0 -10px 20px #ef4444; }
+            100% { text-shadow: 0 0 4px #facc15, 0 -5px 10px #ef4444; }
+        }
+        .streak-fire {
+            animation: fire-flicker 1.5s infinite;
+        }
+
+        /* Active Player Zone Highlight */
+        .active-zone {
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+        }
+        .inactive-zone {
+            opacity: 0.5;
+            filter: grayscale(0.5);
+            pointer-events: none;
+        }
+
+        .rotate-180-ui {
+            transform: rotate(180deg);
+        }
+
+        /* Victory Fireworks Effect */
+        @keyframes firework {
+            0% { transform: translate(var(--x), var(--initialY)); width: var(--initialSize); opacity: 1; }
+            50% { width: 0.5vmin; opacity: 1; }
+            100% { width: var(--finalSize); opacity: 0; }
+        }
+        .firework,
+        .firework::before,
+        .firework::after {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 1vmin;
+            height: 1vmin;
+            border-radius: 50%;
+            animation: firework 2s infinite;
+            content: "";
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, memo } = React;
+
+        // --- Audio Controller ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const playSound = (type) => {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if (type === 'deal') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'shuffle') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(1000, now + 0.2);
+                gainNode.gain.setValueAtTime(0.05, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.25);
+                osc.start(now);
+                osc.stop(now + 0.25);
+            } else if (type === 'win') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else if (type === 'lose') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(100, now);
+                osc.frequency.linearRampToValueAtTime(50, now + 0.4);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } else if (type === 'chips') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1200, now);
+                gainNode.gain.setValueAtTime(0.05, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            } else if (type === 'refill') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1000, now);
+                osc.frequency.exponentialRampToValueAtTime(2000, now + 0.1);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'redpacket') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.setValueAtTime(1760, now + 0.1);
+                osc.frequency.setValueAtTime(880, now + 0.2);
+                osc.frequency.setValueAtTime(1760, now + 0.3);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } else if (type === 'open_packet') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(800, now + 0.1);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'victory') {
+                osc.type = 'square';
+                const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50]; 
+                let time = now;
+                notes.forEach((freq, i) => {
+                    osc.frequency.setValueAtTime(freq, time);
+                    time += 0.15;
+                });
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, time);
+                osc.start(now);
+                osc.stop(time);
+            }
+        };
+
+        const SUITS = ['♠', '♥', '♦', '♣'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        
+        const FUN_BLESSINGS = [
+            "GiGi：看你骨骼精奇，這紅包是你的了！",
+            "財神爺路過，順手點了個讚 👍",
+            "運氣好到連 AI 都想拜你為師！🙇",
+            "這手氣，這波操作，絕了！✨",
+            "恭喜發財！但紅包裡只有滿滿的愛 ❤️",
+            "你的幸運值已突破天際！🚀"
+        ];
+
+        const getCardValue = (rank) => {
+            if (rank === 'A') return 1;
+            if (rank === 'J') return 11;
+            if (rank === 'Q') return 12;
+            if (rank === 'K') return 13;
+            return parseInt(rank);
+        };
+
+        const createDeck = () => {
+            let deck = [];
+            for (let suit of SUITS) {
+                for (let rank of RANKS) {
+                    deck.push({ 
+                        suit, 
+                        rank, 
+                        value: getCardValue(rank),
+                        color: (suit === '♥' || suit === '♦') ? 'text-red-600' : 'text-black',
+                        id: `${suit}-${rank}-${Math.random()}` 
+                    });
+                }
+            }
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        };
+
+        // --- UI Components ---
+        const Card = memo(({ card, isThird }) => {
+            if (!card) return <div className="w-16 h-24 sm:w-20 sm:h-28 border-2 border-dashed border-white/20 rounded-lg bg-black/10"></div>;
+            
+            return (
+                <div className={`card w-16 h-24 sm:w-20 sm:h-28 bg-white rounded-lg border border-gray-300 flex flex-col items-center justify-between p-1 mx-1 card-enter select-none ${isThird ? 'scale-110 shadow-2xl z-10 border-yellow-400 border-2' : ''}`}>
+                    <div className={`text-xs font-bold self-start ${card.color}`}>{card.rank}</div>
+                    <div className={`text-2xl ${card.color}`}>{card.suit}</div>
+                    <div className={`text-xs font-bold self-end transform rotate-180 ${card.color}`}>{card.rank}</div>
+                </div>
+            );
+        }, (prev, next) => prev.card?.id === next.card?.id && prev.isThird === next.isThird);
+
+        const Chip = ({ amount, onClick, disabled }) => (
+            <button 
+                onClick={onClick} 
+                disabled={disabled}
+                className={`w-12 h-12 rounded-full border-2 border-dashed flex items-center justify-center font-bold text-xs shadow-lg transform transition-all active:scale-90
+                ${amount === 10 ? 'bg-blue-600 border-white text-white' : ''}
+                ${amount === 50 ? 'bg-green-600 border-white text-white' : ''}
+                ${amount === 100 ? 'bg-red-600 border-white text-white' : ''}
+                ${amount === 'ALL' ? 'bg-yellow-500 border-red-500 text-red-900' : ''}
+                ${disabled ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:scale-105'}
+                `}
+            >
+                {amount === 'ALL' ? '全押' : amount}
+            </button>
+        );
+
+        // --- Player Zone Component ---
+        const PlayerZone = ({ 
+            player, 
+            isActive, 
+            isRotated, 
+            isComputer, 
+            roundState, 
+            currentBet,
+            onAnte, 
+            onBet, 
+            onPass 
+        }) => {
+            return (
+                <div className={`flex-1 flex flex-col p-4 transition-all duration-300 relative border-white/10 ${isRotated ? 'rotate-180-ui border-b' : 'border-t'} ${isActive ? 'active-zone' : 'inactive-zone'}`}>
+                    
+                    {/* Header Info */}
+                    <div className="flex justify-between items-center mb-2">
+                        <div className="flex items-center gap-2">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl shadow-lg border-2 ${isActive ? 'bg-blue-600 border-yellow-400 scale-110' : 'bg-gray-700 border-gray-500'}`}>
+                                {isComputer ? '🤖' : '👤'}
+                            </div>
+                            <div className="flex flex-col">
+                                <span className={`text-xs font-bold ${isActive ? 'text-yellow-400' : 'text-gray-400'}`}>{player.name}</span>
+                                <span className={`text-xl font-bold tabular-nums ${player.chips < 0 ? 'text-red-500' : 'text-white'}`}>
+                                    ${player.chips}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            {player.streak > 0 && (
+                                <div className="flex items-center gap-1 text-orange-400 streak-fire mb-1">
+                                    <span>🔥</span>
+                                    <span className="font-bold">{player.streak}</span>
+                                </div>
+                            )}
+                            {currentBet > 0 && isActive && (
+                                <div className="text-right">
+                                    <span className="text-xs text-red-300 block">本局下注</span>
+                                    <span className="text-lg font-bold text-red-400">${currentBet}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Controls Area */}
+                    <div className="flex-1 flex items-center justify-center">
+                        {isComputer ? (
+                            <div className="text-green-400/50 text-xs font-bold text-center w-full">GiGi 自動代管</div>
+                        ) : (
+                            <div className="w-full">
+                                {roundState === 'idle' && (
+                                    <button 
+                                        onClick={onAnte} 
+                                        disabled={!isActive}
+                                        className="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-500 rounded-xl font-bold text-white shadow-lg border-b-4 border-blue-800 active:border-b-0 active:translate-y-1 transition-all"
+                                    >
+                                        發牌 (底注 $10)
+                                    </button>
+                                )}
+
+                                {roundState === 'bet' && isActive && (
+                                    <div className="flex gap-2 items-center justify-between">
+                                        <div className="flex gap-1">
+                                            <Chip amount={10} onClick={() => onBet(10)} disabled={player.chips < 10} />
+                                            <Chip amount={50} onClick={() => onBet(50)} disabled={player.chips < 50} />
+                                            <Chip amount={100} onClick={() => onBet(100)} disabled={player.chips < 100} />
+                                            <Chip amount="ALL" onClick={() => onBet('ALL')} />
+                                        </div>
+                                        <button 
+                                            onClick={onPass}
+                                            className="px-4 py-3 bg-gray-600 rounded-xl text-white font-bold border-b-4 border-gray-800 active:border-b-0 active:translate-y-1 text-sm whitespace-nowrap"
+                                        >
+                                            放棄
+                                        </button>
+                                    </div>
+                                )}
+
+                                {(roundState === 'shooting' || roundState === 'result' || roundState === 'dealing') && isActive && (
+                                    <div className="text-gray-400 text-sm animate-pulse text-center font-bold">
+                                        {roundState === 'dealing' ? '發牌中...' : '開牌中...'}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [stage, setStage] = useState('menu'); 
+            const [mode, setMode] = useState('1p'); 
+            const [deck, setDeck] = useState([]);
+            const [pot, setPot] = useState(0);
+            
+            // Player States
+            const [players, setPlayers] = useState([
+                { name: 'P1 玩家', chips: 1000, streak: 0 },
+                { name: 'P2 玩家', chips: 1000, streak: 0 }
+            ]);
+            const [activePlayerIdx, setActivePlayerIdx] = useState(0); 
+            const [winner, setWinner] = useState(null);
+
+            const [leftCard, setLeftCard] = useState(null);
+            const [rightCard, setRightCard] = useState(null);
+            const [thirdCard, setThirdCard] = useState(null);
+            
+            const [roundState, setRoundState] = useState('idle');
+            const [currentBet, setCurrentBet] = useState(0);
+            const [message, setMessage] = useState('');
+            const [messageType, setMessageType] = useState('info'); 
+            const [isReshuffling, setIsReshuffling] = useState(false);
+            const [isRefilling, setIsRefilling] = useState(false);
+
+            // Red Packet
+            const [redPacketState, setRedPacketState] = useState('hidden'); 
+            const [redPacketContent, setRedPacketContent] = useState(null); 
+            const [redPacketSource, setRedPacketSource] = useState(''); 
+
+            const ANTE = 10;
+            const MIN_DECK_SIZE = 10;
+            const RED_PACKET_THRESHOLD = 500;
+            const STREAK_THRESHOLD = 5;
+            const MIN_POT_THRESHOLD = 100;
+            const PVP_WIN_GOAL = 10000;
+
+            const initGame = (selectedMode) => {
+                setMode(selectedMode);
+                setDeck(createDeck());
+                setPot(1000); 
+                setPlayers([
+                    { name: 'P1 玩家', chips: 1000, streak: 0 },
+                    { name: selectedMode === '2p' ? 'P2 玩家' : 'GiGi', chips: 1000, streak: 0 }
+                ]);
+                setActivePlayerIdx(0);
+                setWinner(null);
+                setStage('playing');
+                startRound(createDeck(), 1000, [
+                    { name: 'P1 玩家', chips: 1000, streak: 0 },
+                    { name: selectedMode === '2p' ? 'P2 玩家' : 'GiGi', chips: 1000, streak: 0 }
+                ], 0, selectedMode);
+            };
+
+            const goHome = () => {
+                setStage('menu');
+                setDeck([]);
+                setMessage('');
+            };
+
+            const manualReshuffle = () => {
+                if (roundState !== 'idle') {
+                    setMessage('請等待本局結束後再洗牌');
+                    setMessageType('warn');
+                    return;
+                }
+                setIsReshuffling(true);
+                playSound('shuffle');
+                setMessage('重新洗牌中...');
+                setTimeout(() => {
+                    setDeck(createDeck());
+                    setIsReshuffling(false);
+                    setMessage('已換全新一副牌 (52張)');
+                    setMessageType('info');
+                }, 800);
+            };
+
+            const startRound = (currentDeck = deck, currentPot = pot, currentPlayers = players, currentTurn = activePlayerIdx, currentMode = mode) => {
+                setLeftCard(null);
+                setRightCard(null);
+                setThirdCard(null);
+                setCurrentBet(0);
+                
+                const activeP = currentPlayers[currentTurn];
+                setMessage(`輪到 ${activeP.name} 下底注 ($10)`);
+                setMessageType('info');
+                setRoundState('idle');
+
+                // PvP Win Checks
+                if (currentMode === '2p') {
+                    const opponentIdx = currentTurn === 0 ? 1 : 0;
+                    if (currentPlayers[currentTurn].chips <= 0) {
+                        setWinner(currentPlayers[opponentIdx]);
+                        setStage('pvp_won');
+                        return;
+                    }
+                    if (currentPlayers[currentTurn].chips >= PVP_WIN_GOAL) {
+                         setWinner(currentPlayers[currentTurn]);
+                         setStage('pvp_won');
+                         return;
+                    }
+                }
+
+                // 1P Win Checks
+                if (currentMode === '1p' && currentPot <= 0) {
+                    playSound('victory');
+                    setStage('gamewon');
+                    setMessage('恭喜通關！彩金池已清空！');
+                    return;
+                }
+
+                // Bankruptcy
+                if (activeP.chips < ANTE) {
+                    if (currentMode === '2p') {
+                        const opponentIdx = currentTurn === 0 ? 1 : 0;
+                        setWinner(currentPlayers[opponentIdx]);
+                        setStage('pvp_won');
+                        playSound('victory');
+                    } else {
+                        setStage('gameover');
+                        setMessage('籌碼不足以支付底注！');
+                    }
+                    return;
+                }
+
+                // PvP Refill
+                if (currentMode === '2p' && currentPot < MIN_POT_THRESHOLD) {
+                     setTimeout(() => {
+                        setIsRefilling(true);
+                        playSound('refill');
+                        setMessage('彩金池過低，系統補水...');
+                        setTimeout(() => {
+                            setPot(prev => prev + 500); 
+                            setIsRefilling(false);
+                            setMessage(`已補滿！輪到 ${activeP.name}`);
+                        }, 1000);
+                    }, 500);
+                }
+
+                if (currentDeck.length < MIN_DECK_SIZE) {
+                    setMessage('牌數不足，自動洗牌...');
+                    setTimeout(() => {
+                        setDeck(createDeck());
+                    }, 800);
+                }
+            };
+
+            const handleAnte = () => {
+                const activeP = players[activePlayerIdx];
+                if (activeP.chips < ANTE || isRefilling) return;
+
+                playSound('chips');
+                let currentDeck = [...deck];
+                if (currentDeck.length < 3) {
+                     currentDeck = createDeck();
+                     playSound('shuffle');
+                }
+
+                const c1 = currentDeck.pop();
+                const c2 = currentDeck.pop();
+                
+                const newPlayers = [...players];
+                newPlayers[activePlayerIdx] = { ...activeP, chips: activeP.chips - ANTE };
+                setPlayers(newPlayers);
+                setPot(prev => prev + ANTE);
+                setDeck(currentDeck);
+                
+                setRoundState('dealing');
+                playSound('deal');
+                setLeftCard(c1);
+                
+                setTimeout(() => {
+                    playSound('deal');
+                    setRightCard(c2);
+                    setTimeout(() => analyzeCards(c1, c2, newPlayers), 500);
+                }, 300);
+            };
+
+            const analyzeCards = (c1, c2, currentPlayers) => {
+                const v1 = c1.value;
+                const v2 = c2.value;
+                const diff = Math.abs(v1 - v2);
+                const activePName = currentPlayers[activePlayerIdx].name;
+
+                if (v1 === v2) {
+                    setMessage(`${activePName}: 對子！挑戰「三條」或放棄`);
+                    setRoundState('bet');
+                } else if (diff === 1) {
+                    setMessage('連號牌！無縫可射，退回底注。');
+                    setMessageType('warn');
+                    setTimeout(() => {
+                         const refundPlayers = [...currentPlayers];
+                         refundPlayers[activePlayerIdx].chips += ANTE;
+                         setPlayers(refundPlayers);
+                         setPot(prev => prev - ANTE);
+                         const nextTurn = mode === '2p' ? (activePlayerIdx === 0 ? 1 : 0) : 0;
+                         setActivePlayerIdx(nextTurn);
+                         setTimeout(() => startRound(undefined, undefined, refundPlayers, nextTurn), 1500);
+                    }, 1500);
+                } else {
+                    setMessage(`${activePName}: 範圍 ${Math.min(v1, v2)} ~ ${Math.max(v1, v2)}。請下注！`);
+                    setRoundState('bet');
+                }
+            };
+
+            const handleBet = (amount) => {
+                const activeP = players[activePlayerIdx];
+                let betAmount = amount;
+                if (amount === 'ALL') {
+                    betAmount = Math.min(pot, activeP.chips);
+                }
+
+                if (betAmount > activeP.chips) { setMessage('籌碼不足！'); return; }
+                if (betAmount > pot) { setMessage(`下注不能超過彩金池 (${pot})`); return; }
+
+                playSound('chips');
+                setCurrentBet(betAmount);
+                const newPlayers = [...players];
+                newPlayers[activePlayerIdx].chips -= betAmount;
+                setPlayers(newPlayers);
+                shoot(betAmount, newPlayers);
+            };
+
+            const handlePass = () => {
+                setMessage('放棄挑戰，沒收底注。');
+                setMessageType('warn');
+                setRoundState('result');
+                const nextTurn = mode === '2p' ? (activePlayerIdx === 0 ? 1 : 0) : 0;
+                setActivePlayerIdx(nextTurn);
+                setTimeout(() => startRound(undefined, undefined, players, nextTurn), 1500);
+            };
+
+            const shoot = (bet, currentPlayers) => {
+                setRoundState('shooting');
+                let currentDeck = [...deck];
+                if (currentDeck.length === 0) currentDeck = createDeck();
+
+                const c3 = currentDeck.pop();
+                setDeck(currentDeck);
+
+                setTimeout(() => {
+                    playSound('deal');
+                    setThirdCard(c3);
+                    calculateResult(leftCard, rightCard, c3, bet, currentPlayers);
+                }, 600);
+            };
+
+            const calculateResult = (c1, c2, c3, bet, currentPlayersInput) => {
+                const v1 = c1.value;
+                const v2 = c2.value;
+                const v3 = c3.value;
+                
+                let winAmount = 0; 
+                let won = false;
+                let finalPot = pot;
+                let updatedPlayers = [...currentPlayersInput];
+                let activeP = updatedPlayers[activePlayerIdx];
+                let currentStreak = activeP.streak;
+                let redPacketReason = '';
+                
+                // Game Logic
+                if (v1 === v2) {
+                    if (v3 === v1) { // 3 of a Kind
+                        const win = bet * 10;
+                        setMessage(`三條！${activeP.name} 贏得 ${win}`);
+                        playSound('win');
+                        activeP.chips += (bet + win);
+                        finalPot -= win;
+                        setMessageType('win');
+                        winAmount = win;
+                        won = true;
+                    } else { // Tie
+                        setMessage('未中三條，平手退回賭金。');
+                        activeP.chips += bet;
+                        setMessageType('info');
+                    }
+                } else {
+                    const min = Math.min(v1, v2);
+                    const max = Math.max(v1, v2);
+
+                    if (v3 > min && v3 < max) { // Win
+                        const win = bet; 
+                        setMessage(`射進龍門！${activeP.name} 贏得 ${win}`);
+                        playSound('win');
+                        activeP.chips += (bet + win);
+                        finalPot -= win;
+                        setMessageType('win');
+                        winAmount = win;
+                        won = true;
+                    } else if (v3 === min || v3 === max) { // Hit Post
+                        const penalty = bet * 2;
+                        setMessage(`撞柱！！${activeP.name} 慘賠 ${penalty}`);
+                        playSound('lose');
+                        let extraPay = bet;
+                        if (activeP.chips >= extraPay) {
+                            activeP.chips -= extraPay;
+                            finalPot += (bet + extraPay);
+                        } else {
+                            const allLeft = activeP.chips; 
+                            finalPot += (bet + allLeft);
+                            activeP.chips = 0 - (extraPay - allLeft);
+                        }
+                        setMessageType('lose');
+                    } else { // Miss
+                        setMessage('射偏了！賭金歸池。');
+                        playSound('lose');
+                        finalPot += bet;
+                        setMessageType('lose');
+                    }
+                }
+
+                if (won) currentStreak += 1;
+                else if (messageType === 'lose') currentStreak = 0;
+                activeP.streak = currentStreak;
+                updatedPlayers[activePlayerIdx] = activeP;
+
+                setPlayers(updatedPlayers);
+                setPot(finalPot);
+
+                let triggerRedPacket = false;
+                if (won && winAmount > RED_PACKET_THRESHOLD && finalPot > 0) {
+                    triggerRedPacket = true;
+                    redPacketReason = 'bigWin';
+                }
+                if (currentStreak >= STREAK_THRESHOLD) {
+                    triggerRedPacket = true;
+                    redPacketReason = 'streak';
+                    activeP.streak = 0; 
+                }
+
+                const proceed = () => {
+                    if (mode === '2p') {
+                        if (activeP.chips >= PVP_WIN_GOAL) {
+                             setWinner(activeP);
+                             setStage('pvp_won');
+                             playSound('victory');
+                             return;
+                        }
+                        if (activeP.chips <= 0) {
+                             const winnerIdx = activePlayerIdx === 0 ? 1 : 0;
+                             setWinner(updatedPlayers[winnerIdx]);
+                             setStage('pvp_won');
+                             playSound('victory');
+                             return;
+                        }
+                    } else {
+                        if (finalPot <= 0) {
+                             playSound('victory');
+                             setStage('gamewon');
+                             setMessage('恭喜通關！彩金池已清空！');
+                             return;
+                        }
+                        if (activeP.chips < ANTE) {
+                            setStage('gameover');
+                            if (activeP.chips < 0) setMessage(`破產負債！(負債 $${Math.abs(activeP.chips)})`);
+                            else setMessage(`籌碼不足 ($${activeP.chips})！請重新來過。`);
+                            return;
+                        }
+                    }
+                    const nextTurn = mode === '2p' ? (activePlayerIdx === 0 ? 1 : 0) : 0;
+                    setActivePlayerIdx(nextTurn);
+                    startRound(undefined, finalPot, updatedPlayers, nextTurn, mode);
+                };
+
+                if (triggerRedPacket) {
+                    setRedPacketSource(redPacketReason);
+                    setTimeout(() => {
+                        playSound('redpacket');
+                        setRedPacketState('closed');
+                        window.nextRoundCallback = () => {
+                             if (mode === '2p' && activeP.chips >= PVP_WIN_GOAL) {
+                                 setWinner(activeP);
+                                 setStage('pvp_won');
+                                 playSound('victory');
+                                 return;
+                             }
+                             const nextTurn = mode === '2p' ? (activePlayerIdx === 0 ? 1 : 0) : 0;
+                             setActivePlayerIdx(nextTurn);
+                             startRound(undefined, finalPot, updatedPlayers, nextTurn, mode);
+                        }
+                    }, 1200);
+                } else {
+                    setTimeout(proceed, 2000);
+                }
+            };
+
+            const openRedPacket = () => {
+                playSound('open_packet');
+                const isMoney = Math.random() > 0.5; 
+                let content = {};
+                if (isMoney) {
+                    const bonus = Math.floor(Math.random() * 491) + 10; 
+                    content = { type: 'money', value: bonus, text: `恭喜獲得發財金 $${bonus}` };
+                    const newPlayers = [...players];
+                    newPlayers[activePlayerIdx].chips += bonus;
+                    setPlayers(newPlayers);
+                    playSound('win');
+                } else {
+                    const text = FUN_BLESSINGS[Math.floor(Math.random() * FUN_BLESSINGS.length)];
+                    content = { type: 'text', value: 0, text: text };
+                }
+                setRedPacketContent(content);
+                setRedPacketState('opened');
+            };
+
+            const closeRedPacket = () => {
+                setRedPacketState('hidden');
+                if (window.nextRoundCallback) {
+                    window.nextRoundCallback();
+                    window.nextRoundCallback = null;
+                } else {
+                     const nextTurn = mode === '2p' ? (activePlayerIdx === 0 ? 1 : 0) : 0;
+                     setActivePlayerIdx(nextTurn);
+                     startRound(undefined, undefined, players, nextTurn, mode);
+                }
+            };
+
+            // Helper to determine rotation for victory screen
+            const isP2Winner = stage === 'pvp_won' && winner?.name === 'P2 玩家';
+
+            return (
+                <div className="flex flex-col h-[100dvh] w-screen overflow-hidden relative">
+                    
+                    {/* Menu Overlay */}
+                    {stage === 'menu' && (
+                        <div className="absolute inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-6 animate-pop-in">
+                            <div className="text-7xl mb-6 animate-bounce">🐲</div>
+                            <h2 className="text-4xl font-bold text-green-400 mb-2 text-center drop-shadow-lg">Puti-AI 射龍門</h2>
+                            <p className="text-gray-300 mb-8 text-center text-sm">
+                                經典博奕 • 撞柱賠雙倍 • 萬金競速
+                            </p>
+                            <button onClick={() => initGame('1p')} className="w-full max-w-xs py-4 bg-gradient-to-r from-blue-600 to-blue-500 rounded-2xl mb-4 text-white font-bold text-xl shadow-xl active:scale-95 transition-transform border-2 border-blue-300">
+                                👤 單人挑戰 (vs GiGi)
+                            </button>
+                            <button onClick={() => initGame('2p')} className="w-full max-w-xs py-4 bg-gradient-to-r from-red-600 to-red-500 rounded-2xl mb-4 text-white font-bold text-xl shadow-xl active:scale-95 transition-transform border-2 border-red-300">
+                                ⚔️ 雙人面對面 (PvP)
+                            </button>
+                            <div className="mt-8 text-center text-gray-400 text-[10px] leading-relaxed opacity-80 max-w-xs">
+                                <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" className="font-bold text-yellow-500 text-xs mb-1 block copyright-link">©Puti-AI 更多教學工具</a>
+                                <p>屏東縣後庄國小黃朝榮老師作品</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Victory / Game Over Overlay */}
+                    {(stage === 'pvp_won' || stage === 'gamewon' || stage === 'gameover') && (
+                        <div className="absolute inset-0 z-50 bg-black/90 flex items-center justify-center p-6 animate-pop-in">
+                            <div className={`flex flex-col items-center w-full max-w-sm ${isP2Winner ? 'rotate-180-ui' : ''}`}>
+                                <div className="text-6xl mb-4">{stage === 'gameover' ? '💸' : '🏆'}</div>
+                                <h2 className="text-3xl font-bold text-yellow-400 mb-4 text-center">
+                                    {stage === 'pvp_won' ? `${winner?.name} 獲勝！` : 
+                                     stage === 'gamewon' ? '恭喜通關！' : message}
+                                </h2>
+                                {stage === 'pvp_won' && (
+                                    <p className="text-gray-300 mb-8 text-center px-4">
+                                        {winner?.chips >= PVP_WIN_GOAL ? `達成 $${PVP_WIN_GOAL} 萬金霸業！` : '對手已破產，你是最終倖存者！'}
+                                    </p>
+                                )}
+                                <div className="flex gap-4">
+                                    <button onClick={goHome} className="px-6 py-3 bg-gray-700 rounded-xl text-white font-bold">
+                                        🏠 回首頁
+                                    </button>
+                                    <button onClick={() => initGame(mode)} className="px-6 py-3 bg-yellow-500 rounded-xl text-black font-bold">
+                                        🔄 再來一局
+                                    </button>
+                                </div>
+                            </div>
+                            {(stage === 'pvp_won' || stage === 'gamewon') && (
+                                <>
+                                    <div className="firework" style={{'--initialY': '-20vmin', '--x': '-20vmin', '--initialSize': '5vmin', '--finalSize': '30vmin', 'left': '20%', 'top': '40%'}}></div>
+                                    <div className="firework" style={{'--initialY': '-30vmin', '--x': '20vmin', '--initialSize': '5vmin', '--finalSize': '30vmin', 'left': '70%', 'top': '30%', 'animationDelay': '0.5s'}}></div>
+                                </>
+                            )}
+                        </div>
+                    )}
+
+                    {/* RED PACKET OVERLAY */}
+                    {redPacketState !== 'hidden' && (
+                        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-pop-in" onClick={redPacketState === 'opened' ? closeRedPacket : undefined}>
+                            {/* Inner Container rotates if needed */}
+                            <div className={`transition-transform duration-500 ${activePlayerIdx === 1 && mode === '2p' ? 'rotate-180-ui' : ''}`}>
+                                {redPacketState === 'closed' ? (
+                                    <div className="flex flex-col items-center animate-shake cursor-pointer" onClick={(e) => { e.stopPropagation(); openRedPacket(); }}>
+                                        <div className="w-48 h-64 bg-red-600 rounded-xl border-4 border-yellow-400 shadow-2xl flex flex-col items-center justify-center relative overflow-hidden">
+                                            <div className="absolute top-0 w-full h-16 bg-red-700 rounded-b-[50%]"></div>
+                                            <div className="w-16 h-16 bg-yellow-400 rounded-full flex items-center justify-center text-2xl font-bold text-red-600 shadow-inner z-10 border-2 border-yellow-200">開</div>
+                                            <p className="mt-8 text-yellow-200 font-bold">點擊開啟紅包</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-white w-full max-w-sm rounded-2xl p-6 flex flex-col items-center text-center shadow-2xl border-4 border-red-500 relative">
+                                        <div className="text-5xl mb-2">{redPacketContent?.type === 'money' ? '💰' : '🤣'}</div>
+                                        <h3 className="text-xl font-bold text-red-600 mb-2">
+                                            {redPacketContent?.type === 'money' ? '發財金入帳！' : '來自 GiGi 的祝福'}
+                                        </h3>
+                                        <p className="text-gray-800 font-bold mb-4 bg-yellow-100 p-2 rounded w-full">{redPacketContent?.text}</p>
+                                        <button onClick={closeRedPacket} className="px-6 py-2 bg-red-600 text-white rounded-full font-bold shadow-lg">收下</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* --- MAIN GAME LAYOUT --- */}
+                    <div className="flex flex-col h-full w-full max-w-lg mx-auto relative bg-gray-900/50 shadow-2xl">
+                        
+                        {/* Top: Player 2 Zone (Rotated) */}
+                        <PlayerZone 
+                            player={players[1]} 
+                            isActive={activePlayerIdx === 1 && mode === '2p'}
+                            isRotated={true}
+                            isComputer={mode === '1p'}
+                            roundState={roundState}
+                            currentBet={activePlayerIdx === 1 ? currentBet : 0}
+                            onAnte={handleAnte}
+                            onBet={handleBet}
+                            onPass={handlePass}
+                        />
+
+                        {/* Middle: Shared Pot & Cards */}
+                        <div className="flex-[1.5] flex flex-col items-center justify-center relative my-2">
+                            {/* Pot - ROTATES based on turn in 2P mode */}
+                            <div className={`absolute top-0 z-10 transition-all duration-500 ${isRefilling ? 'scale-110' : ''} ${activePlayerIdx === 1 && mode === '2p' ? 'rotate-180' : ''}`}>
+                                <div className="pot-glow rounded-full px-5 py-2 bg-black/80 border-2 border-yellow-500 flex flex-col items-center backdrop-blur-sm shadow-xl">
+                                    <span className="text-yellow-500 text-[9px] font-bold tracking-widest">POT</span>
+                                    <span className="text-3xl font-black text-yellow-400 tabular-nums">${pot}</span>
+                                </div>
+                                {isRefilling && <span className="text-[10px] text-yellow-300 animate-pulse absolute -bottom-4 w-full text-center">補水中...</span>}
+                            </div>
+
+                            {/* Cards */}
+                            <div className="flex items-center justify-center gap-2 sm:gap-4 mt-8">
+                                <div className="flex flex-col items-center gap-1"><Card card={leftCard} /></div>
+                                <div className="w-16 h-24 sm:w-20 sm:h-28 flex items-center justify-center">
+                                    {thirdCard ? <Card card={thirdCard} isThird={true} /> : <div className="text-white/20 text-4xl font-bold">VS</div>}
+                                </div>
+                                <div className="flex flex-col items-center gap-1"><Card card={rightCard} /></div>
+                            </div>
+                            
+                            {/* Message */}
+                            <div className={`absolute bottom-4 px-4 py-1 rounded-full text-center font-bold text-xs sm:text-sm max-w-[90%] truncate shadow-lg border backdrop-blur-sm z-20
+                                ${activePlayerIdx === 1 && mode === '2p' ? 'rotate-180-ui mb-12' : ''} 
+                                ${messageType === 'win' ? 'bg-yellow-500/90 text-black border-yellow-400' : 
+                                  messageType === 'lose' ? 'bg-red-600/90 text-white border-red-500' : 
+                                  messageType === 'warn' ? 'bg-orange-500/90 text-white border-orange-400' : 
+                                  'bg-blue-600/90 text-white border-blue-400'}
+                            `}>
+                                {message}
+                            </div>
+
+                            {/* Utility Buttons (Floating) */}
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-30">
+                                <button onClick={manualReshuffle} className={`p-2 bg-gray-700/80 rounded-full text-gray-300 hover:text-white ${roundState !== 'idle' ? 'opacity-30' : ''}`}>🔄</button>
+                                <button onClick={goHome} className="p-2 bg-gray-700/80 rounded-full text-gray-300 hover:text-white">🏠</button>
+                            </div>
+                        </div>
+
+                        {/* Bottom: Player 1 Zone */}
+                        <PlayerZone 
+                            player={players[0]} 
+                            isActive={activePlayerIdx === 0}
+                            isRotated={false}
+                            isComputer={false}
+                            roundState={roundState}
+                            currentBet={activePlayerIdx === 0 ? currentBet : 0}
+                            onAnte={handleAnte}
+                            onBet={handleBet}
+                            onPass={handlePass}
+                        />
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
