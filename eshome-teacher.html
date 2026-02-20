@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 國小導師AI小幫手</title>
+    
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 引入 Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* 隱藏滾動條但保持可滾動 */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* 自訂動畫設定 */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes zoomIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes pulse-slow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.5s ease-out forwards; }
+        .animate-zoom-in { animation: zoomIn 0.2s ease-out forwards; }
+        .animate-pulse-slow { animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        
+        /* 避免點擊閃爍 */
+        * { -webkit-tap-highlight-color: transparent; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 font-sans selection:bg-cyan-500 selection:text-white pb-6 relative overflow-x-hidden min-h-screen">
+
+    <!-- 背景裝飾 -->
+    <div class="fixed top-[-10%] left-[-10%] w-96 h-96 bg-cyan-900/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-96 h-96 bg-yellow-900/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Header -->
+    <header class="bg-slate-800/90 backdrop-blur-md border-b border-cyan-800/50 px-6 py-4 sticky top-0 z-30 shadow-lg shadow-cyan-900/20">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center border-2 border-slate-700 shadow-[0_0_15px_rgba(6,182,212,0.6)] relative overflow-hidden group">
+                    <i data-lucide="sparkles" class="text-slate-900 w-7 h-7 absolute z-10 animate-pulse-slow"></i>
+                    <div class="absolute inset-0 bg-gradient-to-tr from-yellow-600 to-yellow-400"></div>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-yellow-500 tracking-wide flex items-center gap-2">
+                        Puti-AI <span class="text-cyan-400 text-sm font-normal border border-cyan-800 px-2 py-0.5 rounded-full bg-cyan-900/30">導師小幫手</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5">小吉 (GiGi) 為您提供全學年實戰火力支援</p>
+                </div>
+            </div>
+            
+            <button id="sound-toggle-btn" class="p-2 rounded-full bg-slate-700 hover:bg-slate-600 text-slate-300 transition-colors border border-slate-600 active:scale-90" title="切換音效">
+                <i data-lucide="volume-2" id="icon-sound-on" class="w-5 h-5 text-cyan-400"></i>
+                <i data-lucide="volume-x" id="icon-sound-off" class="w-5 h-5 hidden"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto mt-8 px-4 relative z-10">
+        <!-- Tabs -->
+        <div id="tabs-container" class="flex space-x-3 mb-8 overflow-x-auto pb-3 scrollbar-hide">
+            <button data-tab="sem1" class="tab-btn flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 whitespace-nowrap active:scale-95 bg-cyan-900/60 border border-cyan-400 text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+                <i data-lucide="calendar" class="w-5 h-5"></i> 🎒 上學期：常規建立
+            </button>
+            <button data-tab="sem2" class="tab-btn flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 whitespace-nowrap active:scale-95 bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700 hover:text-slate-200">
+                <i data-lucide="book-open" class="w-5 h-5"></i> 🌸 下學期：深耕發展
+            </button>
+            <button data-tab="hidden" class="tab-btn flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 whitespace-nowrap active:scale-95 bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700 hover:text-slate-200">
+                <i data-lucide="shield-alert" class="w-5 h-5"></i> 🔥 隱藏關卡：危機處理
+            </button>
+        </div>
+
+        <!-- Content List -->
+        <div id="content-list" class="space-y-6 animate-slide-up">
+            <!-- 內容由 JS 動態生成 -->
+        </div>
+    </main>
+
+    <!-- Modal / 燈箱 -->
+    <div id="prompt-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md animate-fade-in hidden">
+        <div class="bg-slate-800 w-full max-w-2xl rounded-2xl shadow-2xl border border-cyan-700 overflow-hidden flex flex-col max-h-[90vh] animate-zoom-in">
+            <!-- Modal Header -->
+            <div class="px-6 py-5 border-b border-slate-700 flex items-center justify-between bg-gradient-to-r from-slate-800 to-cyan-900/20">
+                <h3 class="text-lg font-bold text-yellow-500 flex items-center gap-3">
+                    <i data-lucide="edit-3" class="w-5 h-5 text-cyan-400"></i>
+                    <span id="modal-title">提示詞標題</span>
+                </h3>
+                <button id="modal-close-btn" class="p-1.5 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors border border-transparent hover:border-slate-600">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 flex-1 overflow-y-auto">
+                <div class="mb-4 flex items-center justify-between text-sm">
+                    <p class="text-slate-300">請確認或修改下方的提示詞，加入您班上的實際狀況：</p>
+                </div>
+                <textarea id="modal-textarea" class="w-full h-64 p-5 bg-slate-900 border border-slate-600 rounded-xl text-slate-200 leading-relaxed focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 resize-none font-mono text-[15px] shadow-inner" placeholder="在這裡輸入或修改提示詞..."></textarea>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-5 border-t border-slate-700 bg-slate-800/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs text-slate-400 bg-slate-900/50 px-3 py-2 rounded-lg border border-slate-700/50 w-full sm:w-auto text-center sm:text-left">
+                    💡 建議：複製後，貼到您慣用的 AI 中執行。
+                </div>
+                <div class="flex gap-3 w-full sm:w-auto">
+                    <button id="btn-save" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-medium bg-slate-700 text-slate-200 hover:bg-slate-600 hover:text-white transition-all border border-slate-600 active:scale-95">
+                        <i data-lucide="save" id="icon-save" class="w-4 h-4"></i>
+                        <i data-lucide="check" id="icon-save-check" class="w-4 h-4 text-green-400 hidden"></i>
+                        <span id="text-save">儲存修改</span>
+                    </button>
+                    <button id="btn-copy" class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold bg-gradient-to-r from-cyan-600 to-cyan-500 text-white hover:from-cyan-500 hover:to-cyan-400 transition-all shadow-[0_0_15px_rgba(6,182,212,0.4)] active:scale-95">
+                        <i data-lucide="copy" id="icon-copy" class="w-4 h-4"></i>
+                        <i data-lucide="check" id="icon-copy-check" class="w-4 h-4 text-yellow-300 hidden"></i>
+                        <span id="text-copy">複製提示詞</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-16 text-center pb-8 text-slate-400 text-sm space-y-2 relative z-10">
+        <p class="font-bold text-yellow-500 text-base tracking-wide">屏東縣後庄國小黃朝榮老師作品</p>
+        <p class="text-slate-300">免費分享，歡迎擴散推廣</p>
+        <p class="text-red-400/80 text-xs mt-1">嚴禁商用與任何侵權、不尊重著作權的行為</p>
+        <p class="pt-3">
+            更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:text-cyan-300 underline underline-offset-4 transition-colors font-medium ml-1">點此前往</a>
+        </p>
+    </footer>
+
+    <!-- 核心邏輯腳本 -->
+    <script>
+        // --- 全面擴充的實戰資料庫 ---
+        const scheduleData = {
+          sem1: [
+            {
+              id: "s1_w0", time: "開學前", title: "教室整備與迎新", desc: "領取學生名條、排座位、準備課表與潔牙用品。", grades: "小一：迎新禮、名牌、校園地圖",
+              prompts: [
+                { id: "p_s1_w0_1", name: "小一迎新家長問候信", defaultText: "身為國小一年級新生導師，請幫我寫一封「開學前家長問候信」。\n\n要求：\n1. 風格：溫暖、親切、給予安全感。\n2. 內容包含：自我介紹、提醒準備學用品（如：姓名貼、水壺、備用衣物）、開學日報到流程。\n3. 特別聲明：請家長放手讓孩子自己走進教室，培養獨立性。" },
+                { id: "p_s1_w0_2", name: "高年級開學收心文", defaultText: "請以高年級（五/六年級）導師的幽默口吻，寫一段給學生的「開學收心文」。\n\n內容：提醒他們暑假遊戲時間結束了，準備好文具，調整作息。用點網路迷因或輕鬆的語氣，不要太古板。" },
+                { id: "p_s1_w0_3", name: "破冰小遊戲設計清單", defaultText: "請幫我設計3個適合國小[中/高]年級，在開學第一天進行的「破冰小遊戲」。要求：\n1. 不需要複雜教具。\n2. 能快速讓學生記住彼此名字。\n3. 能讓老師觀察出班上的意見領袖與內向學生。" },
+                { id: "p_s1_w0_4", name: "家長聯絡網建立說明", defaultText: "請幫我寫一段發在群組的「班級Line群組建立說明」。要求家長將暱稱改為「XX爸爸/媽媽」，並規範群組僅作為校務布達與緊急聯繫使用，私事請私訊導師。" }
+              ]
+            },
+            {
+              id: "s1_w1", time: "第 1-2 週", title: "常規建立與資料調查", desc: "建立班級常規、處理午餐/教科書/弱勢補助申請、IEP個案會議準備。", grades: "全學年：特教生觀察與輔導計畫",
+              prompts: [
+                { id: "p_s1_w1_1", name: "班級常規建立清單", defaultText: "請幫我條列國小[低/中/高]年級的「班級常規檢查清單」，分為：早自修、上課中、下課時、打掃時間 四個階段。要求具體、可執行，例如「桌墊下不塞垃圾」。" },
+                { id: "p_s1_w1_2", name: "弱勢補助申請通知信", defaultText: "請擬定一份發給全班的「各項弱勢補助申請通知單」（含午餐、教科書、代收代辦費）。語氣要保護學生隱私，溫和說明只要符合資格（低收、中低收、突遭變故）皆可私下向導師提出申請，並列出需準備的證明文件。" },
+                { id: "p_s1_w1_3", name: "IEP家長邀請與會前調查", defaultText: "請幫我擬一份正式但溫和的通知信，邀請特殊生家長參加這學期的 IEP（個別化教育計畫）會議。並附上3個簡單的會前調查問題，了解家長本學期對孩子的期待。" }
+              ]
+            },
+            {
+              id: "s1_w3", time: "第 3 週", title: "家長日 (班親會) 實戰", desc: "導師最重要的期初展演，公布班費機制與溝通規範。", grades: "重點：班費收取與監察機制、建立親師邊界感",
+              prompts: [
+                { id: "p_s1_w3_1", name: "班級經營計畫書大綱", defaultText: "請以國小導師身份，撰寫一份「班級經營計畫書」大綱。包含：\n1. 教育理念（融合 Puti-AI 的覺醒與智慧引導）\n2. 班級常規與獎懲機制\n3. 作業與評量方式\n4. 親師溝通管道與時間限制（明訂晚上8點後為家庭時間）。" },
+                { id: "p_s1_w3_2", name: "班費收支家長說明稿", defaultText: "請幫我寫一段要在班親會上說明的「班費管理原則」講稿。重點在於：專款專用、公開透明、每月公布明細，並徵求兩位家長擔任帳目監察人。語氣要專業且讓人信任。" },
+                { id: "p_s1_w3_3", name: "家長日會議紀錄與回條", defaultText: "請幫我製作一份「家長日會議紀錄摘要暨家長回條」。包含：\n1. 今日重要決議事項摘要（班費收取金額、家長代表當選人）。\n2. 給未出席家長簽名的回條欄位，確認已詳閱班級規定。" }
+              ]
+            },
+            {
+              id: "s1_w4", time: "第 4-8 週", title: "例行宣導與健康檢查", desc: "視力/牙齒複檢追蹤、社團報名、防災演練。", grades: "小一/四：尿液寄生蟲篩檢催繳",
+              prompts: [
+                { id: "p_s1_w4_1", name: "視力/牙齒複檢催交通知", defaultText: "班上還有幾位學生尚未繳回「視力與牙齒複檢回條」。請幫我寫一段Line提醒文字，語氣要委婉但強調重要性（這攸關學校行政通報），請家長務必撥冗帶孩子去診所。" },
+                { id: "p_s1_w4_2", name: "防災演練家長說明單", defaultText: "下週學校將進行「國家防災日(921)」地震避難演練。請幫我寫一段給家長的說明，告知學生當天需準備防跌頭套，並簡單說明「趴下、掩護、穩住」的原則，請家長在家也可宣導。" },
+                { id: "p_s1_w4_3", name: "尿液/蟯蟲篩檢注意事項", defaultText: "針對國小一、四年級，請幫我寫一段發在群組的「尿液與蟯蟲檢體採集注意事項」。因為這對家長來說很麻煩，語氣要幽默一點化解尷尬，並條列清楚早上採集的正確步驟。" }
+              ]
+            },
+            {
+              id: "s1_w9", time: "第 9-11 週", title: "期中評量與運動會", desc: "成績結算、試卷分析；運動會進場與各項練習。", grades: "小一：第10週注音符號會考",
+              prompts: [
+                { id: "p_s1_w9_1", name: "期中考後家長勉勵信", defaultText: "期中考結束了，請幫我寫一封給全班家長的信。提醒家長「成績不是唯一，學習態度更重要」。針對考得好的給予肯定，考不好的給予鼓勵與陪伴建議。" },
+                { id: "p_s1_w9_2", name: "小一注音會考前叮嚀", defaultText: "下週是一年級專屬的「注音符號會考」。請幫我寫一段給家長的叮嚀，教導家長這週末可以用什麼輕鬆的遊戲方式幫孩子複習（例如：找注音卡片），並強調不要給孩子過度壓力。" },
+                { id: "p_s1_w9_3", name: "運動會進場口號發想", defaultText: "即將舉辦運動會，我們班的主題是「環保/宇宙/科技(請擇一)」。請幫我發想3個有氣勢、押韻、長度適合國小生邊走邊喊的「運動會進場口號」。" },
+                { id: "p_s1_w9_4", name: "運動會家長志工招募文", defaultText: "請幫我寫一段發在班級Line群組的運動會志工招募文。需要：攝影紀錄2名、秩序維護/補給2名。語氣熱情有活力，強調這是陪伴孩子的好機會。" }
+              ]
+            },
+            {
+              id: "s1_w14", time: "第 12-16 週", title: "戶外教育 (校外教學)", desc: "校外教學企劃、保險名冊、分組與行前安全教育。", grades: "中/高年級：學習單設計",
+              prompts: [
+                { id: "p_s1_w14_1", name: "校外教學行前通知單", defaultText: "我們下週要去「[請填寫地點]」校外教學。請幫我擬一份給家長的行前通知單。包含：集合時間、地點、必備物品（水壺、雨具、防蚊液、健保卡）、零用錢上限規定，以及家長同意書回條。" },
+                { id: "p_s1_w14_2", name: "校外教學分組小組長任務", defaultText: "為了校外教學安全，我將班上分為幾個小組。請幫我列出「小組長」的3項具體任務（如：清點人數、提醒喝水），字句要簡單易懂，適合印在小組長名牌後方。" },
+                { id: "p_s1_w14_3", name: "景點探究學習單大綱", defaultText: "針對校外教學地點，請幫我設計一份適合國小[中/高]年級的「探究式學習單大綱」。包含3個觀察題、1個小組合作題、1個反思繪圖題。" }
+              ]
+            },
+            {
+              id: "s1_w19", time: "第 19-20 週", title: "期末大魔王與休業", desc: "期末評量、大掃除、成績單評語撰寫、B卡輔導紀錄補齊。", grades: "小六：畢業照拍攝準備",
+              prompts: [
+                { id: "p_s1_w19_1", name: "學期末學生評語庫", defaultText: "請幫我生成 10 句針對國小學生的「期末成績單評語」。分為三類：\n1. 表現優異且自律\n2. 聰明但粗心愛講話\n3. 學習較慢但很努力乖巧\n請使用正向、鼓勵的詞彙，運用「三明治回饋法」。" },
+                { id: "p_s1_w19_2", name: "期末大掃除分工引導", defaultText: "下週要進行期末大掃除。請幫我設計一個「大掃除闖關分工表」的文案。將掃地、拖地、擦窗戶、刷洗手台等工作包裝成有趣的「任務」，並說明完成標準。" },
+                { id: "p_s1_w19_3", name: "寒假安全與收心叮嚀", defaultText: "明天就是結業式了，請草擬一段給家長的「寒假注意事項」。包含：網路使用時間管控、交通安全、過年壓歲錢理財觀念，以及提醒按時完成寒假作業。" }
+              ]
+            }
+          ],
+          sem2: [
+            {
+              id: "s2_w1", time: "第 1-2 週", title: "收假收心與下學期家長日", desc: "表揚寒假作業、新學期目標設定、下學期家長日。", grades: "",
+              prompts: [
+                { id: "p_s2_w1_1", name: "下學期重點預告致詞", defaultText: "下學期家長日較短，請幫我整理一份簡短的致詞稿。感謝上學期家長的支持，並預告本學期重大活動（如：園遊會、體適能測驗），重申親師合作的重要性。" },
+                { id: "p_s2_w1_2", name: "寒假作業優良獎狀詞", defaultText: "請幫我寫3種不同風格的「寒假作業優良獎狀」評語。包含：\n1. 內容豐富用心型\n2. 創意十足獨特型\n3. 字體工整認真型。" },
+                { id: "p_s2_w1_3", name: "新學期目標設定學習單", defaultText: "請幫我設計一份「我的新學期挑戰」學習單文案。引導學生寫下這學期想達成的1個學習目標、1個品格目標，以及具體的實踐步驟。" }
+              ]
+            },
+            {
+              id: "s2_w4", time: "第 4-10 週", title: "節慶活動與期中評量", desc: "清明連假宣導、母親節活動準備、期中成績分析。", grades: "低年級：窩溝封填/塗氟回條",
+              prompts: [
+                { id: "p_s2_w4_1", name: "清明連假水域/交通安全通知", defaultText: "清明連假即將到來，請幫我寫一份發給家長的安全宣導。重點提醒：掃墓防火安全、出遊水域安全、以及連假期間勿讓孩子過度沉迷3C。" },
+                { id: "p_s2_w4_2", name: "母親節感恩卡片引導語", defaultText: "下週要帶學生做母親節卡片。請幫我寫一段在課堂上引導學生回憶「媽媽(或照顧者)最辛苦的一刻」的感性引導語，幫助他們寫出真誠的卡片內容，避免流於形式的「母親節快樂」。" },
+                { id: "p_s2_w4_3", name: "期中成績退步家長面談大綱", defaultText: "班上有位學生這次期中考成績大幅退步。我邀請了家長來面談。請幫我列出「親師面談的5個提問大綱」，以關心孩子近期生活狀況為主，避免讓家長覺得是來被興師問罪的。" }
+              ]
+            },
+            {
+              id: "s2_w12", time: "第 12-16 週", title: "藝術季/園遊會/體適能", desc: "攤位計畫、收支明細、體適能數據紀錄與家長通知。", grades: "四/五/六：體適能測驗",
+              prompts: [
+                { id: "p_s2_w12_1", name: "園遊會分工與收支大綱", defaultText: "班上要辦理園遊會攤位（賣乾冰汽水與二手物）。請幫我擬定給學生的「分工表大綱」（如：收銀、叫賣、補給），以及給家長的「贊助物資與志工邀請函」。" },
+                { id: "p_s2_w12_2", name: "體適能測驗前安全提醒", defaultText: "針對[中/高]年級，下週要進行800公尺跑走與各項體適能測驗。請幫我寫一段群組通知，請家長確認孩子近期是否有氣喘、心血管不適等狀況，並提醒測驗當天穿著適當運動服裝與準備毛巾。" },
+                { id: "p_s2_w12_3", name: "才藝發表會主持人講稿", defaultText: "班上要在校內才藝季上表演。請幫我寫一段約1分鐘的「班級串場引言稿」，介紹我們班的表演項目與學生的努力，語氣要活潑、充滿驕傲。" }
+              ]
+            },
+            {
+              id: "s2_w17", time: "第 17-18 週", title: "畢業季大戲 (高年級專屬)", desc: "畢業生獎狀、離校手續、國中志願選填與感性道別。", grades: "小六導師的最後一哩路",
+              prompts: [
+                { id: "p_s2_w17_1", name: "給畢業生的最後一封信", defaultText: "身為帶了他們兩年的導師，請幫我寫一封感人的「給畢業生的一封信」。回顧這兩年的點滴，並給予他們步入國中青春期的三個人生建議。" },
+                { id: "p_s2_w17_2", name: "畢業生家長感謝信", defaultText: "請幫我寫一封發在班級群組，給所有小六畢業生家長的「最後一封致謝信」。感謝他們這兩年來對班級事務的包容與支持，並祝福孩子們鵬程萬里，為這段親師緣分畫下完美句點。" },
+                { id: "p_s2_w17_3", name: "國中銜接/志願選填提醒", defaultText: "請幫我整理一份「給小六家長的國中升學準備清單」。包含：留意戶籍遷入時間、各學區國中報到日、以及提醒家長要開始培養孩子自主管理時間的能力。" }
+              ]
+            },
+            {
+              id: "s2_w19", time: "第 19-20 週", title: "舊生編班與期末轉段", desc: "學生特質描述表(轉班轉段建議)、舊生編班紀錄、暑假規劃。", grades: "重點：詳實記錄以利新導師銜接",
+              prompts: [
+                { id: "p_s2_w19_1", name: "轉段交接：學生特質客觀描述", defaultText: "班上有個學生將升上三年級重新編班。他有注意力不集中的問題，但只要有給予明確指令就能做好。請幫我寫一段給下一任導師的「交接建議」，語氣要客觀白描，不帶偏見，並提供實用引導策略。" },
+                { id: "p_s2_w19_2", name: "暑假生活自主規劃表文案", defaultText: "請幫我設計一份「暑期自主任務挑戰書」文案。除了表定的學校作業外，引導學生自行設定「閱讀任務」、「家事任務」與「運動任務」，並設計一個家長認證的檢核機制。" }
+              ]
+            }
+          ],
+          hidden: [
+            {
+              id: "h_1", time: "突發危機", title: "同儕衝突與霸凌疑慮", desc: "校園中最常引發家長不滿的地雷區。務必詳載事件日誌。", grades: "防禦滿點：事實陳述與保護機制",
+              prompts: [
+                { id: "p_h_1_1", name: "衝突事件家長說明稿", defaultText: "班上發生了兩位學生的肢體衝突（A推了B，B受了輕傷）。請幫我擬定一段傳給雙方家長的訊息。重點：\n1. 客觀陳述事實。\n2. 說明學校已進行的處置（傷口處理、雙方晤談）。\n3. 安撫情緒，避免家長互相指責。\n4. 邀請家長共同輔導。" },
+                { id: "p_h_1_2", name: "事件日誌(B卡)客觀紀錄法", defaultText: "請告訴我如何使用「客觀白描法」來撰寫學生的違規/衝突輔導紀錄。請給我一個範例（例如：上課生氣翻桌子），示範如何寫才不會帶有主觀情緒，能作為保護老師的實證。" },
+                { id: "p_h_1_3", name: "疑似霸凌初步訪談提問單", defaultText: "有家長懷疑孩子在班上被排擠。身為導師，我需要先做初步調查。請幫我設計一份對疑似關係人（旁觀學生）的「訪談提問清單」，問題要中立、不具引導性，避免打草驚蛇或造成二次傷害。" }
+              ]
+            },
+            {
+              id: "h_2", time: "法規行政", title: "傳染病停課與突發通報", desc: "腸病毒/流感高峰期，處理停課不停學、家長安撫與環境清消。", grades: "注意：通報時效與配套措施",
+              prompts: [
+                { id: "p_h_2_1", name: "班級停課緊急通知單", defaultText: "班上因為腸病毒確診人數達標，明天起必須停課一週。請幫我寫一份緊急通知單。包含：停課與復課日期、居家健康觀察提醒，並請家長回報每日體溫。" },
+                { id: "p_h_2_2", name: "停課不停學：線上補課計畫", defaultText: "針對停課的一週，請幫我擬一段給家長的「線上學習與復課後補課計畫」說明。安撫家長對進度落後的焦慮，說明我們將如何運用均一教育平台或復課後的早自修來補齊進度。" },
+                { id: "p_h_2_3", name: "班級清消與衛生重申", defaultText: "復課後的第一天，請幫我寫一段給家長的信，說明教室已經全面消毒完畢，並再次重申「生病不上校」的重要防線，感謝大家的配合。" }
+              ]
+            },
+            {
+              id: "h_3", time: "親師溝通", title: "應對高焦慮與越界家長", desc: "深夜訊息、過度干預教學、質疑班費。需要建立極高的心理邊界。", grades: "Puti-AI 專屬防護盾",
+              prompts: [
+                { id: "p_h_3_1", name: "委婉拒絕不合理干預", defaultText: "有家長傳訊息要求我「每節下課都要盯著他的孩子喝水，並拍照回傳」。請幫我寫一段溫和但堅定拒絕的回覆。說明導師下課需處理全班事務，無法針對單一孩子做到此程度，但會引導全班建立喝水習慣。" },
+                { id: "p_h_3_2", name: "深夜訊息自動回覆罐頭語", defaultText: "請幫我寫一段設定在 Line 官方帳號或個人設定的「夜間與假日自動回覆訊息」。語氣要親切但不失專業，告知目前非上班時間，若遇緊急傷病請聯繫校安專線，一般事務將於次一上班日回覆。" },
+                { id: "p_h_3_3", name: "高焦慮家長安撫話術", defaultText: "班上有位家長極度焦慮，每天都在群組問功課細節。請教我 3 個「安撫高焦慮家長」的溝通心法與對應的話術範例，幫助我建立專業權威感，同時讓家長安心放手。" }
+              ]
+            },
+            {
+              id: "h_4", time: "專業成長", title: "公開授課與教案產出", desc: "每學年必備的教師專業發展評鑑、公開觀課。", grades: "減少備課摩擦力",
+              prompts: [
+                { id: "p_h_4_1", name: "公開授課教案快速生成", defaultText: "我即將進行公開授課，主題是國小[年級][科目]的「[單元名稱]」。請運用『引起動機、發展活動、綜合活動』三段式教學法，幫我產出一份 40 分鐘的單節教案大綱，並融入 SDGs 或平板載具互動。" },
+                { id: "p_h_4_2", name: "觀課後議課自我反思稿", defaultText: "公開觀課結束了。請幫我列出 3 點「自我反思大綱」（例如：時間掌控、師生互動、學生專注度），讓我可以在議課會議上先發言，展現專業省思能力。" }
+              ]
+            }
+          ]
+        };
+
+        // --- 全域狀態 ---
+        let activeTab = 'sem1';
+        let savedPrompts = {};
+        let soundEnabled = true;
+        let currentPrompt = null;
+        let audioCtx = null;
+
+        // --- DOM 元素 ---
+        const tabsBtns = document.querySelectorAll('.tab-btn');
+        const contentList = document.getElementById('content-list');
+        const soundToggleBtn = document.getElementById('sound-toggle-btn');
+        const iconSoundOn = document.getElementById('icon-sound-on');
+        const iconSoundOff = document.getElementById('icon-sound-off');
+        
+        const modal = document.getElementById('prompt-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalTextarea = document.getElementById('modal-textarea');
+        const modalCloseBtn = document.getElementById('modal-close-btn');
+        
+        const btnSave = document.getElementById('btn-save');
+        const textSave = document.getElementById('text-save');
+        const iconSave = document.getElementById('icon-save');
+        const iconSaveCheck = document.getElementById('icon-save-check');
+        
+        const btnCopy = document.getElementById('btn-copy');
+        const textCopy = document.getElementById('text-copy');
+        const iconCopy = document.getElementById('icon-copy');
+        const iconCopyCheck = document.getElementById('icon-copy-check');
+
+        // --- 初始化 ---
+        function init() {
+            // 讀取 LocalStorage
+            try {
+                const localData = localStorage.getItem('putiai-prompts');
+                if (localData) savedPrompts = JSON.parse(localData);
+                
+                const localSound = localStorage.getItem('putiai-sound');
+                if (localSound !== null) soundEnabled = (localSound === 'true');
+            } catch (e) {
+                console.error("Storage error:", e);
+            }
+
+            updateSoundUI();
+            renderTabs();
+            renderContent();
+            lucide.createIcons();
+
+            // 綁定事件
+            tabsBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeTab = btn.getAttribute('data-tab');
+                    feedbackClick();
+                    renderTabs();
+                    renderContent();
+                });
+            });
+
+            soundToggleBtn.addEventListener('click', toggleSound);
+            modalCloseBtn.addEventListener('click', closeModal);
+            btnSave.addEventListener('click', handleSave);
+            btnCopy.addEventListener('click', handleCopy);
+            
+            // 點擊背景關閉 Modal
+            modal.addEventListener('click', (e) => {
+                if(e.target === modal) closeModal();
+            });
+        }
+
+        // --- 互動音效與震動模組 ---
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(freq, type, duration, vol = 0.05) {
+            if (!soundEnabled) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function interactVibrate(pattern) {
+            if (navigator.vibrate) {
+                try { navigator.vibrate(pattern); } catch (e) {}
+            }
+        }
+
+        function feedbackClick() {
+            playTone(600, 'sine', 0.1, 0.03);
+            interactVibrate(20);
+        }
+
+        function feedbackSuccess() {
+            playTone(800, 'sine', 0.1, 0.05);
+            setTimeout(() => playTone(1200, 'sine', 0.15, 0.05), 100);
+            interactVibrate([30, 50, 30]);
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('putiai-sound', soundEnabled);
+            updateSoundUI();
+            if (soundEnabled) {
+                setTimeout(() => playTone(800, 'sine', 0.1, 0.05), 50);
+            }
+        }
+
+        function updateSoundUI() {
+            if (soundEnabled) {
+                iconSoundOn.classList.remove('hidden');
+                iconSoundOff.classList.add('hidden');
+            } else {
+                iconSoundOn.classList.add('hidden');
+                iconSoundOff.classList.remove('hidden');
+            }
+        }
+
+        // --- UI 渲染 ---
+        function renderTabs() {
+            tabsBtns.forEach(btn => {
+                const tab = btn.getAttribute('data-tab');
+                btn.className = 'tab-btn flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 whitespace-nowrap active:scale-95 ' + 
+                    (tab === activeTab 
+                        ? (tab === 'hidden' ? 'bg-yellow-900/40 border border-yellow-500 text-yellow-400 shadow-[0_0_20px_rgba(234,179,8,0.3)]' : 'bg-cyan-900/60 border border-cyan-400 text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.3)]')
+                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 border border-slate-700 hover:text-slate-200');
+            });
+        }
+
+        function renderContent() {
+            // 觸發重新動畫
+            contentList.classList.remove('animate-slide-up');
+            void contentList.offsetWidth; // trigger reflow
+            contentList.classList.add('animate-slide-up');
+
+            const data = scheduleData[activeTab];
+            let html = '';
+
+            data.forEach(item => {
+                let promptsHtml = item.prompts.map(prompt => {
+                    const isEdited = !!savedPrompts[prompt.id];
+                    const editedBadge = isEdited ? `<span class="text-[10px] bg-slate-900 text-cyan-400 px-2 py-1 rounded border border-cyan-900 shadow-[0_0_5px_rgba(6,182,212,0.3)]">已修改</span>` : '';
+                    
+                    return `
+                        <button onclick="openModal('${prompt.id}')" class="w-full flex items-center justify-between p-4 rounded-xl bg-slate-700/40 hover:bg-cyan-900/50 border border-slate-600 hover:border-cyan-400 transition-all text-left group active:scale-[0.98]">
+                            <div class="flex items-center gap-3 pr-4">
+                                <div class="w-8 h-8 rounded-full bg-slate-800 group-hover:bg-cyan-800 flex items-center justify-center shrink-0 border border-slate-600 group-hover:border-cyan-500 transition-colors">
+                                    <i data-lucide="message-circle" class="w-4 h-4 text-slate-400 group-hover:text-cyan-300 transition-colors"></i>
+                                </div>
+                                <span class="font-medium text-slate-200 group-hover:text-cyan-50 transition-colors text-sm md:text-base">${prompt.name}</span>
+                            </div>
+                            <div class="flex items-center gap-3 shrink-0">
+                                ${editedBadge}
+                                <i data-lucide="chevron-right" class="w-5 h-5 text-slate-500 group-hover:text-cyan-400 transition-transform group-hover:translate-x-1"></i>
+                            </div>
+                        </button>
+                    `;
+                }).join('');
+
+                const warningHtml = item.grades ? `
+                    <div class="bg-slate-900/80 p-3 rounded-lg flex items-start gap-2 text-xs text-yellow-300/90 border border-yellow-900/50">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 shrink-0 text-yellow-500"></i>
+                        <span class="leading-relaxed">${item.grades}</span>
+                    </div>
+                ` : '';
+
+                html += `
+                    <div class="bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-700 overflow-hidden hover:border-slate-500 transition-all shadow-lg hover:shadow-cyan-900/20">
+                        <div class="p-6 flex flex-col md:flex-row gap-6">
+                            <div class="md:w-1/3 border-b md:border-b-0 md:border-r border-slate-700 pb-5 md:pb-0 md:pr-6">
+                                <span class="inline-block px-3 py-1 bg-slate-900 text-cyan-400 text-sm font-semibold rounded-full mb-4 border border-cyan-900/50 shadow-inner">
+                                    ${item.time}
+                                </span>
+                                <h2 class="text-xl font-bold text-yellow-500 mb-3">${item.title}</h2>
+                                <p class="text-sm text-slate-300 mb-4 leading-relaxed">${item.desc}</p>
+                                ${warningHtml}
+                            </div>
+                            <div class="md:w-2/3 flex flex-col justify-center gap-3">
+                                <h3 class="text-sm font-semibold text-slate-400 px-1 mb-1">實戰 AI 提示詞清單：</h3>
+                                <div class="grid gap-3">
+                                    ${promptsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            contentList.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        // --- 彈出視窗操作 ---
+        function findPromptById(id) {
+            for (const category in scheduleData) {
+                for (const phase of scheduleData[category]) {
+                    const found = phase.prompts.find(p => p.id === id);
+                    if (found) return found;
+                }
+            }
+            return null;
+        }
+
+        window.openModal = function(promptId) {
+            feedbackClick();
+            currentPrompt = findPromptById(promptId);
+            if (!currentPrompt) return;
+
+            modalTitle.textContent = currentPrompt.name;
+            modalTextarea.value = savedPrompts[promptId] || currentPrompt.defaultText;
+            
+            // 重置按鈕狀態
+            resetButtons();
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeModal() {
+            feedbackClick();
+            modal.classList.add('hidden');
+            currentPrompt = null;
+        }
+
+        function resetButtons() {
+            iconSave.classList.remove('hidden');
+            iconSaveCheck.classList.add('hidden');
+            textSave.textContent = "儲存修改";
+            textSave.classList.remove('text-green-400');
+
+            iconCopy.classList.remove('hidden');
+            iconCopyCheck.classList.add('hidden');
+            textCopy.textContent = "複製提示詞";
+            textCopy.classList.remove('text-yellow-300');
+        }
+
+        // --- 儲存與複製 ---
+        function handleSave() {
+            if (!currentPrompt) return;
+            
+            savedPrompts[currentPrompt.id] = modalTextarea.value;
+            localStorage.setItem('putiai-prompts', JSON.stringify(savedPrompts));
+            
+            feedbackSuccess();
+            
+            // UI 回饋
+            iconSave.classList.add('hidden');
+            iconSaveCheck.classList.remove('hidden');
+            textSave.textContent = "已儲存";
+            textSave.classList.add('text-green-400');
+            
+            renderContent(); // 更新列表顯示 "已修改" 徽章
+
+            setTimeout(resetButtons, 2000);
+        }
+
+        function handleCopy() {
+            modalTextarea.select();
+            try {
+                document.execCommand('copy');
+                feedbackSuccess();
+                
+                // UI 回饋
+                iconCopy.classList.add('hidden');
+                iconCopyCheck.classList.remove('hidden');
+                textCopy.textContent = "已複製！";
+                textCopy.classList.add('text-yellow-300');
+
+                setTimeout(resetButtons, 2000);
+            } catch (err) {
+                console.error('Copy failed', err);
+            }
+        }
+
+        // 執行初始化
+        window.addEventListener('DOMContentLoaded', init);
+
+    </script>
+</body>
+</html>
