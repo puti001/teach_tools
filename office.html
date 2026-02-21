@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 學校行政AI小幫手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-slide-in { animation: slideIn 0.3s ease-out forwards; }
+        
+        .office-tab-active { background: rgba(255, 255, 255, 0.08); transform: translateY(-2px); border-bottom-width: 4px; }
+
+        /* 處室色彩主題 - 強化卡片色彩識別 */
+        .theme-edu { border-left: 8px solid #3b82f6; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.2); }
+        .theme-stu { border-left: 8px solid #ef4444; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.2); }
+        .theme-gen { border-left: 8px solid #10b981; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2); }
+        .theme-cou { border-left: 8px solid #f59e0b; box-shadow: 0 10px 15px -3px rgba(245, 158, 11, 0.2); }
+        .theme-hr  { border-left: 8px solid #8b5cf6; box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.2); }
+        .theme-acc { border-left: 8px solid #64748b; box-shadow: 0 10px 15px -3px rgba(100, 116, 139, 0.2); }
+
+        .badge-edu { background-color: #1d4ed8; }
+        .badge-stu { background-color: #b91c1c; }
+        .badge-gen { background-color: #047857; }
+        .badge-cou { background-color: #b45309; }
+        .badge-hr  { background-color: #6d28d9; }
+        .badge-acc { background-color: #334155; }
+
+        * { -webkit-tap-highlight-color: transparent; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 font-sans selection:bg-cyan-500 selection:text-white pb-6 min-h-screen relative overflow-x-hidden">
+
+    <div class="fixed top-[-5%] right-[-5%] w-80 h-80 bg-cyan-900/10 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="fixed bottom-[-5%] left-[-5%] w-80 h-80 bg-yellow-900/5 rounded-full blur-3xl pointer-events-none"></div>
+
+    <header class="bg-slate-800/90 backdrop-blur-md border-b border-cyan-800/50 px-6 py-4 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full bg-yellow-500 flex items-center justify-center border-2 border-slate-700 shadow-[0_0_15px_rgba(6,182,212,0.6)] relative overflow-hidden group">
+                    <i data-lucide="sparkles" class="text-slate-900 w-7 h-7 absolute z-10 animate-pulse"></i>
+                    <div class="absolute inset-0 bg-gradient-to-tr from-yellow-600 to-yellow-400"></div>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-yellow-500 tracking-wide">
+                        Puti-AI <span class="text-cyan-400 text-sm font-normal border border-cyan-800 px-2 py-0.5 rounded-full bg-cyan-900/30">行政全方位戰隊</span>
+                    </h1>
+                    <p class="text-xs text-slate-400 mt-0.5">複製提示詞🪄貼到慣用的AI去生成</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="sound-btn" class="p-2 rounded-full bg-slate-700 hover:bg-slate-600 border border-slate-600 transition-all">
+                    <i data-lucide="volume-2" id="icon-on" class="w-5 h-5 text-cyan-400"></i>
+                    <i data-lucide="volume-x" id="icon-off" class="w-5 h-5 hidden"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto mt-8 px-4 relative z-10">
+        
+        <div class="mb-6">
+            <div class="relative max-w-md mx-auto mb-6">
+                <input type="text" id="search-input" placeholder="搜尋：家長日、畢業典禮、才藝、教科書評選..." class="w-full bg-slate-800 border border-slate-600 rounded-full py-3 px-12 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all shadow-inner">
+                <i data-lucide="search" class="absolute left-4 top-3.5 w-5 h-5 text-slate-400"></i>
+            </div>
+
+            <div class="grid grid-cols-3 md:grid-cols-6 gap-2" id="office-tabs">
+                <button data-office="教務" class="office-tab flex flex-col items-center gap-1 p-3 rounded-xl bg-slate-800 border-b-4 border-blue-500 transition-all hover:bg-slate-700">
+                    <i data-lucide="book-marked" class="w-6 h-6 text-blue-400"></i><span class="text-xs md:text-sm font-bold">教務處</span>
+                </button>
+                <button data-office="學務" class="office-tab flex flex-col items-center gap-1 p-3 rounded-xl bg-slate-800 border-b-4 border-red-500 transition-all hover:bg-slate-700">
+                    <i data-lucide="users" class="w-6 h-6 text-red-400"></i><span class="text-xs md:text-sm font-bold">學務處</span>
+                </button>
+                <button data-office="總務" class="office-tab flex flex-col items-center gap-1 p-3 rounded-xl bg-slate-800 border-b-4 border-emerald-500 transition-all hover:bg-slate-700">
+                    <i data-lucide="building" class="w-6 h-6 text-emerald-400"></i><span class="text-xs md:text-sm font-bold">總務處</span>
+                </button>
+                <button data-office="輔導" class="office-tab flex flex-col items-center gap-1 p-3 rounded-xl bg-slate-800 border-b-4 border-amber-500 transition-all hover:bg-slate-700">
+                    <i data-lucide="heart-handshake" class="w-6 h-6 text-amber-400"></i><span class="text-xs md:text-sm font-bold">輔導室</span>
+                </button>
+                <button data-office="人事" class="office-tab flex flex-col items-center gap-1 p-3 rounded-xl bg-slate-800 border-b-4 border-violet-500 transition-all hover:bg-slate-700">
+                    <i data-lucide="user-cog" class="w-6 h-6 text-violet-400"></i><span class="text-xs md:text-sm font-bold">人事室</span>
+                </button>
+                <button data-office="會計" class="office-tab flex flex-col items-center gap-1 p-3 rounded-xl bg-slate-800 border-b-4 border-slate-500 transition-all hover:bg-slate-700">
+                    <i data-lucide="calculator" class="w-6 h-6 text-slate-400"></i><span class="text-xs md:text-sm font-bold">會計室</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="main-content" class="space-y-6"></div>
+    </main>
+
+    <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md hidden">
+        <div class="bg-slate-800 w-full max-w-3xl rounded-2xl border border-cyan-700 shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-700 flex items-center justify-between bg-slate-800/50">
+                <h3 id="modal-title" class="text-lg font-bold text-yellow-500 flex items-center gap-2">提示詞內容</h3>
+                <button onclick="closeModal()" class="p-1 hover:bg-slate-700 rounded-lg text-slate-400"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-6 flex-1 overflow-y-auto">
+                <textarea id="modal-text" class="w-full h-80 p-5 bg-slate-900 border border-slate-600 rounded-xl text-slate-200 leading-relaxed font-mono text-sm focus:outline-none focus:border-cyan-500 shadow-inner"></textarea>
+            </div>
+            <div class="px-6 py-4 border-t border-slate-700 bg-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="text-xs text-slate-400 bg-slate-900/50 p-2 rounded border border-slate-700/50">
+                    💡 建議：複製後，貼到您慣用的 AI 中執行。
+                </div>
+                <div class="flex gap-3">
+                    <button id="save-btn" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-xl border border-slate-600 flex items-center gap-2 transition-all active:scale-95"><i data-lucide="save" class="w-4 h-4"></i>儲存修改</button>
+                    <button id="copy-btn" class="px-6 py-2 bg-cyan-600 hover:bg-cyan-500 rounded-xl font-bold flex items-center gap-2 transition-all active:scale-95"><i data-lucide="copy" class="w-4 h-4"></i>複製提示詞</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-16 text-center pb-8 text-slate-400 text-sm space-y-2">
+        <p class="font-bold text-yellow-500 text-base">屏東縣後庄國小黃朝榮老師作品</p>
+        <p>免費分享，歡迎擴散推廣</p>
+        <p class="text-red-400/80 text-xs">嚴禁商用與任何侵權、不尊重著作權的行為</p>
+        <p class="pt-3 text-cyan-400">更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" class="underline" target="_blank">點此前往</a></p>
+    </footer>
+
+    <script>
+        const officeData = {
+            "教務": [
+                { 
+                    time: "期初/常態", 
+                    title: "教學組：核心教學行政", 
+                    desc: "課程計畫彙整、巡堂視導、代課排定、教科書評選委員會、教學研究會。", 
+                    prompts: [
+                        { id: "edu_1", name: "課程發展委員會(課發會)通知與議程", default: "本校將辦理[年度][學期]第[次]課發會。請幫我擬一份正式通知。議程包含：審查各領域課程計畫、審議彈性學習節數規劃、選用教科書審議。語氣需正式。" },
+                        { id: "edu_2", name: "教科書評選紀錄與分析報告", default: "我是教學組長。請產出本校教科書評選紀錄。內容包含：各版本教材結構分析、適教性評估、優缺點對照表，以及最終委員會表決結果之理由書。" },
+                        { id: "edu_3", name: "教學視導(巡堂)專業優化紀錄", default: "我是教務主任。請將以下觀察[白話紀錄]轉為專業巡堂紀錄。強調：1.數位工具與教學結合成效 2.學生互動積極度 3.班級常規維護 4.具建設性之教學回饋。" },
+                        { id: "edu_4", name: "領域研討會/教學研究會紀錄", default: "請撰寫「[科目]領域會議紀錄」。重點包含：教學進度檢核、段考命題原則研議、補救教學執行現況、以及領域專業研習規劃。" }
+                    ]
+                },
+                { 
+                    time: "常態/畢業", 
+                    title: "註冊組：學籍與成績精算", 
+                    desc: "新生入學、畢業證書核發、成績證明、獎學金、常態編班、中輟追蹤。", 
+                    prompts: [
+                        { id: "edu_5", name: "畢業生受獎名單與證書核發簽呈", default: "主旨：有關本校第[幾]屆畢業生畢業證書核發暨畢業生各項獎勵名單乙案，簽請 核示。說明：畢業生人數、證書流水號、獎項類別（市長獎、議長獎等）。" },
+                        { id: "edu_6", name: "新生/舊生常態編班公告函", default: "我是註冊組長。請寫一份關於[年度]常態編班作業公告。內容強調：依據教育部規範辦理、公開抽籤時間地點、編班後之導師抽籤時程。" },
+                        { id: "edu_7", name: "中輟生/長期缺課學生追蹤紀錄表", default: "請撰寫一份中輟生追蹤摘要。內容：個案家庭背景簡述、缺課起始日、已執行之家庭訪問次數與重點、目前輔導困境、以及後續預計採取之復學引導方案。" }
+                    ]
+                },
+                { 
+                    time: "設備/數位", 
+                    title: "資訊設備組：數位學習與資產", 
+                    desc: "圖書盤點、生生用平板成果、資安演練、校園官網公告、智慧教室維護。", 
+                    prompts: [
+                        { id: "edu_8", name: "圖書館藏盤點計畫與公告", default: "我是設備組長。請擬定本學期「圖書盤點實施計畫」。包含：暫停借閱期間、盤點流程、志工招募、以及盤點後之遺失書籍處理程序。" },
+                        { id: "edu_9", name: "生生用平板(數位精進計畫)成果冊", default: "我是資訊組長。請撰寫 800 字數位學習成果報告。重點在於：平板借用週轉率、教師運用PaGamO/均一/學習吧平台之具體課例分析、以及學生學習成效之量化數據描述。" }
+                    ]
+                }
+            ],
+            "學務": [
+                { 
+                    time: "慶典/重大", 
+                    title: "訓育組：校級慶典與活動全紀錄", 
+                    desc: "家長日、校慶運動會、畢業典禮、才藝展演秀、母親節感恩活動、社團管理、學生幹部訓練、志工招募。", 
+                    prompts: [
+                        { id: "stu_1", name: "全校家長日(親師座談)行政企劃書", default: "我是訓育組長。請擬定[年度]家長日計畫。包含：程序單、處室重點宣導清單、各樓層引導人力配置、家長意見反映單彙整流程、以及經費預算表。" },
+                        { id: "stu_2", name: "校慶運動會/表演會完整競賽規程", default: "請擬定[年度]校慶競賽規程。包含：開幕進場主題、各年級趣味競賽、大隊接力規章、裁判分工、獎勵辦法、以及緊急救護緊急連絡網。" },
+                        { id: "stu_3", name: "畢業典禮企劃書與程序單(溫馨風)", default: "我是訓育組長。請產出畢業典禮企劃大綱。內容包含：典禮流程（由校長致詞、頒獎、校友致詞至唱校歌）、會場佈置風格建議、畢業生致詞稿初稿撰寫提示、以及後勤人力分工。" },
+                        { id: "stu_4", name: "校內學生才藝大賽/才藝秀計畫", default: "請擬定「校園才藝大秀」實施計畫。包含：報名資格、初選機制、評審組成、表演時間限制、以及現場秩序維護計畫。語氣要活潑能吸引學生參加。" },
+                        { id: "stu_5", name: "母親節/感恩週系列活動企劃", default: "請產出「溫馨五月：感恩系列活動」計畫。包含：感恩明信片投遞、校園音樂午餐、感恩傳情小活動、以及家長入校參與之邀請函。" },
+                        { id: "stu_6", name: "社團招收/催交通知與管理說明", default: "請寫一段發給導師轉發家長的Line通知：本學期社團線上報名流程、截止時間、繳費方式說明，以及社團上課期間的安全規範注意事項。" }
+                    ]
+                },
+                { 
+                    time: "安全/危機", 
+                    title: "生活組：安全防護與緊急應變", 
+                    desc: "校安通報、霸凌/性平調查紀錄、防災演習、校外教學安全、導護輪值、交通安全宣導。", 
+                    prompts: [
+                        { id: "stu_7", name: "正式校安中心通報語法(去識別化)", default: "請將以下描述轉為正式校安通報。要求：時序精確到分鐘、去識別化、客觀描述事發、已採措施（醫療、輔導、通知）、後續追蹤。切勿帶有情感或主觀判斷。" },
+                        { id: "stu_8", name: "疑似霸凌/性平案件事件日誌日誌", default: "請根據訪談紀錄，彙整為正式「調查日誌」。紀錄雙方當事人說法、證人描述、現場證據照片標註、以及行政端各項法定通報日期之連貫性紀錄。" },
+                        { id: "stu_9", name: "全校校外教學(含畢旅)安全維護計畫", default: "我是生活組長。請撰寫校外教學安全維護手冊。包含：隨車老師名冊、逃生演練標準流程、景點緊急集合點地圖說明、傷病應變SOP。" }
+                    ]
+                },
+                { 
+                    time: "健康/防疫", 
+                    title: "衛生組：防疫健康與環境衛導", 
+                    desc: "腸病毒通報、停課公告、午餐食材驗收、大掃除計畫、健檢、垃圾分類檢查。", 
+                    prompts: [
+                        { id: "stu_10", name: "傳染病停課/復課緊急通知函", default: "針對腸病毒/流感，請寫一份發給家長的公告。內容：停課起訖、居家健康監測建議、停課期間自主學習安排、復課後班級清消說明。" },
+                        { id: "stu_11", name: "學校午餐供應商違約扣款正式函稿", default: "我是午餐執行秘書。今日驗收發現供應商之食材([項目])不符契約規範([問題])。請擬一份正式函稿，依據合約條款進行扣點罰款，並要求限期改善。" }
+                    ]
+                }
+            ],
+            "總務": [
+                { 
+                    time: "會議/公文", 
+                    title: "文書組：全校行政會議核心", 
+                    desc: "校務會議、簽稿併陳、印信、檔案管理、校史紀錄、全校日誌彙整。", 
+                    prompts: [
+                        { id: "gen_1", name: "正式校務會議開會通知與提案單", default: "請擬定本學期校務會議通知。包含：時間、地點、出席人員、議程(含提案討論)、以及各處室報告截止時間說明。" },
+                        { id: "gen_2", name: "行政會議正式紀錄模版(嚴謹版)", default: "請產出一份專業會議紀錄模版。包含：主席致詞摘要、處室報告事項、提案討論對話摘要、決議內容、以及散會時間紀錄。語氣需正式。" }
+                    ]
+                },
+                { 
+                    time: "採購/維護", 
+                    title: "庶務組：招標修繕與後勤管理", 
+                    desc: "招標需求書、修繕申請、災損報核、飲水機/消防/電梯維護、冷氣電費、場地租借。", 
+                    prompts: [
+                        { id: "gen_3", name: "設施修繕(漏水/結構)採購需求書", default: "我是庶務組長。本校擬辦理[設施名稱]修繕。請幫我撰寫需求規格：材料品質(符合CNS)、保固期、施工期間安全圍籬規範、驗收標準。" },
+                        { id: "gen_4", name: "飲水機/消防設備定期檢測報告摘要", default: "請整理本季校園安全檢測紀錄。包含：水質檢測合格字號、滅火器換粉紀錄、避難引導燈測試、以及相關法規報核之文字敘述。" }
+                    ]
+                }
+            ],
+            "輔導": [
+                { 
+                    time: "輔導/個案", 
+                    title: "輔導組：個案晤談與家庭聯繫", 
+                    desc: "親職講座、個案會議、兒少通報、性平會、生命教育、中輟復學。", 
+                    prompts: [
+                        { id: "cou_1", name: "兒少保護/家暴事件緊急通報摘要", default: "我是輔導組長。請擬一份初步通報處理紀錄。內容包含：接獲通報時序、學生身體/心理徵候客觀白描、24H內法定線上通報案號紀錄、以及初步安全保護計畫。" },
+                        { id: "cou_2", name: "親職教育講座成果結案報告", default: "請產出講座成果。包含：主題、參加家長人數、問卷滿意度量化分析、家長質性意見摘要、照片圖說、以及未來改進建議。" }
+                    ]
+                },
+                { 
+                    time: "特教", 
+                    title: "特教組：IEP會議與特教資源", 
+                    desc: "IEP計畫、助理員考核、鑑輔會議、轉銜輔導、資源班管理。", 
+                    prompts: [
+                        { id: "cou_3", name: "IEP期末檢討會議紀錄摘要內容", default: "我是特教組長。請根據學生學習表現，產出IEP檢討會議紀錄摘要。包含：各領域目標達成度分析、情緒適應現況、以及下學期IEP目標修正建議。" }
+                    ]
+                }
+            ],
+            "人事": [
+                { 
+                    time: "年度/考核", 
+                    title: "人事室：考核、福利與研習", 
+                    desc: "平時考核、考績、退休申請、研習時數管理、敘薪、各項津貼補助說明。", 
+                    prompts: [
+                        { id: "hr_1", name: "教職員平時考核紀錄客觀描述(10則)", default: "請提供 10 則專業的人員考核描述語句。涵蓋：行政效率、教學研發、危機處理能力、以及同儕協作。語氣要客觀且具引導性。" },
+                        { id: "hr_2", name: "教職員研習時數催告與權益通知", default: "請擬定一段發給校內教職員的Line訊息：提醒[學年度]法定研習時數之達成期限、不符時數對考績之影響、以及推薦之線上研習平台網址。" }
+                    ]
+                }
+            ],
+            "會計": [
+                { 
+                    time: "預算/決算", 
+                    title: "會計室：預算決算與經費核銷", 
+                    desc: "概算編列、決算報告、追加預算理由、經費流用、單據審核說明。", 
+                    prompts: [
+                        { id: "acc_1", name: "預算執行分析與追加預算理由書", default: "本處室因[特定原因]需追加[科目]預算。請擬定動支必要性說明。強調：1.符合急迫性 2.符合教育局政策 3.無法於原預算挪移之具體理由。" }
+                    ]
+                }
+            ]
+        };
+
+        let currentOffice = "教務";
+        let savedData = JSON.parse(localStorage.getItem('putiai-admin-vfinal-prompts') || '{}');
+        let soundOn = true;
+        let audioCtx = null;
+
+        function init() {
+            renderTabs();
+            renderContent();
+            lucide.createIcons();
+            
+            document.querySelectorAll('.office-tab').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    playTabSound();
+                    currentOffice = e.currentTarget.dataset.office;
+                    renderTabs();
+                    renderContent();
+                    document.getElementById('search-input').value = ''; 
+                });
+            });
+
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                renderContent(e.target.value.toLowerCase());
+            });
+
+            document.getElementById('sound-btn').addEventListener('click', () => {
+                soundOn = !soundOn;
+                document.getElementById('icon-on').classList.toggle('hidden', !soundOn);
+                document.getElementById('icon-off').classList.toggle('hidden', soundOn);
+            });
+        }
+
+        function renderTabs() {
+            document.querySelectorAll('.office-tab').forEach(tab => {
+                const isActive = tab.dataset.office === currentOffice;
+                tab.classList.toggle('office-tab-active', isActive);
+                const icon = tab.querySelector('svg, i');
+                if (icon) { icon.style.opacity = isActive ? "1" : "0.6"; }
+            });
+        }
+
+        function renderContent(filter = '') {
+            const container = document.getElementById('main-content');
+            container.innerHTML = '';
+            let dataToDisplay = [];
+            
+            if (filter) {
+                for (let office in officeData) {
+                    officeData[office].forEach(item => {
+                        const matchedPrompts = (item.prompts || []).filter(p => 
+                            (p.name || '').toLowerCase().includes(filter) || 
+                            (p.default || '').toLowerCase().includes(filter)
+                        );
+                        if ((item.title || '').toLowerCase().includes(filter) || matchedPrompts.length > 0) {
+                            dataToDisplay.push({...item, office, prompts: matchedPrompts.length > 0 ? matchedPrompts : item.prompts});
+                        }
+                    });
+                }
+            } else {
+                dataToDisplay = officeData[currentOffice];
+            }
+
+            if (dataToDisplay.length === 0) {
+                container.innerHTML = `<div class="text-center py-20 text-slate-500">找不到相關行政內容...</div>`;
+                return;
+            }
+
+            dataToDisplay.forEach(item => {
+                const officeName = item.office || currentOffice;
+                const themeClass = getOfficeTheme(officeName);
+                const badgeClass = getBadgeClass(officeName);
+                const section = document.createElement('div');
+                section.className = `bg-slate-800/80 p-6 rounded-2xl animate-slide-in shadow-xl transition-all hover:translate-x-1 ${themeClass}`;
+                
+                section.innerHTML = `
+                    <div class="flex flex-col md:flex-row gap-6">
+                        <div class="md:w-1/3 border-b md:border-b-0 md:border-r border-slate-700/50 pb-4 md:pb-0 md:pr-6">
+                            <div class="flex items-center gap-2 mb-3">
+                                <span class="text-[10px] font-bold text-white ${badgeClass} px-2 py-0.5 rounded shadow-sm">${officeName}</span>
+                                <span class="text-xs font-bold text-cyan-400 bg-cyan-900/40 px-3 py-1 rounded-full border border-cyan-800">${item.time || '常態'}</span>
+                            </div>
+                            <h2 class="text-xl font-bold text-yellow-500 leading-tight">${item.title}</h2>
+                            <p class="text-sm text-slate-400 mt-2 leading-relaxed">${item.desc}</p>
+                        </div>
+                        <div class="md:w-2/3 grid gap-3">
+                            ${(item.prompts || []).map(p => `
+                                <button onclick="openModal('${p.id}')" class="flex items-center justify-between p-4 bg-slate-900/40 hover:bg-slate-700/60 border border-slate-700/50 hover:border-cyan-500/50 rounded-xl transition-all group active:scale-[0.98]">
+                                    <div class="flex items-center gap-3">
+                                        <i data-lucide="file-text" class="w-4 h-4 text-slate-500 group-hover:text-cyan-400"></i>
+                                        <span class="text-sm font-medium group-hover:text-cyan-50 text-slate-300">${p.name}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        ${savedData[p.id] ? '<span class="text-[10px] text-cyan-400 border border-cyan-800 px-1 rounded bg-cyan-950">已存</span>' : ''}
+                                        <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
+                                    </div>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+            lucide.createIcons();
+        }
+
+        function getOfficeTheme(name) {
+            const themes = {"教務":"theme-edu","學務":"theme-stu","總務":"theme-gen","輔導":"theme-cou","人事":"theme-hr","會計":"theme-acc"};
+            return themes[name] || "";
+        }
+
+        function getBadgeClass(name) {
+            const badges = {"教務":"badge-edu","學務":"badge-stu","總務":"badge-gen","輔導":"badge-cou","人事":"badge-hr","會計":"badge-acc"};
+            return badges[name] || "bg-slate-600";
+        }
+
+        window.openModal = function(id) {
+            let prompt = null;
+            for(let key in officeData) {
+                for(let item of officeData[key]) {
+                    const found = (item.prompts || []).find(p => p.id === id);
+                    if(found) { prompt = found; break; }
+                }
+                if(prompt) break;
+            }
+            if(!prompt) return;
+            document.getElementById('modal-title').innerText = '行政支援：' + prompt.name;
+            document.getElementById('modal-text').value = savedData[id] || prompt.default;
+            document.getElementById('modal').classList.remove('hidden');
+            feedbackClick();
+            document.getElementById('save-btn').onclick = () => {
+                savedData[id] = document.getElementById('modal-text').value;
+                localStorage.setItem('putiai-admin-vfinal-prompts', JSON.stringify(savedData));
+                playSuccessSound();
+                renderContent(document.getElementById('search-input').value);
+            };
+            document.getElementById('copy-btn').onclick = () => {
+                document.getElementById('modal-text').select();
+                document.execCommand('copy');
+                playSuccessSound();
+            };
+        }
+
+        window.closeModal = function() { document.getElementById('modal').classList.add('hidden'); }
+
+        function playTone(freq, duration, vol = 0.05) {
+            if(!soundOn) return;
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + duration);
+        }
+
+        function playTabSound() { playTone(440, 0.1); }
+        function feedbackClick() { playTone(600, 0.1, 0.03); }
+        function playSuccessSound() { playTone(880, 0.1); setTimeout(() => playTone(1100, 0.1), 100); }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
