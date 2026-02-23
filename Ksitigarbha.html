@@ -28,6 +28,10 @@
         ::-webkit-scrollbar-thumb:hover {
             background: #a39476; 
         }
+        /* 確保捲動平滑 */
+        #sutra-content {
+            scroll-behavior: smooth;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden">
@@ -52,7 +56,7 @@
                 </div>
             </div>
             
-            <div id="sutra-content" class="flex-1 overflow-y-auto p-8 sutra-text text-xl leading-loose tracking-wide text-[#2c2c2c]">
+            <div id="sutra-content" tabindex="0" class="flex-1 overflow-y-auto p-8 sutra-text text-xl leading-loose tracking-wide text-[#2c2c2c] focus:outline-none focus:ring-2 focus:ring-[#e6decb] focus:ring-inset">
             </div>
         </section>
 
@@ -77,6 +81,10 @@
                         <li><span class="inline-block w-4 h-4 bg-[#fdf0d5] border border-[#e2c78d] rounded-sm mr-1 align-middle"></span> <strong>27-28日：</strong> 金剛經 (分兩日)</li>
                         <li><span class="inline-block w-4 h-4 bg-[#e6eaf0] border border-[#a6b8d4] rounded-sm mr-1 align-middle"></span> <strong>29日起：</strong> 自由研究日</li>
                     </ul>
+                </div>
+                
+                <div class="mt-4 text-xs text-[#8a7b66] text-center">
+                    💡 點擊左側經文區後，可使用<strong class="text-[#5c4a3d]">簡報筆</strong>、空白鍵、Enter 或 PageDown 進行平滑翻頁。
                 </div>
             </div>
         </section>
@@ -175,7 +183,13 @@
             if (day >= 14 && day <= 26) roundBadge = "<span class='text-sm bg-[#526b4d] text-white px-2 py-1 rounded ml-3 align-middle'>第二遍</span>";
 
             document.getElementById('sutra-title').innerHTML = `${data.title} <span class='block md:inline mt-2 md:mt-0 md:ml-4 text-xl text-[#8a7b66]'>${data.subtitle}</span> ${roundBadge}`;
-            document.getElementById('sutra-content').innerHTML = data.content;
+            
+            const sutraContent = document.getElementById('sutra-content');
+            sutraContent.innerHTML = data.content;
+            
+            // 每次載入新經文時，將經文區捲動回最上方，並設定焦點以利鍵盤/簡報筆控制
+            sutraContent.scrollTop = 0;
+            sutraContent.focus();
 
             document.querySelectorAll('.day-btn').forEach(btn => {
                 btn.classList.remove('ring-2', 'ring-[#745b42]', 'ring-offset-2', 'font-extrabold', 'transform', 'scale-110', 'shadow-md');
@@ -233,9 +247,32 @@
             loadSutraContent(currentDay);
         }
 
+        // === 簡報筆與鍵盤平滑翻頁控制邏輯 ===
+        function setupKeyboardScrolling() {
+            window.addEventListener('keydown', function(e) {
+                const container = document.getElementById('sutra-content');
+                if (!container) return;
+                
+                // 每次往下捲動容器高度的 80%，保留最後幾行讓視線連貫
+                const scrollAmount = container.clientHeight * 0.8; 
+
+                // 簡報筆下一頁通常是 PageDown、ArrowDown、ArrowRight、Space 或 Enter
+                if (['PageDown', 'ArrowDown', 'ArrowRight', ' ', 'Enter'].includes(e.key)) {
+                    e.preventDefault(); // 防止預設跳動
+                    container.scrollBy({ top: scrollAmount, behavior: 'smooth' });
+                } 
+                // 簡報筆上一頁通常是 PageUp、ArrowUp、ArrowLeft
+                else if (['PageUp', 'ArrowUp', 'ArrowLeft'].includes(e.key)) {
+                    e.preventDefault();
+                    container.scrollBy({ top: -scrollAmount, behavior: 'smooth' });
+                }
+            });
+        }
+
         window.onload = () => {
             renderCalendar();
             document.getElementById('sutra-content').style.fontSize = currentBaseFontSize + 'px';
+            setupKeyboardScrolling(); // 啟動鍵盤與簡報筆監聽
         };
     </script>
 </body>
