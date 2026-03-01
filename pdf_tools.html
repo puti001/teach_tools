@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI PDF 多功能工具箱</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF-lib (PDF 合併、修改、圖片轉PDF) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <!-- PDF.js (PDF 轉圖片、壓縮渲染) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- JSZip (打包圖片成 ZIP) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        putiYellow: '#eab308',
+                        putiBlue: '#1e3a8a',
+                        putiCyan: '#06b6d4',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+        .glass-panel { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* 工具按鈕啟用狀態 */
+        .tool-btn { transition: all 0.3s ease; }
+        .tool-btn.active { background-color: #1e3a8a; color: white; border-color: #06b6d4; transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .tool-btn.inactive { background-color: white; color: #4b5563; border-color: #e5e7eb; }
+        .tool-btn.inactive:hover { border-color: #06b6d4; color: #1e3a8a; }
+
+        /* 自訂 Radio */
+        .radio-custom:checked + div { border-color: #06b6d4; background-color: #f0fdfa; }
+        .radio-custom:checked + div .radio-icon { color: #06b6d4; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4 sm:p-8 relative">
+
+    <header class="w-full max-w-5xl text-center mb-6 animate-fade-in">
+        <div class="inline-flex items-center justify-center space-x-3 bg-putiBlue text-white px-6 py-3 rounded-full shadow-lg border-2 border-putiCyan">
+            <i class="fa-solid fa-robot text-putiCyan text-2xl animate-pulse"></i>
+            <h1 class="text-2xl font-bold tracking-wide">Puti-AI PDF 多功能工具箱</h1>
+        </div>
+        <p class="text-gray-600 mt-3 font-medium text-sm sm:text-base">
+            安全、快速、無須上傳。所有處理皆在您的裝置上完成，保障教學隱私。
+        </p>
+    </header>
+
+    <main class="w-full max-w-5xl glass-panel rounded-2xl shadow-xl overflow-hidden flex flex-col flex-grow mb-8">
+        
+        <!-- 工具選擇列 (Top Navigation) -->
+        <div class="bg-gray-100 p-4 border-b border-gray-200">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                <button onclick="switchTool('split')" id="btn-split" class="tool-btn active flex flex-col items-center justify-center py-3 px-2 rounded-xl border-2 font-bold text-sm">
+                    <i class="fa-solid fa-scissors text-xl mb-1 text-putiYellow"></i> 檔案拆分
+                </button>
+                <button onclick="switchTool('compress')" id="btn-compress" class="tool-btn inactive flex flex-col items-center justify-center py-3 px-2 rounded-xl border-2 font-bold text-sm">
+                    <i class="fa-solid fa-compress text-xl mb-1 text-putiYellow"></i> 進階瘦身
+                </button>
+                <button onclick="switchTool('merge')" id="btn-merge" class="tool-btn inactive flex flex-col items-center justify-center py-3 px-2 rounded-xl border-2 font-bold text-sm">
+                    <i class="fa-solid fa-plus-square text-xl mb-1 text-putiYellow"></i> 合併 PDF
+                </button>
+                <button onclick="switchTool('pdf2img')" id="btn-pdf2img" class="tool-btn inactive flex flex-col items-center justify-center py-3 px-2 rounded-xl border-2 font-bold text-sm">
+                    <i class="fa-solid fa-file-image text-xl mb-1 text-putiYellow"></i> PDF 轉圖片
+                </button>
+                <button onclick="switchTool('img2pdf')" id="btn-img2pdf" class="tool-btn inactive flex flex-col items-center justify-center py-3 px-2 rounded-xl border-2 font-bold text-sm">
+                    <i class="fa-solid fa-images text-xl mb-1 text-putiYellow"></i> 圖片轉 PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- 工作區 (Working Area) -->
+        <div class="p-6 sm:p-10 flex-grow flex flex-col items-center">
+            
+            <!-- 1. 拆分工具區 -->
+            <div id="area-split" class="w-full max-w-xl tool-area">
+                <div class="mb-6">
+                    <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-putiCyan transition-all">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fa-regular fa-file-pdf text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-500"><span class="font-semibold text-putiBlue">上傳單一 PDF</span></p>
+                            <p id="split-file-info" class="text-xs text-putiCyan font-bold mt-2 hidden"></p>
+                        </div>
+                        <input type="file" class="hidden" accept=".pdf" onchange="handleSingleFile(event, 'split')" />
+                    </label>
+                </div>
+                <div class="bg-blue-50 p-5 rounded-lg border border-blue-100 mb-4">
+                    <h3 class="font-bold text-putiBlue mb-3"><i class="fa-solid fa-list-ul mr-2"></i>選擇拆分方式</h3>
+                    <div class="space-y-3">
+                        <label class="block relative cursor-pointer">
+                            <input type="radio" name="splitMode" value="range" class="radio-custom sr-only" checked onchange="toggleSplitInputs()">
+                            <div class="p-3 border rounded-lg transition-all flex items-center bg-white border-gray-200">
+                                <div>
+                                    <div class="font-medium text-sm text-gray-800">自訂頁碼範圍</div>
+                                    <input type="text" id="split-ranges" placeholder="例：1-3, 4-7" class="mt-1 w-full px-3 py-1.5 text-sm border border-gray-300 rounded outline-none">
+                                </div>
+                            </div>
+                        </label>
+                        <label class="block relative cursor-pointer">
+                            <input type="radio" name="splitMode" value="parts" class="radio-custom sr-only" onchange="toggleSplitInputs()">
+                            <div class="p-3 border rounded-lg transition-all flex items-center bg-white border-gray-200 opacity-60" id="wrapper-parts">
+                                <div>
+                                    <div class="font-medium text-sm text-gray-800">平均拆成幾份</div>
+                                    <input type="number" id="split-parts" min="2" placeholder="例：3" class="mt-1 w-24 px-3 py-1.5 text-sm border border-gray-300 rounded outline-none" disabled>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <button onclick="processSplit()" class="w-full bg-putiBlue hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all">
+                    <i class="fa-solid fa-scissors mr-2"></i> 開始拆分 PDF
+                </button>
+            </div>
+
+            <!-- 2. 瘦身工具區 -->
+            <div id="area-compress" class="w-full max-w-xl tool-area hidden">
+                <div class="mb-6">
+                    <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-putiCyan transition-all">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fa-regular fa-file-pdf text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-500"><span class="font-semibold text-putiBlue">上傳單一 PDF</span></p>
+                            <p id="compress-file-info" class="text-xs text-putiCyan font-bold mt-2 hidden"></p>
+                        </div>
+                        <input type="file" class="hidden" accept=".pdf" onchange="handleSingleFile(event, 'compress')" />
+                    </label>
+                </div>
+                <div class="bg-yellow-50 p-5 rounded-lg border border-yellow-100 mb-4">
+                    <h3 class="font-bold text-gray-800 mb-3"><i class="fa-solid fa-gauge-high text-putiYellow mr-2"></i>選擇壓縮品質</h3>
+                    <div class="space-y-3">
+                        <label class="block relative cursor-pointer">
+                            <input type="radio" name="compressLevel" value="high" class="radio-custom sr-only" checked>
+                            <div class="p-3 border rounded-lg bg-white border-gray-200 flex flex-col">
+                                <span class="font-bold text-sm text-gray-800"><i class="fa-solid fa-star text-putiYellow mr-1"></i> 高質量 (無損優化)</span>
+                                <span class="text-xs text-gray-500 mt-1">完全保留文字可選取性與原始畫質。</span>
+                            </div>
+                        </label>
+                        <label class="block relative cursor-pointer">
+                            <input type="radio" name="compressLevel" value="medium" class="radio-custom sr-only">
+                            <div class="p-3 border rounded-lg bg-white border-gray-200 flex flex-col">
+                                <span class="font-bold text-sm text-gray-800"><i class="fa-solid fa-image text-blue-500 mr-1"></i> 中質量 (影像壓縮)</span>
+                                <span class="text-xs text-gray-500 mt-1">轉為標準畫質圖片。<b>⚠️ 文字將變圖片。</b></span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <button onclick="processCompress()" class="w-full bg-putiYellow hover:bg-yellow-600 text-putiBlue font-bold py-3 px-4 rounded-lg shadow-md transition-all">
+                    <i class="fa-solid fa-compress mr-2"></i> 開始瘦身處理
+                </button>
+            </div>
+
+            <!-- 3. 合併工具區 -->
+            <div id="area-merge" class="w-full max-w-xl tool-area hidden">
+                <div class="mb-4">
+                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-putiCyan transition-all">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fa-solid fa-file-circle-plus text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-500"><span class="font-semibold text-putiBlue">點擊選擇多個 PDF</span> (可按 Ctrl 複選)</p>
+                        </div>
+                        <input type="file" class="hidden" accept=".pdf" multiple onchange="handleMultipleFiles(event, 'merge')" />
+                    </label>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-gray-200 mb-4 min-h-[100px] max-h-48 overflow-y-auto">
+                    <p class="text-sm font-bold text-gray-700 mb-2 border-b pb-1">已選擇的檔案 (依序合併)：</p>
+                    <ul id="merge-file-list" class="space-y-1 text-sm text-gray-600 list-decimal list-inside pl-1">
+                        <li class="text-gray-400 italic list-none">尚未選擇檔案</li>
+                    </ul>
+                </div>
+                <button onclick="processMerge()" class="w-full bg-putiBlue hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all">
+                    <i class="fa-solid fa-link mr-2"></i> 一鍵合併為單一 PDF
+                </button>
+            </div>
+
+            <!-- 4. PDF轉圖片區 -->
+            <div id="area-pdf2img" class="w-full max-w-xl tool-area hidden">
+                <div class="mb-6">
+                    <label class="flex flex-col items-center justify-center w-full h-36 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-putiCyan transition-all">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fa-regular fa-file-pdf text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-500"><span class="font-semibold text-putiBlue">上傳要轉成圖片的 PDF</span></p>
+                            <p id="pdf2img-file-info" class="text-xs text-putiCyan font-bold mt-2 hidden"></p>
+                        </div>
+                        <input type="file" class="hidden" accept=".pdf" onchange="handleSingleFile(event, 'pdf2img')" />
+                    </label>
+                </div>
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-100 mb-4 text-sm text-gray-700">
+                    <i class="fa-solid fa-circle-info text-putiCyan mr-1"></i> 系統會將 PDF 的每一頁轉成高畫質 JPG 圖片，並自動打包成一個 ZIP 壓縮檔讓您下載。
+                </div>
+                <button onclick="processPdfToImg()" class="w-full bg-putiCyan hover:bg-cyan-600 text-white font-bold py-3 px-4 rounded-lg shadow-md transition-all">
+                    <i class="fa-solid fa-file-zipper mr-2"></i> 轉換並打包下載
+                </button>
+            </div>
+
+            <!-- 5. 圖片轉PDF區 -->
+            <div id="area-img2pdf" class="w-full max-w-xl tool-area hidden">
+                <div class="mb-4">
+                    <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 hover:border-putiCyan transition-all">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fa-solid fa-images text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-500"><span class="font-semibold text-putiBlue">點擊選擇多張圖片</span> (JPG / PNG)</p>
+                        </div>
+                        <input type="file" class="hidden" accept="image/jpeg, image/png" multiple onchange="handleMultipleFiles(event, 'img2pdf')" />
+                    </label>
+                </div>
+                <div class="bg-white p-3 rounded-lg border border-gray-200 mb-4 min-h-[100px] max-h-48 overflow-y-auto">
+                    <p class="text-sm font-bold text-gray-700 mb-2 border-b pb-1">已選擇的圖片 (依序排列)：</p>
+                    <ul id="img2pdf-file-list" class="space-y-1 text-sm text-gray-600 list-decimal list-inside pl-1">
+                        <li class="text-gray-400 italic list-none">尚未選擇圖片</li>
+                    </ul>
+                </div>
+                <button onclick="processImgToPdf()" class="w-full bg-putiYellow hover:bg-yellow-600 text-putiBlue font-bold py-3 px-4 rounded-lg shadow-md transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 將圖片串成單一 PDF
+                </button>
+            </div>
+
+            <!-- Global Results Area -->
+            <div id="results-area" class="w-full max-w-xl mt-8 hidden animate-fade-in">
+                <h3 class="text-lg font-bold text-putiBlue mb-3 border-b pb-2"><i class="fa-solid fa-check-circle text-green-500 mr-2"></i>處理完成的檔案：</h3>
+                <ul id="download-list" class="space-y-3 max-h-56 overflow-y-auto no-scrollbar pr-2 pb-2">
+                    <!-- Download items injected here -->
+                </ul>
+                <button onclick="clearResults()" class="mt-3 text-sm text-gray-500 hover:text-red-500 transition underline">清除列表</button>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Global Loading Overlay -->
+    <div id="global-loading" class="fixed inset-0 bg-black/60 z-50 hidden flex-col items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl flex flex-col items-center max-w-sm w-[90%]">
+            <i class="fa-solid fa-robot fa-bounce text-5xl text-putiCyan mb-4"></i>
+            <p class="text-lg text-putiBlue font-bold mb-2" id="loading-text">小吉正在高速運算中...</p>
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-200 rounded-full h-3 mt-2 hidden" id="progress-container">
+                <div class="bg-putiCyan h-3 rounded-full transition-all duration-300" id="progress-bar" style="width: 0%"></div>
+            </div>
+            <p class="text-sm text-gray-500 mt-2 hidden font-medium" id="progress-text">0 / 0</p>
+        </div>
+    </div>
+
+    <footer class="w-full text-center py-6 mt-auto">
+        <div class="bg-putiBlue text-white p-4 rounded-xl shadow-lg inline-block max-w-3xl text-sm leading-relaxed border-t-4 border-putiYellow">
+            <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣。</p>
+            <p class="text-gray-300 text-xs mt-1">嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+            <div class="mt-3">
+                <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="inline-flex items-center text-putiCyan hover:text-white transition-colors duration-300 font-bold bg-white/10 px-4 py-2 rounded-full hover:bg-putiCyan/20">
+                    <i class="fa-solid fa-toolbox mr-2"></i> 更多 Puti-AI 教學工具 點此前往
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Init PDF.js Worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // --- State Management ---
+        const state = {
+            split: { file: null, bytes: null, pages: 0 },
+            compress: { file: null, bytes: null, pages: 0 },
+            merge: { files: [] },
+            pdf2img: { file: null, bytes: null, pages: 0 },
+            img2pdf: { files: [] }
+        };
+
+        // --- UI Navigation ---
+        function switchTool(toolId) {
+            // Update Buttons
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('inactive');
+            });
+            document.getElementById(`btn-${toolId}`).classList.remove('inactive');
+            document.getElementById(`btn-${toolId}`).classList.add('active');
+
+            // Update Areas
+            document.querySelectorAll('.tool-area').forEach(area => area.classList.add('hidden'));
+            document.getElementById(`area-${toolId}`).classList.remove('hidden');
+        }
+
+        function toggleSplitInputs() {
+            const mode = document.querySelector('input[name="splitMode"]:checked').value;
+            const inputRanges = document.getElementById('split-ranges');
+            const inputParts = document.getElementById('split-parts');
+            const wrapParts = document.getElementById('wrapper-parts');
+
+            inputRanges.disabled = true;
+            inputParts.disabled = true;
+            inputRanges.parentElement.parentElement.classList.add('opacity-60');
+            wrapParts.classList.add('opacity-60');
+
+            if (mode === 'range') {
+                inputRanges.disabled = false;
+                inputRanges.parentElement.parentElement.classList.remove('opacity-60');
+            } else if (mode === 'parts') {
+                inputParts.disabled = false;
+                wrapParts.classList.remove('opacity-60');
+            }
+        }
+
+        // --- File Handling ---
+        async function handleSingleFile(event, tool) {
+            const file = event.target.files[0];
+            const infoEl = document.getElementById(`${tool}-file-info`);
+            
+            if (file && file.type === "application/pdf") {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const bytes = new Uint8Array(arrayBuffer);
+                    
+                    const { PDFDocument } = PDFLib;
+                    const tempDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
+                    const pages = tempDoc.getPageCount();
+
+                    state[tool] = { file, bytes, pages };
+                    const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                    
+                    infoEl.innerHTML = `已載入: ${file.name}<br>(${sizeMB} MB, 共 ${pages} 頁)`;
+                    infoEl.classList.remove('hidden', 'text-red-500');
+                    infoEl.classList.add('text-putiCyan');
+                } catch (e) {
+                    infoEl.textContent = "讀取失敗，可能是已加密的 PDF。";
+                    infoEl.classList.remove('hidden', 'text-putiCyan');
+                    infoEl.classList.add('text-red-500');
+                    state[tool] = { file: null, bytes: null, pages: 0 };
+                }
+            }
+        }
+
+        function handleMultipleFiles(event, tool) {
+            const files = Array.from(event.target.files);
+            state[tool].files = files;
+            
+            const listEl = document.getElementById(`${tool}-file-list`);
+            listEl.innerHTML = '';
+            
+            if (files.length > 0) {
+                files.forEach(f => {
+                    const li = document.createElement('li');
+                    li.className = "truncate";
+                    li.textContent = f.name;
+                    listEl.appendChild(li);
+                });
+            } else {
+                listEl.innerHTML = '<li class="text-gray-400 italic list-none">尚未選擇檔案</li>';
+            }
+        }
+
+        // --- Core Functions ---
+
+        // 1. 拆分 PDF
+        async function processSplit() {
+            const data = state.split;
+            if (!data.bytes) return alert("請先上傳要拆分的 PDF！");
+
+            const mode = document.querySelector('input[name="splitMode"]:checked').value;
+            let ranges = [];
+
+            if (mode === 'range') {
+                const val = document.getElementById('split-ranges').value.trim();
+                if (!val) return alert("請輸入範圍！");
+                ranges = parseCustomRanges(val, data.pages);
+            } else {
+                const parts = parseInt(document.getElementById('split-parts').value);
+                if (isNaN(parts) || parts < 2) return alert("份數請輸入大於1的數字！");
+                ranges = calculatePartsRanges(data.pages, parts);
+            }
+
+            if (ranges.length === 0) return alert("範圍計算錯誤！");
+
+            showLoading("小吉正在為您拆分檔案...");
+            try {
+                const { PDFDocument } = PDFLib;
+                const sourcePdf = await PDFDocument.load(data.bytes);
+                const results = [];
+
+                for (let i = 0; i < ranges.length; i++) {
+                    const [start, end] = ranges[i];
+                    const newPdf = await PDFDocument.create();
+                    const pageIndices = [];
+                    for (let p = start - 1; p < end; p++) pageIndices.push(p);
+
+                    const copiedPages = await newPdf.copyPages(sourcePdf, pageIndices);
+                    copiedPages.forEach(p => newPdf.addPage(p));
+
+                    const newBytes = await newPdf.save();
+                    results.push({
+                        name: `${data.file.name.replace('.pdf','')}_分段${i+1}_(P${start}-${end}).pdf`,
+                        blob: new Blob([newBytes], { type: "application/pdf" })
+                    });
+                }
+                displayResults(results);
+            } catch (e) {
+                alert("拆分失敗：" + e.message);
+            } finally { hideLoading(); }
+        }
+
+        // 2. 瘦身 PDF
+        async function processCompress() {
+            const data = state.compress;
+            if (!data.bytes) return alert("請先上傳要瘦身的 PDF！");
+
+            const level = document.querySelector('input[name="compressLevel"]:checked').value;
+            showLoading("小吉正在執行壓縮瘦身程序...");
+
+            try {
+                let optimizedBytes;
+                const { PDFDocument } = PDFLib;
+
+                if (level === 'high') {
+                    const pdfDoc = await PDFDocument.load(data.bytes, { ignoreEncryption: true });
+                    optimizedBytes = await pdfDoc.save({ useObjectStreams: true });
+                } else {
+                    // PDF.js rasterization
+                    showProgressContainer(true);
+                    const loadingTask = pdfjsLib.getDocument({ data: data.bytes });
+                    const pdfDoc = await loadingTask.promise;
+                    const numPages = pdfDoc.numPages;
+                    const newPdf = await PDFDocument.create();
+
+                    for (let i = 1; i <= numPages; i++) {
+                        updateProgress(i, numPages);
+                        await new Promise(r => setTimeout(r, 10)); // Yield UI
+                        
+                        const page = await pdfDoc.getPage(i);
+                        const viewport = page.getViewport({ scale: 1.5 });
+                        const canvas = document.createElement('canvas');
+                        canvas.width = viewport.width; canvas.height = viewport.height;
+                        const ctx = canvas.getContext('2d');
+                        await page.render({ canvasContext: ctx, viewport }).promise;
+                        
+                        const imgData = canvas.toDataURL('image/jpeg', 0.7);
+                        const img = await newPdf.embedJpg(imgData);
+                        const originalVP = page.getViewport({ scale: 1.0 });
+                        const newPage = newPdf.addPage([originalVP.width, originalVP.height]);
+                        newPage.drawImage(img, { x: 0, y: 0, width: originalVP.width, height: originalVP.height });
+                    }
+                    showProgressContainer(false);
+                    document.getElementById('loading-text').textContent = "最後封裝中...";
+                    optimizedBytes = await newPdf.save();
+                }
+
+                const ogSize = (data.bytes.length / (1024*1024)).toFixed(2);
+                const newSize = (optimizedBytes.length / (1024*1024)).toFixed(2);
+                
+                displayResults([{
+                    name: `${data.file.name.replace('.pdf','')}_Puti瘦身.pdf`,
+                    blob: new Blob([optimizedBytes], { type: "application/pdf" }),
+                    note: `(${ogSize}MB ➔ ${newSize}MB)`
+                }]);
+            } catch (e) {
+                alert("瘦身失敗：" + e.message);
+            } finally { hideLoading(); }
+        }
+
+        // 3. 合併 PDF
+        async function processMerge() {
+            const files = state.merge.files;
+            if (files.length < 2) return alert("請至少選擇 2 個 PDF 檔案來合併！");
+
+            showLoading("小吉正在幫您組合檔案...");
+            try {
+                const { PDFDocument } = PDFLib;
+                const mergedPdf = await PDFDocument.create();
+                
+                showProgressContainer(true);
+                for (let i = 0; i < files.length; i++) {
+                    updateProgress(i + 1, files.length, "合併中");
+                    const arrayBuffer = await files[i].arrayBuffer();
+                    const pdf = await PDFDocument.load(arrayBuffer);
+                    const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+                    copiedPages.forEach((page) => mergedPdf.addPage(page));
+                }
+                
+                const mergedBytes = await mergedPdf.save();
+                displayResults([{
+                    name: `Puti-AI_合併完成_${files.length}份檔案.pdf`,
+                    blob: new Blob([mergedBytes], { type: "application/pdf" })
+                }]);
+            } catch (e) {
+                alert("合併失敗：" + e.message);
+            } finally { hideLoading(); }
+        }
+
+        // 4. PDF 轉圖片 (ZIP 下載)
+        async function processPdfToImg() {
+            const data = state.pdf2img;
+            if (!data.bytes) return alert("請先上傳 PDF 檔案！");
+
+            showLoading("小吉正在將每一頁轉成高畫質圖片...");
+            try {
+                showProgressContainer(true);
+                const loadingTask = pdfjsLib.getDocument({ data: data.bytes });
+                const pdfDoc = await loadingTask.promise;
+                const zip = new JSZip();
+                const folderName = data.file.name.replace('.pdf', '');
+                const imgFolder = zip.folder(folderName);
+
+                for (let i = 1; i <= pdfDoc.numPages; i++) {
+                    updateProgress(i, pdfDoc.numPages, "轉檔中");
+                    await new Promise(r => setTimeout(r, 10)); // UI flush
+
+                    const page = await pdfDoc.getPage(i);
+                    // 用 scale: 2.0 獲得不錯的高畫質
+                    const viewport = page.getViewport({ scale: 2.0 });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = viewport.width; canvas.height = viewport.height;
+                    const ctx = canvas.getContext('2d');
+                    await page.render({ canvasContext: ctx, viewport }).promise;
+                    
+                    const base64Data = canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+                    // 補零讓檔名排序正確 (如 page_01.jpg)
+                    const pageNum = String(i).padStart(3, '0'); 
+                    imgFolder.file(`${folderName}_P${pageNum}.jpg`, base64Data, {base64: true});
+                }
+
+                document.getElementById('loading-text').textContent = "正在打包壓縮檔 (ZIP)...";
+                showProgressContainer(false);
+                
+                const zipBlob = await zip.generateAsync({type:"blob"});
+                displayResults([{
+                    name: `${folderName}_所有圖片.zip`,
+                    blob: zipBlob,
+                    icon: 'fa-file-zipper',
+                    color: 'text-putiYellow'
+                }]);
+            } catch (e) {
+                alert("轉換失敗：" + e.message);
+            } finally { hideLoading(); }
+        }
+
+        // 5. 圖片轉 PDF
+        async function processImgToPdf() {
+            const files = state.img2pdf.files;
+            if (files.length === 0) return alert("請先選擇圖片檔案！");
+
+            showLoading("小吉正在將圖片嵌入 PDF 中...");
+            try {
+                showProgressContainer(true);
+                const { PDFDocument } = PDFLib;
+                const pdfDoc = await PDFDocument.create();
+
+                for (let i = 0; i < files.length; i++) {
+                    updateProgress(i + 1, files.length, "處理圖片中");
+                    const file = files[i];
+                    const arrayBuffer = await file.arrayBuffer();
+                    let img;
+                    
+                    if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
+                        img = await pdfDoc.embedJpg(arrayBuffer);
+                    } else if (file.type === 'image/png') {
+                        img = await pdfDoc.embedPng(arrayBuffer);
+                    } else {
+                        console.warn(`跳過不支援的格式: ${file.name}`);
+                        continue; 
+                    }
+
+                    // 依據圖片長寬建立頁面
+                    const page = pdfDoc.addPage([img.width, img.height]);
+                    page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+                }
+
+                const pdfBytes = await pdfDoc.save();
+                displayResults([{
+                    name: `Puti-AI_圖片集結_${files.length}張.pdf`,
+                    blob: new Blob([pdfBytes], { type: "application/pdf" })
+                }]);
+            } catch (e) {
+                alert("轉換失敗：" + e.message);
+            } finally { hideLoading(); }
+        }
+
+        // --- Utils & UI Helpers ---
+        function parseCustomRanges(input, max) {
+            const ranges = [];
+            const parts = input.split(',');
+            for (let part of parts) {
+                part = part.trim();
+                if (!part) continue;
+                if (part.includes('-')) {
+                    const [s, e] = part.split('-');
+                    const start = parseInt(s); const end = parseInt(e);
+                    if (isNaN(start) || isNaN(end) || start < 1 || start > end || start > max) continue;
+                    ranges.push([start, Math.min(end, max)]);
+                } else {
+                    const page = parseInt(part);
+                    if (!isNaN(page) && page >= 1 && page <= max) ranges.push([page, page]);
+                }
+            }
+            return ranges;
+        }
+
+        function calculatePartsRanges(total, parts) {
+            const ranges = [];
+            const baseSize = Math.floor(total / parts);
+            const remainder = total % parts;
+            let start = 1;
+            for (let i = 0; i < parts; i++) {
+                let size = baseSize + (i < remainder ? 1 : 0);
+                if (size > 0) {
+                    ranges.push([start, start + size - 1]);
+                    start += size;
+                }
+            }
+            return ranges;
+        }
+
+        function showLoading(text) {
+            document.getElementById('global-loading').style.display = 'flex';
+            document.getElementById('loading-text').textContent = text;
+            showProgressContainer(false);
+        }
+
+        function hideLoading() {
+            document.getElementById('global-loading').style.display = 'none';
+        }
+
+        function showProgressContainer(show) {
+            const c = document.getElementById('progress-container');
+            const t = document.getElementById('progress-text');
+            if (show) { c.classList.remove('hidden'); t.classList.remove('hidden'); }
+            else { c.classList.add('hidden'); t.classList.add('hidden'); }
+        }
+
+        function updateProgress(curr, total, prefix = "進度") {
+            const pct = Math.round((curr / total) * 100);
+            document.getElementById('progress-bar').style.width = pct + '%';
+            document.getElementById('progress-text').textContent = `${prefix}: ${curr} / ${total}`;
+        }
+
+        function displayResults(items) {
+            const area = document.getElementById('results-area');
+            const list = document.getElementById('download-list');
+            
+            items.forEach(item => {
+                const url = URL.createObjectURL(item.blob);
+                const li = document.createElement('li');
+                li.className = "flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 shadow-sm";
+                
+                const iconClass = item.icon || 'fa-file-pdf';
+                const colorClass = item.color || 'text-red-500';
+                const noteHtml = item.note ? `<span class="text-xs text-putiYellow font-bold ml-2 shrink-0">${item.note}</span>` : '';
+
+                li.innerHTML = `
+                    <div class="flex items-center overflow-hidden mr-3">
+                        <i class="fa-solid ${iconClass} ${colorClass} mr-3 text-2xl"></i>
+                        <span class="text-sm text-gray-700 truncate font-medium max-w-[150px] sm:max-w-xs" title="${item.name}">${item.name}</span>
+                        ${noteHtml}
+                    </div>
+                    <a href="${url}" download="${item.name}" class="shrink-0 bg-putiCyan hover:bg-cyan-600 text-white text-sm font-bold py-2 px-4 rounded-lg transition-colors shadow">
+                        <i class="fa-solid fa-download"></i>
+                    </a>
+                `;
+                // Add to top of list
+                list.insertBefore(li, list.firstChild);
+            });
+
+            area.classList.remove('hidden');
+            area.scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }
+
+        function clearResults() {
+            document.getElementById('download-list').innerHTML = '';
+            document.getElementById('results-area').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
