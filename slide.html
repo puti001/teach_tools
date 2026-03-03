@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-AI 教育簡報提示詞大全</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel CDN (用於在瀏覽器端即時編譯 JSX) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <!-- React 應用程式掛載點 -->
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- 替換原 Lucide 圖示為 SVG 元件 (確保單一檔案能完美執行) ---
+    const BookOpen = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>;
+    const Users = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>;
+    const Briefcase = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>;
+    const Zap = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>;
+    const Clipboard = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>;
+    const CheckCircle = ({ className }) => <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>;
+
+    // --- 自訂小吉 (GiGi) SVG 頭像 ---
+    const GiGiIcon = () => (
+      <svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md">
+        {/* 圓潤頭盔外殼 (芥末黃) */}
+        <path d="M 10 50 A 40 40 0 0 1 90 50 L 90 80 A 10 10 0 0 1 80 90 L 20 90 A 10 10 0 0 1 10 80 Z" fill="#EAA100" stroke="#333" strokeWidth="3"/>
+        {/* 額頭 Puti-AI 標誌區 (深灰色) */}
+        <rect x="35" y="15" width="30" height="8" rx="4" fill="#333"/>
+        <circle cx="50" cy="19" r="2" fill="#00FFFF"/>
+        {/* 側邊機械耳/樞紐 (深灰色金屬) */}
+        <rect x="2" y="45" width="8" height="20" rx="3" fill="#5A6268" stroke="#333" strokeWidth="2"/>
+        <rect x="90" y="45" width="8" height="20" rx="3" fill="#5A6268" stroke="#333" strokeWidth="2"/>
+        {/* 深色面罩 (帶點科技感的深藍/灰色) */}
+        <rect x="18" y="35" width="64" height="32" rx="16" fill="#1A252F" stroke="#111" strokeWidth="2"/>
+        {/* 雙眼發光青色虹膜 (Glowing Cyan) */}
+        <circle cx="34" cy="51" r="7" fill="#00FFFF" style={{ filter: 'drop-shadow(0 0 4px #00FFFF)' }}/>
+        <circle cx="66" cy="51" r="7" fill="#00FFFF" style={{ filter: 'drop-shadow(0 0 4px #00FFFF)' }}/>
+        <circle cx="36" cy="49" r="2" fill="#FFFFFF"/> {/* 眼神反光 */}
+        <circle cx="68" cy="49" r="2" fill="#FFFFFF"/>
+        {/* 嘴部發聲波紋/散熱槽 */}
+        <line x1="45" y1="75" x2="55" y2="75" stroke="#333" strokeWidth="3" strokeLinecap="round"/>
+      </svg>
+    );
+
+    // --- 資料設定區 ---
+    const STYLES = [
+      "簡約專業風 (乾淨留白，適合長官提報與正式會議)",
+      "溫馨繪本風 (柔和親切，適合低年級或親師溝通)",
+      "活潑遊戲風 (高對比與動態感，適合引起動機與互動)",
+      "邏輯圖解風 (重視流程圖與資訊圖表，適合高年級與理科)",
+      "自然清新風 (舒適無壓，適合綜合活動或輔導)",
+      "未來科技風 (現代科技感，適合資訊科技或創新計畫)",
+      "傳統文化風 (古典人文元素，適合社會科或語文科)",
+      "雜誌編輯風 (大圖配質感文字，適合成果發表與參賽)",
+      "手繪塗鴉風 (輕鬆創意，適合腦力激盪與社團)",
+      "沉浸故事風 (情境營造，適合文本導讀或情意教育)",
+      "火柴人簡筆風 (極簡線條，聚焦核心概念與幽默感)",
+      "黏土動畫風 (立體可愛、材質溫潤，適合故事與低年級)",
+      "黑板手繪風 (粉筆質感、學校情境，適合板書演練與復古感)",
+      "便利貼筆記風 (手寫質感、紙張拼貼，適合快速重點整理與學生複習)"
+    ];
+
+    const CATEGORIES = [
+      {
+        id: 'management',
+        name: '👨‍👩‍👧‍👦 班級經營 (親師溝通)',
+        icon: <Users className="w-5 h-5" />,
+        scenarios: [
+          {
+            id: 'm_firstday', name: '開學第一課 (班規/破冰)',
+            fields: [{ id: 'grade', label: '年級', placeholder: '下拉選單或直接輸入' }],
+            promptBase: ['導師自我介紹與教育理念', '班級願景與共同目標', '正向聚焦的核心班規 (Positive Discipline)', '日常作息與重要常規提醒', '師生破冰互動小遊戲']
+          },
+          {
+            id: 'm_parents', name: '班親會 / 家長座談會',
+            fields: [{ id: 'grade', label: '年級', placeholder: '下拉選單或直接輸入' }, { id: 'focus', label: '本學期重點', placeholder: '例：推動數位閱讀與AI輔助' }],
+            promptBase: ['導師經營理念與帶班風格', '各學科學習重點與評量方式', '班級費使用規劃與透明化說明', '家長配合事項與親師聯繫管道', '介紹 Puti-AI 等數位工具如何輔助居家學習']
+          },
+          {
+            id: 'm_endterm', name: '期末回顧與家長叮嚀',
+            fields: [{ id: 'grade', label: '年級', placeholder: '下拉選單或直接輸入' }],
+            promptBase: ['本學期重要活動照片牆與回顧', '全班在學習與品格上的進步點', '頒發特色獎項與鼓勵', '寒/暑假安全須知與學習建議', '溫馨的期末結語與感謝']
+          },
+          {
+            id: 'm_grad', name: '畢業典禮導師致詞/感言',
+            fields: [{ id: 'class_name', label: '班級名稱', placeholder: '例：九年三班' }],
+            promptBase: ['校園回憶走馬燈 (各年級轉變)', '共同經歷的挫折與成長故事', '導師給畢業生的五個期許或金句', '對家長的感謝與祝福', '最後的叮嚀與感性道別']
+          }
+        ]
+      },
+      {
+        id: 'admin',
+        name: '📋 行政職務 (校務與推廣)',
+        icon: <Briefcase className="w-5 h-5" />,
+        scenarios: [
+          {
+            id: 'a_meeting', name: '校務會議 / 業務宣導',
+            fields: [{ id: 'office', label: '處室/職稱', placeholder: '例：學務處/生教組長' }, { id: 'topic', label: '宣導主題', placeholder: '例：校園友善與反霸凌' }],
+            promptBase: ['政策重點與現況說明', '具體執行進度與 KPI 數據', '需要各班導師配合的具體事項', '常見問題與處理流程 (SOP)', '聯絡窗口與 Q&A']
+          },
+          {
+            id: 'a_plc', name: 'PLC 社群 / 專業分享',
+            fields: [{ id: 'topic', label: '分享主題', placeholder: '例：運用 Puti-AI 生成教案' }],
+            promptBase: ['理論基礎或工具背景介紹', '實務操作步驟拆解與示範', '實際應用案例與學生回饋', '實施過程中的省思與避坑指南', '同儕交流與 QA 互動環節']
+          },
+          {
+            id: 'a_seminar', name: '研習轉傳 / 心得推廣',
+            fields: [{ id: 'seminar_name', label: '研習名稱', placeholder: '例：AI 融入教學實務工作坊' }],
+            promptBase: ['研習核心精華與 3 個重點金句', '介紹 2 個可立即落實的教學工具', '工具的操作介面或重點截圖說明', '個人的心得啟發與教學轉化', '鼓勵校內同仁嘗試的行動呼籲']
+          }
+        ]
+      },
+      {
+        id: 'stealth',
+        name: '👻 隱形任務 (高壓/專門場景)',
+        icon: <Zap className="w-5 h-5" />,
+        scenarios: [
+          {
+            id: 's_demo', name: '公開授課 (說課/議課)',
+            fields: [{ id: 'subject', label: '科目與年級', placeholder: '例：八年級理化' }, { id: 'topic', label: '單元/核心素養', placeholder: '例：光的折射與透鏡' }],
+            promptBase: ['教材分析與教學設計理念', '學生起點行為與迷思概念預測', '具體的教學目標 (含素養導向)', '教學活動流程設計與時間分配', '數位工具 (如 Puti-AI) 的融入策略與多元評量']
+          },
+          {
+            id: 's_iep', name: 'IEP/IGP 個案研討',
+            fields: [{ id: 'student_type', label: '學生特質', placeholder: '例：ADHD 伴隨閱讀障礙' }, { id: 'meeting_goal', label: '會議目標', placeholder: '例：擬定期中評量調整方案' }],
+            promptBase: ['學生近期優勢能力與進步表現', '目前遭遇的學習或行為困難點', '調整後的教學策略與環境安排', '具體的評量方式調整與給分標準', '給予家長的居家陪伴建議與親師配合']
+          },
+          {
+            id: 's_project', name: '競爭型計畫申請/成果',
+            fields: [{ id: 'project_name', label: '計畫名稱', placeholder: '例：5G 智慧學校推動計畫' }],
+            promptBase: ['教育現場的問題意識與痛點', '創新的解決方案與執行架構', '預期的量化數據與質化效益', '具體實施歷程、照片與學生回饋 (若是成果報告)', '經費配置合理性與未來推廣性']
+          },
+          {
+            id: 's_contest', name: '創新教學競賽提報',
+            fields: [{ id: 'course_name', label: '課程/專案名稱', placeholder: '例：AI 魔法學院-跨領域閱讀' }],
+            promptBase: ['亮眼的問題解決歷程與創新點', '系統化的教學 SOP 與模組架構', '學生前後測對照或亮點作品展示', '教學反思與滾動式修正歷程', '具備高度可複製性與推廣價值的證據']
+          }
+        ]
+      }
+    ];
+
+    function App() {
+      const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].id);
+      const [activeScenario, setActiveScenario] = useState(CATEGORIES[0].scenarios[0]);
+      const [formData, setFormData] = useState({});
+      const [selectedStyle, setSelectedStyle] = useState(STYLES[0]);
+      const [copied, setCopied] = useState(false);
+      const [yamlPrompt, setYamlPrompt] = useState("");
+
+      useEffect(() => {
+        const initialData = {};
+        activeScenario.fields.forEach(field => {
+          initialData[field.id] = '';
+        });
+        setFormData(initialData);
+      }, [activeScenario]);
+
+      const handleInputChange = (e, fieldId) => {
+        setFormData({
+          ...formData,
+          [fieldId]: e.target.value
+        });
+      };
+
+      useEffect(() => {
+        generatePrompt();
+      }, [formData, selectedStyle, activeScenario]);
+
+      const generatePrompt = () => {
+        let parametersYaml = '';
+        activeScenario.fields.forEach(field => {
+          const value = formData[field.id] || `[請輸入${field.label}]`;
+          parametersYaml += `  ${field.label}: "${value}"\n`;
+        });
+
+        let requirementsYaml = '';
+        activeScenario.promptBase.forEach(req => {
+          requirementsYaml += `  - ${req}\n`;
+        });
+        requirementsYaml += `  - 請根據設定的「Style_Guideline」，提供每一頁的版面配置、推薦視覺元素與色系建議。\n`;
+        requirementsYaml += `  - 若適合，請加入能提升聽眾互動的環節設計。\n`;
+
+        const promptText = `Role: 資深教師與專業簡報設計師
+Task: 為使用者設計一份結構完整、符合教育現場實務需求的簡報大綱
+Parameters:
+  Scenario: "${activeScenario.name}"
+${parametersYaml}  Style_Guideline: "${selectedStyle}"
+Requirements:
+${requirementsYaml}Output_Format: |
+  請以 Markdown 格式輸出。包含：
+  1. 簡報總頁數建議 (適中即可)
+  2. 每一頁的「大標題」
+  3. 核心內容（以條列式呈現，具體且專業）
+  4. 視覺與配圖建議（符合選擇風格）
+  5. 講者備註或互動設計`;
+
+        setYamlPrompt(promptText);
+      };
+
+      const handleCopy = () => {
+        const fallbackCopy = (text) => {
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          textArea.style.position = "fixed";
+          textArea.style.left = "-9999px";
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+          } catch (err) {
+            console.error('Fallback copy failed', err);
+          }
+          document.body.removeChild(textArea);
+        };
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(yamlPrompt)
+            .then(() => {
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2000);
+            })
+            .catch(err => {
+              console.warn("Clipboard API blocked, using fallback.", err);
+              fallbackCopy(yamlPrompt);
+            });
+        } else {
+          fallbackCopy(yamlPrompt);
+        }
+      };
+
+      const currentCategoryObj = CATEGORIES.find(c => c.id === activeCategory);
+
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+          <datalist id="grade-options">
+            <option value="一年級" />
+            <option value="二年級" />
+            <option value="三年級" />
+            <option value="四年級" />
+            <option value="五年級" />
+            <option value="六年級" />
+            <option value="七年級" />
+            <option value="八年級" />
+            <option value="九年級" />
+            <option value="高一" />
+            <option value="高二" />
+            <option value="高三" />
+          </datalist>
+
+          <header className="bg-gradient-to-r from-blue-800 to-indigo-900 text-white shadow-lg p-6">
+            <div className="max-w-6xl mx-auto flex items-center gap-4">
+              <div className="flex-shrink-0">
+                <GiGiIcon />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-wide">Puti-AI 教育簡報提示詞大全</h1>
+                <p className="text-sm text-blue-200 mt-1 opacity-90 flex items-center gap-1">
+                  <span>小吉 (GiGi) 數位助手為您自動生成高階 YAML 指令</span>
+                </p>
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-grow max-w-6xl mx-auto w-full p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div className="lg:col-span-5 flex flex-col gap-5">
+              
+              <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                <h2 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                  選擇簡報場景
+                </h2>
+                
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {CATEGORIES.map(category => (
+                    <button
+                      key={category.id}
+                      onClick={() => {
+                        setActiveCategory(category.id);
+                        setActiveScenario(category.scenarios[0]);
+                      }}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 ${
+                        activeCategory === category.id 
+                        ? 'bg-blue-100 text-blue-700 border-2 border-blue-500' 
+                        : 'bg-slate-100 text-slate-600 border-2 border-transparent hover:bg-slate-200'
+                      }`}
+                    >
+                      {category.icon}
+                      {category.name.split(' ')[1]}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-slate-600">細分任務</label>
+                  <select 
+                    className="w-full p-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition cursor-pointer"
+                    value={activeScenario.id}
+                    onChange={(e) => setActiveScenario(currentCategoryObj.scenarios.find(s => s.id === e.target.value))}
+                  >
+                    {currentCategoryObj.scenarios.map(sc => (
+                      <option key={sc.id} value={sc.id}>{sc.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </section>
+
+              <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                 <h2 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
+                  填寫核心參數
+                </h2>
+                <div className="space-y-4">
+                  {activeScenario.fields.map(field => (
+                    <div key={field.id}>
+                      <label className="block text-sm font-semibold text-slate-600 mb-1.5">{field.label}</label>
+                      <input
+                        type="text"
+                        list={field.id === 'grade' ? "grade-options" : undefined}
+                        placeholder={field.placeholder}
+                        value={formData[field.id] || ''}
+                        onChange={(e) => handleInputChange(e, field.id)}
+                        className="w-full p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+                 <h2 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                  <span className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
+                  選擇簡報風格
+                </h2>
+                <select 
+                  className="w-full p-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none transition cursor-pointer"
+                  value={selectedStyle}
+                  onChange={(e) => setSelectedStyle(e.target.value)}
+                >
+                  {STYLES.map((style, idx) => (
+                    <option key={idx} value={style}>{style}</option>
+                  ))}
+                </select>
+                <p className="text-xs text-slate-500 mt-2">
+                  *不綁定死板顏色，保留彈性讓 AI 為您建議最合適的視覺搭配。
+                </p>
+              </section>
+            </div>
+
+            <div className="lg:col-span-7 flex flex-col">
+              <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-0 flex flex-col h-full overflow-hidden">
+                <div className="bg-slate-800 text-slate-200 p-4 flex justify-between items-center border-b border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span className="ml-2 font-mono text-sm tracking-wider text-slate-400">YAML_Prompt_Preview</span>
+                  </div>
+                  <button 
+                    onClick={handleCopy}
+                    className={`flex items-center gap-1.5 px-4 py-1.5 rounded-md font-medium text-sm transition-all ${
+                      copied ? 'bg-green-500 text-white' : 'bg-blue-600 hover:bg-blue-500 text-white'
+                    }`}
+                  >
+                    {copied ? <CheckCircle className="w-4 h-4" /> : <Clipboard className="w-4 h-4" />}
+                    {copied ? '已複製！' : '一鍵複製'}
+                  </button>
+                </div>
+                
+                <div className="p-5 flex-grow bg-slate-50">
+                  <textarea 
+                    readOnly
+                    value={yamlPrompt}
+                    className="w-full h-full min-h-[400px] lg:min-h-full p-4 bg-slate-100 text-slate-800 font-mono text-sm rounded-lg border border-slate-200 focus:outline-none resize-none"
+                  ></textarea>
+                </div>
+                <div className="p-3 bg-blue-50 border-t border-blue-100 text-sm text-blue-800 flex items-start gap-2">
+                  <span className="text-xl">💡</span>
+                  <p>複製上方的YAML提示詞，先編輯或直接貼給慣用的AI，就能為您產出架構清晰、富含視覺建議的簡報大綱！</p>
+                </div>
+              </section>
+            </div>
+
+          </main>
+
+          <footer className="bg-slate-800 text-slate-300 py-6 mt-auto">
+            <div className="max-w-6xl mx-auto px-6 text-center text-sm space-y-2">
+              <p className="font-semibold text-white">© Puti-AI 教育簡報提示詞大全</p>
+              <p>
+                屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣。<br/>
+                <span className="text-red-400 font-medium">嚴禁商用與任何侵權、不尊重著作權的行為。</span>
+              </p>
+              <div className="pt-2">
+                <a 
+                  href="https://padlet.com/clongwh/puti_ai_tools" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-yellow-400 hover:text-yellow-300 transition-colors underline underline-offset-4"
+                >
+                  👉 更多 Puti-AI 教學工具 點此前往
+                </a>
+              </div>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    // 將 App 掛載到 DOM 節點上
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
