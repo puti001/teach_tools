@@ -3,245 +3,292 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puti-AI 5年級數學學力檢測衝刺指南</title>
+    <title>Puti-AI 5年級數學學力檢測｜10堂課衝刺計畫</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- MathJax for rendering math formulas -->
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; }
+        .card-hover { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .card-hover:hover { transform: translateY(-5px); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
         
-        body {
-            font-family: 'Noto Sans TC', sans-serif;
-            background-color: #f8fafc;
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 20px 20px;
-        }
-
-        .card-hover {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .card-hover:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-
         /* Modal Animation */
-        .modal-enter {
-            animation: modalFadeIn 0.3s ease-out forwards;
-        }
-        .modal-exit {
-            animation: modalFadeOut 0.2s ease-in forwards;
-        }
-        
+        .modal-enter { animation: modalFadeIn 0.4s ease-out forwards; }
+        .modal-exit { animation: modalFadeOut 0.3s ease-in forwards; }
         @keyframes modalFadeIn {
-            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            from { opacity: 0; transform: scale(0.95) translateY(20px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
         @keyframes modalFadeOut {
             from { opacity: 1; transform: scale(1) translateY(0); }
-            to { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 0; transform: scale(0.95) translateY(20px); }
         }
-
-        /* Toast Animation */
-        .toast-show {
-            animation: slideUpFade 0.4s ease-out forwards, fadeOutDown 0.4s ease-in forwards 2s;
-        }
-        @keyframes slideUpFade {
-            from { opacity: 0; transform: translate(-50%, 20px); }
-            to { opacity: 1; transform: translate(-50%, 0); }
-        }
-        @keyframes fadeOutDown {
-            from { opacity: 1; transform: translate(-50%, 0); }
-            to { opacity: 0; transform: translate(-50%, 20px); visibility: hidden; }
-        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="text-gray-800 antialiased overflow-x-hidden">
 
-    <!-- Header -->
-    <header class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-12 px-4 shadow-lg text-center relative overflow-hidden">
-        <div class="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
-            <span class="absolute top-4 left-10 text-4xl transform -rotate-12">📐</span>
-            <span class="absolute bottom-4 right-20 text-5xl transform rotate-12">🧮</span>
-            <span class="absolute top-1/2 right-10 text-3xl">✖️</span>
-            <span class="absolute bottom-1/4 left-1/4 text-4xl">➗</span>
-        </div>
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white pt-16 pb-20 px-4 text-center rounded-b-[3rem] shadow-xl relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
         <div class="max-w-4xl mx-auto relative z-10">
-            <span class="bg-yellow-400 text-blue-900 text-sm font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm mb-4 inline-block">
-                Puti-AI 教學工具
+            <span class="inline-block py-1 px-3 rounded-full bg-white/20 backdrop-blur-sm text-sm font-bold tracking-wider mb-4 border border-white/30">
+                Puti-AI 教學工具庫 🎯
             </span>
-            <h1 class="text-4xl md:text-5xl font-black mb-4 drop-shadow-md">🚀 5年級數學學力檢測 衝刺計畫</h1>
-            <p class="text-lg md:text-xl text-blue-100 font-medium">10堂課的「高投資報酬率 (ROI)」奪分策略</p>
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4 drop-shadow-md">國小學力檢測【5年級數學】</h1>
+            <h2 class="text-xl md:text-2xl font-medium mb-6 opacity-90">10 堂課超強衝刺計畫 🚀 投資報酬率最高攻略</h2>
+            <p class="max-w-2xl mx-auto text-sm md:text-base bg-black/20 p-4 rounded-xl backdrop-blur-sm shadow-inner">
+                針對只有兩週的緊湊複習時間，優先聚焦「歷屆必考且容易掌握的公式與規律」，其次為「官方疑義易錯陷阱題」。點擊下方卡片獲取教學細節與專屬 AI 提示詞！
+            </p>
         </div>
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow w-full max-w-6xl mx-auto px-4 py-10" id="course-container">
-        <!-- Content injected by JS -->
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-slate-800 text-slate-300 py-8 text-center text-sm mt-auto">
-        <div class="max-w-4xl mx-auto px-4 flex flex-col items-center justify-center gap-2">
-            <p class="font-bold text-yellow-400 text-base">© Puti-AI 教學工具庫</p>
-            <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣</p>
-            <p class="text-slate-400 text-xs mt-1">嚴禁商用與任何侵權、不尊重著作權的行為</p>
-            <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="mt-3 inline-flex items-center gap-2 bg-slate-700 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-300">
-                <span>🔗 更多 Puti-AI 教學工具 點此前往</span>
-            </a>
-        </div>
-    </footer>
-
-    <!-- Modal Backdrop -->
-    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden flex items-center justify-center p-4">
-        <!-- Modal Content -->
-        <div id="modal-card" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col opacity-0 scale-95 transform transition-all">
-            <!-- Modal Header -->
-            <div id="modal-header" class="px-6 py-4 flex justify-between items-center text-white">
-                <h3 id="modal-title" class="text-xl font-bold flex items-center gap-2"></h3>
-                <button id="close-modal" class="text-white/80 hover:text-white hover:rotate-90 transition-transform p-1">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
+    <main class="max-w-6xl mx-auto px-4 py-12 -mt-10 relative z-20">
+        
+        <!-- Phase 1 -->
+        <div class="mb-12">
+            <div class="flex items-center gap-3 mb-6 pl-2">
+                <div class="bg-red-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-lg">1</div>
+                <h3 class="text-2xl font-bold text-gray-800">第一階段：絕對必考、投資報酬率最高 <span class="text-red-500 text-lg">🔥 (共 4 堂課)</span></h3>
             </div>
-            <!-- Modal Body -->
-            <div class="p-6 overflow-y-auto flex-grow bg-slate-50">
-                <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm mb-6">
-                    <h4 class="font-bold text-slate-800 mb-2 border-b-2 border-slate-100 pb-2 flex items-center gap-2">
-                        <span>🎯</span> 複習重點與拿分策略
-                    </h4>
-                    <div id="modal-details" class="text-slate-600 leading-relaxed space-y-3"></div>
+            <p class="text-gray-600 mb-6 pl-14">此階段的單元只要觀念釐清、公式背熟，幾乎能「秒拿分」，是搶分首要關鍵。</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pl-0 md:pl-14">
+                <!-- Card 1 -->
+                <div class="bg-white rounded-2xl p-6 border-t-4 border-red-400 shadow-md card-hover cursor-pointer group" onclick="openModal('l1')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-sm font-bold">第 1～2 堂</div>
+                        <i class="fa-solid fa-calculator text-red-300 text-2xl group-hover:text-red-500 transition-colors"></i>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2">四則運算規律</h4>
+                    <p class="text-sm text-gray-600 line-clamp-2">特別是「分配律」與「結合律」。歷屆試題極常出現將繁雜算式利用規律簡化的題目...</p>
+                    <div class="mt-4 flex items-center text-red-500 text-sm font-bold">
+                        <span>點擊看提示詞與秘訣</span> <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
                 </div>
 
-                <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 relative">
-                    <div class="absolute -top-3 -right-3 text-2xl animate-bounce">💡</div>
-                    <h4 class="font-bold text-blue-800 mb-2 flex items-center gap-2">
-                        <span>🤖</span> AI 備課提示詞 (可直接複製打包)
-                    </h4>
-                    <div class="relative mt-3">
-                        <textarea id="modal-prompt" readonly class="w-full bg-white border border-blue-200 text-slate-700 rounded-lg p-4 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 font-mono text-sm leading-relaxed"></textarea>
-                        <button id="copy-btn" class="absolute bottom-3 right-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-all flex items-center gap-2 active:scale-95">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                            <span>複製提示詞</span>
-                        </button>
+                <!-- Card 2 -->
+                <div class="bg-white rounded-2xl p-6 border-t-4 border-orange-400 shadow-md card-hover cursor-pointer group" onclick="openModal('l2')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-orange-100 text-orange-600 px-3 py-1 rounded-lg text-sm font-bold">第 3 堂</div>
+                        <i class="fa-solid fa-divide text-orange-300 text-2xl group-hover:text-orange-500 transition-colors"></i>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2">除法「餘數」定位</h4>
+                    <p class="text-sm text-gray-600 line-clamp-2">整數/小數除以整數，這是歷年檢測的超級大熱門，且每年都有極高比例的學生答錯...</p>
+                    <div class="mt-4 flex items-center text-orange-500 text-sm font-bold">
+                        <span>點擊看提示詞與秘訣</span> <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-white rounded-2xl p-6 border-t-4 border-yellow-400 shadow-md card-hover cursor-pointer group" onclick="openModal('l3')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-yellow-100 text-yellow-600 px-3 py-1 rounded-lg text-sm font-bold">第 4 堂</div>
+                        <i class="fa-solid fa-shapes text-yellow-400 text-2xl group-hover:text-yellow-500 transition-colors"></i>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2">平面圖形面積與組合</h4>
+                    <p class="text-sm text-gray-600 line-clamp-2">三角形、平行四邊形、梯形。各種圖形的面積與周長是幾何題目的核心，需熟記公式...</p>
+                    <div class="mt-4 flex items-center text-yellow-600 text-sm font-bold">
+                        <span>點擊看提示詞與秘訣</span> <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Phase 2 -->
+        <div class="mb-12">
+            <div class="flex items-center gap-3 mb-6 pl-2">
+                <div class="bg-green-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-lg">2</div>
+                <h3 class="text-2xl font-bold text-gray-800">第二階段：題數占比極高、需基礎熟練度 <span class="text-green-500 text-lg">🌿 (共 4 堂課)</span></h3>
+            </div>
+            <p class="text-gray-600 mb-6 pl-14">此階段涵蓋檢測中題數佔比最重的「分數與小數」，需要稍微花點時間練習計算與比較。</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pl-0 md:pl-14">
+                <!-- Card 4 -->
+                <div class="bg-white rounded-2xl p-6 border-t-4 border-green-400 shadow-md card-hover cursor-pointer group" onclick="openModal('l4')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-green-100 text-green-600 px-3 py-1 rounded-lg text-sm font-bold">第 5～6 堂</div>
+                        <i class="fa-solid fa-ruler-horizontal text-green-300 text-2xl group-hover:text-green-500 transition-colors"></i>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2">分數與小數</h4>
+                    <p class="text-sm text-gray-600 line-clamp-2">換算、大小比較與數線定位。包含擴分、約分、真假分數互換及圖形塗色面積比例...</p>
+                    <div class="mt-4 flex items-center text-green-500 text-sm font-bold">
+                        <span>點擊看提示詞與秘訣</span> <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="bg-white rounded-2xl p-6 border-t-4 border-teal-400 shadow-md card-hover cursor-pointer group" onclick="openModal('l5')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-teal-100 text-teal-600 px-3 py-1 rounded-lg text-sm font-bold">第 7 堂</div>
+                        <i class="fa-solid fa-chart-pie text-teal-300 text-2xl group-hover:text-teal-500 transition-colors"></i>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2">扇形、角度與線對稱</h4>
+                    <p class="text-sm text-gray-600 line-clamp-2">扇形圓心角比例判斷，以及線對稱圖形對稱軸的概念與對稱邊等長的特性...</p>
+                    <div class="mt-4 flex items-center text-teal-500 text-sm font-bold">
+                        <span>點擊看提示詞與秘訣</span> <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="bg-white rounded-2xl p-6 border-t-4 border-emerald-400 shadow-md card-hover cursor-pointer group" onclick="openModal('l6')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-sm font-bold">第 8 堂</div>
+                        <i class="fa-solid fa-layer-group text-emerald-300 text-2xl group-hover:text-emerald-500 transition-colors"></i>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2">因數與倍數觀念</h4>
+                    <p class="text-sm text-gray-600 line-clamp-2">比起複雜短除法，更愛考觀念定義。例如「最小因數是1」、「倍數有無限多個」等...</p>
+                    <div class="mt-4 flex items-center text-emerald-600 text-sm font-bold">
+                        <span>點擊看提示詞與秘訣</span> <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Phase 3 -->
+        <div class="mb-12">
+            <div class="flex items-center gap-3 mb-6 pl-2">
+                <div class="bg-blue-500 text-white w-10 h-10 rounded-full flex items-center justify-center font-bold shadow-lg">3</div>
+                <h3 class="text-2xl font-bold text-gray-800">第三階段：常識判斷與特定題型 <span class="text-blue-500 text-lg">💡 (共 2 堂課)</span></h3>
+            </div>
+            <p class="text-gray-600 mb-6 pl-14">最後階段針對較瑣碎、但不需要複雜計算的單元進行掃描。</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pl-0 md:pl-14">
+                <!-- Card 7 -->
+                <div class="bg-white rounded-2xl p-6 border-t-4 border-blue-400 shadow-md card-hover cursor-pointer group" onclick="openModal('l7')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-blue-100 text-blue-600 px-3 py-1 rounded-lg text-sm font-bold">第 9 堂</div>
+                        <i class="fa-solid fa-cube text-blue-300 text-2xl group-hover:text-blue-500 transition-colors"></i>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2">立體形體</h4>
+                    <p class="text-sm text-gray-600 line-clamp-2">面、邊、頂點關係。不需執著表面積計算，專注判斷構造特徵與面的垂直關係...</p>
+                    <div class="mt-4 flex items-center text-blue-500 text-sm font-bold">
+                        <span>點擊看提示詞與秘訣</span> <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- Card 8 -->
+                <div class="bg-white rounded-2xl p-6 border-t-4 border-indigo-400 shadow-md card-hover cursor-pointer group" onclick="openModal('l8')">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-lg text-sm font-bold">第 10 堂</div>
+                        <i class="fa-solid fa-clock text-indigo-300 text-2xl group-hover:text-indigo-500 transition-colors"></i>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2">時間計算與大數/單位</h4>
+                    <p class="text-sm text-gray-600 line-clamp-2">兆、億、萬位值關係，以及跨日、連續時間加減法。提醒上下午制與24小時制轉換...</p>
+                    <div class="mt-4 flex items-center text-indigo-500 text-sm font-bold">
+                        <span>點擊看提示詞與秘訣</span> <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+
+                <!-- Boss Tip Card -->
+                <div class="bg-gradient-to-br from-purple-600 to-indigo-800 text-white rounded-2xl p-6 shadow-xl card-hover cursor-pointer group relative overflow-hidden" onclick="openModal('boss')">
+                    <i class="fa-solid fa-wand-magic-sparkles absolute -right-4 -bottom-4 text-8xl text-white/10 group-hover:scale-110 transition-transform"></i>
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <div class="bg-white/20 px-3 py-1 rounded-lg text-sm font-bold backdrop-blur-sm">終極叮嚀</div>
+                        <i class="fa-solid fa-crown text-yellow-300 text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-bold mb-2 relative z-10">考前終極心法 🏆</h4>
+                    <p class="text-sm text-purple-100 line-clamp-2 relative z-10">長度雖長，計算不大。發現需要硬算時，先停下來思考是否有分配律或觀念題...</p>
+                    <div class="mt-4 flex items-center text-yellow-300 text-sm font-bold relative z-10">
+                        <span>查看心法詳情</span> <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Overlay -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <!-- Modal Content -->
+        <div id="modalBox" class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div id="modalHeader" class="px-6 py-4 bg-gray-50 border-b flex justify-between items-center relative">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-400 to-purple-500" id="modalColorBar"></div>
+                <h3 id="modalTitle" class="text-xl font-extrabold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-book-open text-blue-500"></i> 標題
+                </h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-red-50">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Body -->
+            <div class="p-6 overflow-y-auto flex-1 bg-gray-50/50" id="modalBodyScroll">
+                
+                <div class="bg-white border rounded-2xl p-5 shadow-sm mb-6">
+                    <h4 class="text-sm font-bold text-gray-400 mb-3 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-lightbulb text-yellow-500"></i> 教學重點與搶分關鍵
+                    </h4>
+                    <div id="modalDetail" class="text-gray-700 leading-relaxed space-y-2">
+                        <!-- Content injected via JS -->
+                    </div>
+                </div>
+
+                <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 relative group">
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="text-sm font-bold text-blue-600 flex items-center gap-2">
+                            <i class="fa-solid fa-robot"></i> 專屬 AI 提示詞 (Prompt)
+                        </h4>
+                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md shadow-sm font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-bolt text-yellow-500"></i> 推薦搭配 NotebookLM
+                        </span>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl text-gray-700 text-sm font-mono border shadow-inner whitespace-pre-wrap leading-relaxed" id="modalPrompt">
+                        <!-- Prompt injected via JS -->
+                    </div>
+                    
+                    <button id="copyBtn" class="mt-4 w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98]">
+                        <i class="fa-regular fa-copy"></i> 一鍵複製提示詞去產卷
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 z-50 invisible">
-        <span>✨</span>
-        <span class="font-medium">提示詞已複製到剪貼簿！</span>
-    </div>
+    <!-- Footer Copyright -->
+    <footer class="bg-gray-800 text-gray-300 py-10 text-center relative z-10 mt-12">
+        <div class="max-w-4xl mx-auto px-6">
+            <div class="flex justify-center mb-4">
+                <span class="bg-gray-700 text-xs px-3 py-1 rounded-full font-mono flex items-center gap-2">
+                    <i class="fa-solid fa-microchip text-yellow-400"></i> 小吉 (GiGi) Assistant
+                </span>
+            </div>
+            <p class="font-bold text-white mb-2 tracking-wider">屏東縣後庄國小黃朝榮老師作品</p>
+            <p class="text-sm mb-4 leading-relaxed opacity-80">
+                免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為。
+            </p>
+            <div class="inline-flex items-center justify-center space-x-2 bg-gray-900 px-6 py-3 rounded-xl border border-gray-700 hover:border-blue-500 transition-colors group cursor-pointer" onclick="window.open('https://padlet.com/clongwh/puti_ai_tools', '_blank')">
+                <i class="fa-solid fa-link text-blue-400 group-hover:scale-110 transition-transform"></i>
+                <span class="text-sm font-medium text-blue-300 group-hover:text-blue-200">更多 Puti-AI 教學工具 點此前往</span>
+            </div>
+            <div class="mt-8 text-xs text-gray-500 flex items-center justify-center gap-2">
+                <span>©Puti-AI 教學工具庫</span>
+                <span class="w-1 h-1 bg-gray-600 rounded-full"></span>
+                <span>Created using Puti-AI</span>
+            </div>
+        </div>
+    </footer>
 
+    <!-- JavaScript Data and Logic -->
     <script>
-        // --- 課程資料設定 ---
-        const courseData = [
-            {
-                stageTitle: "第一階段：搶分鐵票區 🥇",
-                stageDesc: "投資報酬率最高，強烈建議優先掌握。熟記規則與公式，幾乎穩拿分數。",
-                headerColor: "bg-rose-500",
-                borderColor: "border-rose-500",
-                iconColor: "text-rose-500",
-                cards: [
-                    {
-                        lesson: "第 1~2 堂",
-                        title: "整數四則運算與運算規律",
-                        emoji: "🧮",
-                        shortDesc: "結合律、分配律的靈活運用、連除等價算法。",
-                        details: "<p><strong>🔹 複習重點：</strong>結合律、分配律的靈活運用是歷年常客。例如利用乘法對加減法的分配律來簡化計算（如 <code>13×1997 + 1997×7</code> 的速算）。另外，連除的等價算法也是必考觀念（如 <code>9600÷4÷100 = 9600÷400</code>）。</p><p><strong>🏆 拿分策略：</strong>不要拿到題目就硬算，先觀察數字特徵，運用規律能大幅減少計算錯誤。</p>",
-                        prompt: "請扮演一位國小資深數學老師，幫我出 5 題適合五年級學力檢測的「整數四則運算」進階挑戰題。題目必須包含：\n1. 利用分配律的速算（如 a×b + b×c）\n2. 連除的等價算法觀念\n請附上詳細的「速算解析」以及「學生易錯點提醒」。"
-                    },
-                    {
-                        lesson: "第 3 堂",
-                        title: "因數與倍數",
-                        emoji: "🧩",
-                        shortDesc: "最大公因數、最小公倍數求法與生活應用。",
-                        details: "<p><strong>🔹 複習重點：</strong>最大公因數與最小公倍數的求法與生活應用。常見考題包含判斷哪些數是某些數的公倍數，或是將物品平分裝箱、用巧拼墊鋪滿地板等應用題。</p><p><strong>🏆 拿分策略：</strong>熟練短除法，並學會從題目關鍵字（如「平分」、「最多」、「同時出發」）判斷該求因數還是倍數。</p>",
-                        prompt: "請幫我設計 4 題五年級「因數與倍數」的情境應用題，專攻學力檢測。題型需包含：\n1. 求最大公因數（關鍵字：平分裝箱、最多）\n2. 求最小公倍數（關鍵字：同時出發、鋪滿地板）\n請在解答中示範如何使用「短除法」，並說明如何引導學生抓取題目關鍵字。"
-                    },
-                    {
-                        lesson: "第 4 堂",
-                        title: "平面圖形的面積與角度",
-                        emoji: "📐",
-                        shortDesc: "圖形面積公式、內角和180度、邊長關係。",
-                        details: "<p><strong>🔹 複習重點：</strong>三角形、平行四邊形與梯形的面積公式。必須熟記「三角形內角和為 180 度」以及「三角形任意兩邊之和大於第三邊」的幾何性質。</p><p><strong>🏆 拿分策略：</strong>圖形題經常會將圖形拆解或組合，只要把底和高找對（注意垂直符號），套用公式就能輕鬆得分。</p>",
-                        prompt: "請生成 3 題五年級「平面圖形與角度」的視覺化文字題。包含：\n1. 複合圖形（三角形+梯形）的面積計算，且給定多餘的干擾邊長資訊以測試學生找「底和高」的能力。\n2. 應用「三角形內角和180度」與「兩邊之和大於第三邊」的觀念判斷題。\n請附上清晰的解題步驟。"
-                    }
-                ]
-            },
-            {
-                stageTitle: "第二階段：核心概念區 🎯",
-                stageDesc: "出題頻率極高，佔據試卷極大比例。釐清特定陷阱就能大幅拉開差距。",
-                headerColor: "bg-amber-500",
-                borderColor: "border-amber-500",
-                iconColor: "text-amber-500",
-                cards: [
-                    {
-                        lesson: "第 5~6 堂",
-                        title: "分數與小數的進階運算",
-                        emoji: "⚖️",
-                        shortDesc: "等值分數、小數除法求商與「餘數陷阱」。",
-                        details: "<p><strong>🔹 複習重點：</strong><br>1. 等值分數與擴分/約分。<br>2. <strong>小數除法的「餘數陷阱」</strong>：這是超級大熱門與易錯點！求商到特定小數位數時，餘數的小數點位置必須與「被除數原來的小數點」對齊（如 53÷7 求商到小數第二位，餘數的實際位值）。</p><p><strong>🏆 拿分策略：</strong>特別加強「小數除法有餘數」的直式計算，做完務必驗算：商×除數+餘數=被除數，確認餘數小數點是否正確。</p>",
-                        prompt: "請幫我針對五年級最容易出錯的「小數除法餘數陷阱」設計 5 題測驗。題目要求：\n被除數為整數或小數，除數為整數，要求求商到小數第一位或第二位，並寫出餘數。\n請在解答特別標註「餘數小數點必須與被除數原小數點對齊」的觀念提醒，並給出驗算算式。"
-                    },
-                    {
-                        lesson: "第 7 堂",
-                        title: "體積、表面積與容積",
-                        emoji: "📦",
-                        shortDesc: "正方體/長方體計算，必考「沉水體積」。",
-                        details: "<p><strong>🔹 複習重點：</strong>正方體與長方體的體積及表面積計算。其中，<strong>「沉水體積（排開水的體積）」</strong>是極常出現的經典題型（如石頭放入水中，水面上升）。</p><p><strong>🏆 拿分策略：</strong>記住沉水物體體積的最快算法：<code>容器內部底面積 × 水面上升的高度</code>，不要去算總體積再相減，容易出錯。</p>",
-                        prompt: "請設計 3 題五年級「容積與沉水體積」的應用題。其中兩題必須是經典的「石頭丟入長方體水槽，求石頭體積」的題型。解答請強調使用「容器內部底面積 × 水面上升高度」的高效算法，並提供引導學生理解此觀念的教學話術。"
-                    }
-                ]
-            },
-            {
-                stageTitle: "第三階段：視覺直觀與生活應用區 👁️",
-                stageDesc: "不需要複雜計算，憑藉觀念理解和視覺判斷即可得分。易學易懂。",
-                headerColor: "bg-emerald-500",
-                borderColor: "border-emerald-500",
-                iconColor: "text-emerald-500",
-                cards: [
-                    {
-                        lesson: "第 8 堂",
-                        title: "線對稱圖形與扇形",
-                        emoji: "🦋",
-                        shortDesc: "判斷對稱軸數量、幾分之幾圓與圓心角換算。",
-                        details: "<p><strong>🔹 複習重點：</strong><br>1. 線對稱：判斷常見圖形（長方形、正三角形、菱形等）有幾條對稱軸，或透過對稱求角度邊長。<br>2. 扇形：能算出幾分之幾圓對應的圓心角度數（如 1/6 圓的圓心角）。</p><p><strong>🏆 拿分策略：</strong>線對稱圖形可以用「想像對摺是否完全重合」來直觀判斷；扇形則緊扣「一個圓是 360 度」進行等比例換算。</p>",
-                        prompt: "請為五年級學生出 6 題選擇題，主題為「線對稱圖形與扇形」。\n題型包含：\n1. 判斷正多邊形或特殊四邊形有幾條對稱軸。\n2. 給定幾分之幾圓，求圓心角度數；或給定圓心角，求是幾分之幾圓。\n請給出詳細解答與記憶口訣（如正N邊形就有N條對稱軸）。"
-                    },
-                    {
-                        lesson: "第 9 堂",
-                        title: "時間與單位的換算",
-                        emoji: "⏱️",
-                        shortDesc: "跨日時間加減運算、重量與容量單位換算。",
-                        details: "<p><strong>🔹 複習重點：</strong>時間的加減運算（跨日或時、分、秒換算）。基本重量與容量單位（公斤/公噸、公升/毫升）的換算也常融入計算中。</p><p><strong>🏆 拿分策略：</strong>時間計算切記進位與退位是「60 進制 或 24 進制」而非 10 進制，這是學生最常粗心的地方。畫時間線(數線)有助於跨日題型的思考。</p>",
-                        prompt: "請設計 4 題五年級「時間加減與單位換算」的情境題。必須包含：\n1. 跨日的時刻與時間長度計算（如：昨天晚上10點到今天下午3點，經過多久）。\n2. 包含公噸/公斤 或 公升/毫升 的單位陷阱題。\n請在解答中特別提醒「60進位/24進位」的易錯點，並示範畫時間線的方法。"
-                    }
-                ]
-            },
-            {
-                stageTitle: "第四階段：實戰演練與錯題掃雷 💣",
-                stageDesc: "確保前 9 堂課累積的實力順利轉化為實際分數。",
-                headerColor: "bg-indigo-500",
-                borderColor: "border-indigo-500",
-                iconColor: "text-indigo-500",
-                cards: [
-                    {
-                        lesson: "第 10 堂",
-                        title: "歷屆試題全真模擬與訂正",
-                        emoji: "📝",
-                        shortDesc: "40分鐘計時測驗，專注找出粗心盲點。",
-                        details: "<p><strong>🔹 複習重點：</strong>挑選 1 到 2 回近年的學力檢測卷進行 40 分鐘的計時測驗，訓練臨場感與時間分配。</p><p><strong>🏆 拿分策略：</strong>檢測卷通常包含陷阱選項（如單位未換算、小數點點錯）。專注於找出自己的「粗心盲點」並進行訂正（建立錯題本），比盲目刷題更重要。</p>",
-                        prompt: "我是國小五年級老師，請根據前面九堂課的重點（四則運算規律、因倍數、面積、小數除法餘數、沉水體積、對稱與扇形、時間單位），幫我生成一份「學力檢測考前精華模擬卷」。\n共 10 題選擇題，每題都要包含常見的「學生迷思概念陷阱選項」。\n請附上解答、詳解，以及「各錯誤選項對應的迷思概念分析」。"
-                    }
-                ]
-            }
-        ];
-
-        // --- 音效系統 (Web Audio API) ---
+        // Web Audio API Context (Initialized on first interaction)
         let audioCtx;
-        
         function initAudio() {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -251,216 +298,179 @@
             }
         }
 
-        function playClickSound() {
-            if (!audioCtx) return;
-            const oscillator = audioCtx.createOscillator();
+        function playSound(type) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
-            
-            oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
-            oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-            
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
-            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-            
-            oscillator.connect(gainNode);
+            osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
             
-            oscillator.start();
-            oscillator.stop(audioCtx.currentTime + 0.1);
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.1);
+            } else if (type === 'success') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+                osc.frequency.setValueAtTime(1000, audioCtx.currentTime + 0.2);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.3);
+            }
         }
 
-        function playSuccessSound() {
-            if (!audioCtx) return;
-            const now = audioCtx.currentTime;
-            
-            // First note
-            const osc1 = audioCtx.createOscillator();
-            const gain1 = audioCtx.createGain();
-            osc1.type = 'triangle';
-            osc1.frequency.setValueAtTime(523.25, now); // C5
-            gain1.gain.setValueAtTime(0, now);
-            gain1.gain.linearRampToValueAtTime(0.3, now + 0.05);
-            gain1.gain.linearRampToValueAtTime(0, now + 0.15);
-            osc1.connect(gain1);
-            gain1.connect(audioCtx.destination);
-            osc1.start(now);
-            osc1.stop(now + 0.15);
+        // Data for cards
+        const lessonData = {
+            'l1': {
+                title: '第 1～2 堂：四則運算規律',
+                color: 'red',
+                icon: 'fa-calculator',
+                detail: '<p><b>重點說明：</b>歷屆試題極常出現將繁雜算式利用規律簡化的題目。例如「$567 \\times 49 + 49 \\times \\square = 569 \\times 49$」這類題型。</p><p class="mt-2 text-red-600 bg-red-50 p-3 rounded-lg border border-red-100"><b>🎯 搶分關鍵：</b><br>學力檢測官方特別強調「<b>乘法對加法分配律解題的能力</b>」，只要學生能看懂 $(A+B)\\times C = A\\times C + B\\times C$，就能快速選出答案，完全不需浪費時間硬算。</p>',
+                prompt: '你是專業的國小數學教育專家。請幫我出一份針對「五年級：四則運算規律（分配律與結合律）」的考前衝刺練習卷。\n\n【要求】：\n1. 題型包含選擇題 3 題、填充題 3 題。\n2. 題目必須設計成「看似數字很大，但只要套用分配律 (A+B) × C = A × C + B × C 或結合律就能秒解」的陷阱題（例如 567 × 49 + 49 × 2）。\n3. 請附上詳細解答與觀念提點（給學生的溫馨提醒）。'
+            },
+            'l2': {
+                title: '第 3 堂：除法的「餘數」定位',
+                color: 'orange',
+                icon: 'fa-divide',
+                detail: '<p><b>重點說明：</b>整數/小數除以整數。這是歷年檢測的「超級大熱門」，且每年都有極高比例的學生答錯，甚至引發教師提出疑義爭論。</p><p class="mt-2 text-orange-600 bg-orange-50 p-3 rounded-lg border border-orange-100"><b>🎯 搶分關鍵：</b><br>請務必讓學生死記一個重點：<b>「商的餘數，小數點必須與被除數原來的小數點對齊」</b>。<br>例如「$365 \\div 9$ 算到小數第一位」或「$1 \\div 7$ 算到小數第三位」，餘數絕對不是整數，而是 $0.5$ 或 $0.006$ 等帶有小數點的數值。只要掌握這點，就能穩穩拿下別人容易丟失的分數。</p>',
+                prompt: '你是專業的國小數學教育專家。請幫我出一份針對「五年級：小數/整數除以整數的【餘數定位】易錯題」的小測驗。\n\n【要求】：\n1. 題型包含選擇題 5 題。\n2. 題目重點必須放在「算到指定小數位數後，求餘數是多少」。選項中必須包含學生常見的錯誤陷阱（忘記把小數點退回原位而選成整數餘數）。\n3. 請附上詳細解答，並用強烈的視覺文字（如：⚠️注意原來的小數點位置！）提醒學生。'
+            },
+            'l3': {
+                title: '第 4 堂：平面圖形面積公式與組合',
+                color: 'yellow',
+                icon: 'fa-shapes',
+                detail: '<p><b>重點說明：</b>三角形、平行四邊形、梯形。各種圖形的面積與周長是幾何題目的核心。</p><p class="mt-2 text-yellow-700 bg-yellow-50 p-3 rounded-lg border border-yellow-200"><b>🎯 搶分關鍵：</b><br>確認學生熟記「三角形面積＝底 $\\times$ 高 $\\div 2$」、「平行四邊形＝底 $\\times$ 高」等基礎公式。<br>需特別留意，若圖形由<b>多個三角形組合</b>，可利用「底邊相同、高相加」的分配律概念來合併計算面積，不需傻傻分開算。</p>',
+                prompt: '你是專業的國小數學教育專家。請幫我出一份針對「五年級：平面圖形面積（三角形、平行四邊形、梯形）」的綜合觀念卷。\n\n【要求】：\n1. 包含 4 題看圖計算題（請用文字描述圖形構造，例如：一個大三角形內包含...）。\n2. 至少有 2 題考「組合圖形」，並且是可以利用「底邊相同，高相加/減」技巧來快速解題的題型。\n3. 請附上詳細解答，並拆解「速算技巧」與「一般算法」的對比。'
+            },
+            'l4': {
+                title: '第 5～6 堂：分數與小數',
+                color: 'green',
+                icon: 'fa-ruler-horizontal',
+                detail: '<p><b>重點說明：</b>包含擴分、約分、真假分數互換。這是題數佔比最重的地方。</p><p class="mt-2 text-green-700 bg-green-50 p-3 rounded-lg border border-green-200"><b>🎯 搶分關鍵：</b><br>1. 掌握分數在<b>「數線」</b>上的位置判斷（例如 $1\\frac{1}{3} \\times \\frac{5}{8}$ 應該落在哪個區間）。<br>2. 熟悉「倍數」關係比較，例如 $\\frac{5}{6}$ 是 $\\frac{3}{4}$ 的幾倍。<br>3. 能看懂圖形塗色面積代表的分數比例（例如 $\\frac{1}{3}$ 張色紙再平分後的比例）。</p>',
+                prompt: '你是專業的國小數學教育專家。請幫我出一份針對「五年級：分數與小數的換算、大小比較與數線定位」的重點題庫。\n\n【要求】：\n1. 出 5 題核心觀念題。\n2. 題型必須涵蓋：(1) 判斷乘法結果在數線上的落點區間 (2) 兩分數的倍數關係 (3) 塗色面積的分數表徵。\n3. 請避免過度繁雜的通分計算，著重在「觀念判斷」與「大小比較」。\n4. 附上詳細解答與觀念解析。'
+            },
+            'l5': {
+                title: '第 7 堂：扇形、角度與線對稱',
+                color: 'teal',
+                icon: 'fa-chart-pie',
+                detail: '<p><b>重點說明：</b>幾何圖形的性質判斷。</p><p class="mt-2 text-teal-700 bg-teal-50 p-3 rounded-lg border border-teal-200"><b>🎯 搶分關鍵：</b><br>1. <b>扇形圓心角</b>：記住「圓心角 = $360^\\circ \\times$ 圓的比例」，例如 $\\frac{1}{3}$ 圓就是 $120^\\circ$，<b>半徑長度「不會」影響圓心角的大小</b>。<br>2. <b>線對稱圖形</b>：了解對稱軸的概念與對稱邊等長的特性。(註：各版本針對某些圖形的對稱軸數量編排有落差，建議掌握基礎即可)。</p>',
+                prompt: '你是專業的國小數學教育專家。請幫我出一份針對「五年級：扇形圓心角與線對稱圖形」的考前複習卷。\n\n【要求】：\n1. 包含 5 題選擇/是非題。\n2. 必考陷阱：設計一題「半徑不同，但圓比例相同的兩個扇形，比較其圓心角大小」的題目，測試學生是否掉入陷阱。\n3. 包含尋找對稱軸數量與對應邊長度的基本題。\n4. 附上解答，並在解答中強調「半徑不影響圓心角」的鐵律。'
+            },
+            'l6': {
+                title: '第 8 堂：因數與倍數觀念',
+                color: 'emerald',
+                icon: 'fa-layer-group',
+                detail: '<p><b>重點說明：</b>求公因數與公倍數。</p><p class="mt-2 text-emerald-700 bg-emerald-50 p-3 rounded-lg border border-emerald-200"><b>🎯 搶分關鍵：</b><br>比起複雜的短除法計算，學力檢測更愛考<b>「觀念定義」</b>。<br>例如「已知 $12$ 是 $4$ 和 $6$ 的公倍數，下列何者也是？」或判別甲乙丙丁四人對於因數/倍數的說法何者正確。釐清「最小的因數是 $1$」、「倍數有無限多個」等基本名詞定義即可拿分。</p>',
+                prompt: '你是專業的國小數學教育專家。請幫我出一份針對「五年級：因數與倍數【純觀念定義】」的澄清考卷。\n\n【要求】：\n1. 不考複雜的短除法計算，只考觀念。\n2. 出 4 題「四人說法判斷題」（例如：甲說...乙說...請問誰說得對？）。\n3. 測試重點包含：最小因數是1、最大因數是自己、倍數無限多、公倍數的衍生尋找（如已知12是公倍數，求下一個）。\n4. 附上解答與每一位學生說法錯在哪裡的詳解。'
+            },
+            'l7': {
+                title: '第 9 堂：立體形體',
+                color: 'blue',
+                icon: 'fa-cube',
+                detail: '<p><b>重點說明：</b>柱體與錐體的構造特徵。</p><p class="mt-2 text-blue-700 bg-blue-50 p-3 rounded-lg border border-blue-200"><b>🎯 搶分關鍵：</b><br><b>不需執著於複雜的表面積計算</b>（曾因進度超出部分版本範圍而不予計分），請專注於讓學生學會判斷「幾角柱/錐有幾個面、幾條邊、幾個頂點」，以及能從圖形中看出哪幾個面與桌面「垂直」或「平行」。</p>',
+                prompt: '你是專業的國小數學教育專家。請幫我出一份針對「五年級：立體形體（柱體與錐體）」的構造特徵表與練習。\n\n【要求】：\n1. 產出一個 Markdown 格式的整理表格，統整 N 角柱與 N 角錐的「底面數、側面形狀、頂點數、邊數、面數」公式。\n2. 根據表格出 3 題基礎應用題（例如：某立體有 12 條邊，它是什麼柱/錐？）。\n3. 出 1 題測試立體圖形中「面與面垂直/平行」關係的空間判斷題。\n4. 附上完整解答。'
+            },
+            'l8': {
+                title: '第 10 堂：時間與大數換算',
+                color: 'indigo',
+                icon: 'fa-clock',
+                detail: '<p><b>重點說明：</b>日常生活應用題型。</p><p class="mt-2 text-indigo-700 bg-indigo-50 p-3 rounded-lg border border-indigo-200"><b>🎯 搶分關鍵：</b><br>1. <b>大數</b>：弄懂兆、億、萬之間的位值關係，例如「$2.05$ 兆是 $2.05$ 萬的幾倍」（$1$ 億倍）。<br>2. <b>時間跨度</b>：細心處理「跨日」或「連續幾次」的時間加減法（如：上午 $10$ 時出發，經過 $45$ 小時後是何時）。提醒學生注意「上午/下午」的 $12$ 小時制與 $24$ 小時制轉換。</p>',
+                prompt: '你是專業的國小數學教育專家。請幫我出一份針對「五年級：時間跨度計算與大數位值換算」的生活應用題卷。\n\n【要求】：\n1. 包含 2 題大數換算（例如兆與萬的倍數關係）。\n2. 包含 3 題時間計算，其中必須有跨越超過 24 小時的「跨日題」，以及 12 小時制與 24 小時制的轉換陷阱。\n3. 題目情境請設計得生活化（例如火車時刻表、太空船飛行時間等）。\n4. 附上防呆解答（提醒學生哪裡容易忘記進位/換算）。'
+            },
+            'boss': {
+                title: '考前終極心法 🏆',
+                color: 'purple',
+                icon: 'fa-crown',
+                detail: '<p class="text-lg leading-relaxed text-purple-800"><b>學力檢測的題目設計經常「長度較長」，但計算量通常不大！</b></p><p class="mt-4 bg-purple-100 p-4 rounded-xl border border-purple-200 text-purple-900 leading-relaxed">若學生發現某題需要進行極端複雜的三位數乘除硬算（例如遇到多個選項都是複雜算式時），請優先思考：<br><br>👉 <b>「是不是有分配律、結合律可以抵銷？」</b><br>👉 <b>「有沒有可能是觀念題？」</b><br><br>教導學生「適時踩煞車」，先觀察題目全貌再下筆，這樣能大幅節省時間並提高正確率。</p>',
+                prompt: '幫我寫一篇用於 [FB] 的貼文，打造3秒內的強力Hook，介紹我創建的教學工具: Puti-AI 產生器，說明功能、用法和教學應用，輕鬆有趣的風格，並邀請分享。註明 連結請搜尋: Puti-AI 教學工具庫，找 [ 五年級數學衝刺卡片 ] 欄 。再生成本工具宣傳海報的生圖提示詞，可愛風格，16:9構圖，要有明顯的本工具標題。'
+            }
+        };
 
-            // Second note
-            const osc2 = audioCtx.createOscillator();
-            const gain2 = audioCtx.createGain();
-            osc2.type = 'triangle';
-            osc2.frequency.setValueAtTime(783.99, now + 0.1); // G5
-            gain2.gain.setValueAtTime(0, now + 0.1);
-            gain2.gain.linearRampToValueAtTime(0.3, now + 0.15);
-            gain2.gain.linearRampToValueAtTime(0, now + 0.4);
-            osc2.connect(gain2);
-            gain2.connect(audioCtx.destination);
-            osc2.start(now + 0.1);
-            osc2.stop(now + 0.4);
-        }
-
-        // --- 畫面渲染 ---
-        const container = document.getElementById('course-container');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalBox = document.getElementById('modalBox');
         
-        function renderContent() {
-            courseData.forEach((stage, stageIndex) => {
-                // 建立階段標題區塊
-                const stageSection = document.createElement('div');
-                stageSection.className = 'mb-12';
-                
-                stageSection.innerHTML = `
-                    <div class="border-b-2 ${stage.borderColor} pb-3 mb-6 flex flex-col md:flex-row md:items-end gap-3">
-                        <h2 class="text-2xl font-black text-slate-800">${stage.stageTitle}</h2>
-                        <p class="text-slate-500 font-medium pb-1">${stage.stageDesc}</p>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="stage-cards-${stageIndex}">
-                    </div>
-                `;
-                container.appendChild(stageSection);
-
-                const cardsContainer = document.getElementById(`stage-cards-${stageIndex}`);
-
-                // 建立卡片
-                stage.cards.forEach((card, cardIndex) => {
-                    const cardEl = document.createElement('div');
-                    cardEl.className = `bg-white rounded-xl p-6 border-t-4 ${stage.borderColor} card-hover shadow-md cursor-pointer relative overflow-hidden group`;
-                    
-                    // 隱藏的資料屬性，供點擊時使用
-                    cardEl.dataset.lesson = card.lesson;
-                    cardEl.dataset.title = card.title;
-                    cardEl.dataset.emoji = card.emoji;
-                    cardEl.dataset.details = card.details;
-                    cardEl.dataset.prompt = card.prompt;
-                    cardEl.dataset.color = stage.headerColor;
-
-                    cardEl.innerHTML = `
-                        <div class="flex justify-between items-start mb-4">
-                            <span class="text-xs font-bold text-white ${stage.headerColor} px-3 py-1 rounded-full shadow-sm">${card.lesson}</span>
-                            <span class="text-3xl filter drop-shadow-sm transition-transform group-hover:scale-125 duration-300">${card.emoji}</span>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-800 mb-2 group-hover:${stage.iconColor} transition-colors">${card.title}</h3>
-                        <p class="text-slate-600 text-sm mb-4 line-clamp-2">${card.shortDesc}</p>
-                        <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-bold ${stage.iconColor}">
-                            <span>查看詳細重點與提示詞</span>
-                            <span class="text-lg group-hover:translate-x-1 transition-transform">→</span>
-                        </div>
-                    `;
-
-                    // 點擊事件：開啟 Modal
-                    cardEl.addEventListener('click', () => {
-                        initAudio();
-                        playClickSound();
-                        openModal(cardEl.dataset);
-                    });
-
-                    cardsContainer.appendChild(cardEl);
-                });
-            });
-        }
-
-        // --- Modal 控制 ---
-        const modalBackdrop = document.getElementById('modal-backdrop');
-        const modalCard = document.getElementById('modal-card');
-        const modalHeader = document.getElementById('modal-header');
-        const modalTitle = document.getElementById('modal-title');
-        const modalDetails = document.getElementById('modal-details');
-        const modalPrompt = document.getElementById('modal-prompt');
-        const closeModalBtn = document.getElementById('close-modal');
-        const copyBtn = document.getElementById('copy-btn');
-        const toast = document.getElementById('toast');
-
-        function openModal(data) {
-            // 設定內容
-            modalTitle.innerHTML = `<span class="text-2xl">${data.emoji}</span> ${data.lesson}：${data.title}`;
-            modalDetails.innerHTML = data.details;
-            modalPrompt.value = data.prompt;
+        function openModal(id) {
+            playSound('click');
+            const data = lessonData[id];
             
-            // 設定標題顏色
-            modalHeader.className = `px-6 py-4 flex justify-between items-center text-white ${data.color}`;
+            // Set dynamic content
+            document.getElementById('modalTitle').innerHTML = `<i class="fa-solid ${data.icon} text-${data.color}-500"></i> ${data.title}`;
+            document.getElementById('modalColorBar').className = `absolute top-0 left-0 w-full h-1 bg-${data.color}-500`;
+            document.getElementById('modalDetail').innerHTML = data.detail;
+            document.getElementById('modalPrompt').textContent = data.prompt;
+            
+            // Reset Copy Button
+            const btn = document.getElementById('copyBtn');
+            btn.innerHTML = `<i class="fa-regular fa-copy"></i> 一鍵複製提示詞去產卷`;
+            btn.className = `mt-4 w-full bg-gradient-to-r from-${data.color}-500 to-${data.color}-600 hover:from-${data.color}-600 hover:to-${data.color}-700 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98]`;
+            btn.onclick = copyPrompt; // 綁定原本的複製功能
 
-            // 顯示動畫
-            modalBackdrop.classList.remove('hidden');
-            modalCard.classList.remove('modal-exit');
-            modalCard.classList.add('modal-enter');
-            document.body.style.overflow = 'hidden'; // 防止背景滾動
+            // Show modal
+            modalOverlay.classList.remove('hidden');
+            modalBox.classList.remove('modal-exit');
+            modalBox.classList.add('modal-enter');
+            
+            // Scroll to top of modal body
+            document.getElementById('modalBodyScroll').scrollTop = 0;
+
+            // Re-render MathJax inside modal
+            if (window.MathJax) {
+                MathJax.typesetPromise([document.getElementById('modalDetail')]).catch(function (err) {
+                    console.log('MathJax Error: ' + err.message);
+                });
+            }
         }
 
         function closeModal() {
-            modalCard.classList.remove('modal-enter');
-            modalCard.classList.add('modal-exit');
-            
-            // 等待動畫結束再隱藏
+            modalBox.classList.remove('modal-enter');
+            modalBox.classList.add('modal-exit');
             setTimeout(() => {
-                modalBackdrop.classList.add('hidden');
-                document.body.style.overflow = ''; 
-            }, 200);
+                modalOverlay.classList.add('hidden');
+            }, 300); // match animation duration
         }
 
-        closeModalBtn.addEventListener('click', () => {
-            playClickSound();
-            closeModal();
-        });
-        
-        modalBackdrop.addEventListener('click', (e) => {
-            if (e.target === modalBackdrop) {
+        async function copyPrompt() {
+            playSound('success');
+            const promptText = document.getElementById('modalPrompt').textContent;
+            
+            try {
+                // Fallback for iframe execution context
+                const textArea = document.createElement("textarea");
+                textArea.value = promptText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand("Copy");
+                textArea.remove();
+
+                // 複製成功後，將按鈕轉變為前往 NotebookLM 的連結按鈕
+                const btn = document.getElementById('copyBtn');
+                btn.innerHTML = `<i class="fa-solid fa-check text-white"></i> 複製成功！前往 NotebookLM 考古題庫產卷 <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>`;
+                btn.className = `mt-4 w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98]`;
+                btn.onclick = function() {
+                    window.open('https://notebooklm.google.com/notebook/ca640a0b-22f1-4bd8-8bfd-c3ef8b42af0a', '_blank');
+                };
+                
+                // Add a little pop effect
+                btn.style.transform = 'scale(1.05)';
+                setTimeout(() => { btn.style.transform = 'scale(1)'; }, 200);
+
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+            }
+        }
+
+        // Close on outside click
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) {
                 closeModal();
             }
         });
-
-        // --- 複製功能 ---
-        copyBtn.addEventListener('click', () => {
-            initAudio();
-            modalPrompt.select();
-            modalPrompt.setSelectionRange(0, 99999); // for mobile
-
-            try {
-                // 優先使用 clipboard API
-                if (navigator.clipboard && window.isSecureContext) {
-                    navigator.clipboard.writeText(modalPrompt.value).then(showToast);
-                } else {
-                    // Fallback
-                    document.execCommand('copy');
-                    showToast();
-                }
-            } catch (err) {
-                console.error('複製失敗:', err);
-                alert('複製失敗，請手動選取複製。');
-            }
-        });
-
-        function showToast() {
-            playSuccessSound();
-            
-            // 按鈕視覺回饋
-            const originalHtml = copyBtn.innerHTML;
-            copyBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>已複製！</span>`;
-            copyBtn.classList.replace('bg-blue-600', 'bg-green-500');
-            copyBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-600');
-            
-            // Toast 動畫
-            toast.classList.remove('invisible');
-            toast.classList.remove('toast-show');
-            void toast.offsetWidth; // trigger reflow
-            toast.classList.add('toast-show');
-
-            setTimeout(() => {
-                copyBtn.innerHTML = originalHtml;
-                copyBtn.classList.replace('bg-green-500', 'bg-blue-600');
-                copyBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-700');
-            }, 2000);
-        }
-
-        // 初始化
-        document.addEventListener('DOMContentLoaded', () => {
-            renderContent();
-            
-            // 初始化音效 (綁定在第一次點擊任意處)
-            document.body.addEventListener('click', initAudio, { once: true });
-        });
-
     </script>
 </body>
 </html>
