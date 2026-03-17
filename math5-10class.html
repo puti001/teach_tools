@@ -241,20 +241,15 @@
                 </div>
 
                 <div class="bg-blue-50/50 border border-blue-100 rounded-2xl p-5 relative group">
-                    <div class="flex justify-between items-center mb-3">
-                        <h4 class="text-sm font-bold text-blue-600 flex items-center gap-2">
-                            <i class="fa-solid fa-robot"></i> 專屬 AI 提示詞 (Prompt)
-                        </h4>
-                        <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md shadow-sm font-medium flex items-center gap-1">
-                            <i class="fa-solid fa-bolt text-yellow-500"></i> 推薦搭配 NotebookLM
-                        </span>
+                    <div class="flex justify-between items-center mb-3" id="promptHeader">
+                        <!-- Header Content Injected via JS dynamically -->
                     </div>
                     <div class="bg-white p-4 rounded-xl text-gray-700 text-sm font-mono border shadow-inner whitespace-pre-wrap leading-relaxed" id="modalPrompt">
                         <!-- Prompt injected via JS -->
                     </div>
                     
-                    <button id="copyBtn" class="mt-4 w-full bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98]">
-                        <i class="fa-regular fa-copy"></i> 一鍵複製提示詞去產卷
+                    <button id="copyBtn" class="mt-4 w-full bg-gradient-to-r transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98]">
+                        <!-- Button content injected via JS dynamically -->
                     </button>
                 </div>
             </div>
@@ -388,7 +383,7 @@
                 color: 'purple',
                 icon: 'fa-crown',
                 detail: '<p class="text-lg leading-relaxed text-purple-800"><b>學力檢測的題目設計經常「長度較長」，但計算量通常不大！</b></p><p class="mt-4 bg-purple-100 p-4 rounded-xl border border-purple-200 text-purple-900 leading-relaxed">若學生發現某題需要進行極端複雜的三位數乘除硬算（例如遇到多個選項都是複雜算式時），請優先思考：<br><br>👉 <b>「是不是有分配律、結合律可以抵銷？」</b><br>👉 <b>「有沒有可能是觀念題？」</b><br><br>教導學生「適時踩煞車」，先觀察題目全貌再下筆，這樣能大幅節省時間並提高正確率。</p>',
-                prompt: '幫我寫一篇用於 [FB] 的貼文，打造3秒內的強力Hook，介紹我創建的教學工具: Puti-AI 產生器，說明功能、用法和教學應用，輕鬆有趣的風格，並邀請分享。註明 連結請搜尋: Puti-AI 教學工具庫，找 [ 五年級數學衝刺卡片 ] 欄 。再生成本工具宣傳海報的生圖提示詞，可愛風格，16:9構圖，要有明顯的本工具標題。'
+                prompt: '你現在是一位熟悉台灣 108 課綱的國小數學教育專家與命題委員。請參考歷年「縣市學生學習能力檢測五年級數學科」的考題風格與難度，為我出一份全新的模擬試卷。\n\n【基本測驗設定】\n測驗對象：國小五年級學生。\n測驗規格：總共 25 題，全部為「四選一」的單元選擇題（選項標示為 1, 2, 3, 4）。\n\n【命題重點單元與配比】 請平均涵蓋以下五年級核心單元：\n數與量：大數（萬、兆的倍數關係）、因數與倍數（公因數、公倍數概念）、分數與小數的四則運算（含異分母比較、分數乘法、小數乘除法與四捨五入取概數）、時間的換算與計算。\n幾何圖形：三角形與四邊形的性質/內角和/面積計算、扇形與圓心角的比例關係、線對稱圖形、立體形體（柱體與錐體的面/邊/頂點數量、垂直與平行面的判斷、體積與表面積）。\n代數與關係：整數與小數四則混合運算（先乘除後加減、括號優先）、生活中的圖表與簡單規律推理。\n\n【必須包含的「特色題型」】 請務必依照歷年考題習慣，設計以下幾種特定題型：\n算式選擇題（約佔3-4題）：設計生活情境（如買東西找零、幾個人平分花費等），不要求學生算出最後答案，而是問「下列哪個算式可以算出正確的答案？」（選項需包含各種先乘除後加減、括號運用錯誤的誘答選項）。\n說法判斷題（約佔3-4題）：給定一個情境或圖形，列出「甲、乙、丙、丁」等學生的說法（例如討論因數倍數的定義、圖形面積大小、分數比較），並問「請問哪些人的說法正確？」。\n除法直式與餘數理解題：設計「整數除以整數商為小數」或「求商到小數點後第X位」的題目，考驗學生對「餘數所在位值」的理解（例如問餘數是 0.5 還是 5）。\n幾何圖形組合/分割題：給定組合圖形（如兩個三角形拼在一起，或梯形對角線切割），詢問特定的面積大小比較，或利用內角和求未知的角度。\n\n【難度與命題限制】\n難度設定：維持「中等」，檢測重點在於「數學觀念的靈活應用」與「閱讀理解」，請避免數字極大且單純刁鑽的繁複計算。\n避開超綱爭議：\n「規律推理」題目只要能透過圖表觀察找出即可，切勿使用需列出六年級代數變數公式的題型。\n考驗「表面積」與「線對稱圖形」時，請維持五年級的基本程度。\n處理小數除法的餘數時，確保餘數的位值觀念正確且符合五年級除不盡情況的教學範疇。\n\n請直接以上述要求，輸出這 25 題的完整模擬測驗卷。並在試卷最後附上「標準答案」與「各題測驗重點解析」。'
             }
         };
 
@@ -405,11 +400,20 @@
             document.getElementById('modalDetail').innerHTML = data.detail;
             document.getElementById('modalPrompt').textContent = data.prompt;
             
-            // Reset Copy Button
+            const promptHeader = document.getElementById('promptHeader');
             const btn = document.getElementById('copyBtn');
+
+            promptHeader.innerHTML = `
+                <h4 class="text-sm font-bold text-blue-600 flex items-center gap-2">
+                    <i class="fa-solid fa-robot"></i> 專屬 AI 提示詞 (Prompt)
+                </h4>
+                <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-md shadow-sm font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-bolt text-yellow-500"></i> 推薦搭配 NotebookLM
+                </span>
+            `;
             btn.innerHTML = `<i class="fa-regular fa-copy"></i> 一鍵複製提示詞去產卷`;
             btn.className = `mt-4 w-full bg-gradient-to-r from-${data.color}-500 to-${data.color}-600 hover:from-${data.color}-600 hover:to-${data.color}-700 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98]`;
-            btn.onclick = copyPrompt; // 綁定原本的複製功能
+            btn.onclick = copyPrompt;
 
             // Show modal
             modalOverlay.classList.remove('hidden');
@@ -448,8 +452,8 @@
                 document.execCommand("Copy");
                 textArea.remove();
 
-                // 複製成功後，將按鈕轉變為前往 NotebookLM 的連結按鈕
                 const btn = document.getElementById('copyBtn');
+                
                 btn.innerHTML = `<i class="fa-solid fa-check text-white"></i> 複製成功！前往 NotebookLM 考古題庫產卷 <i class="fa-solid fa-arrow-up-right-from-square ml-1"></i>`;
                 btn.className = `mt-4 w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition-all flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98]`;
                 btn.onclick = function() {
