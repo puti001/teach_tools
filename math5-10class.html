@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 5年級數學學力檢測衝刺指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Modal Animation */
+        .modal-enter {
+            animation: modalFadeIn 0.3s ease-out forwards;
+        }
+        .modal-exit {
+            animation: modalFadeOut 0.2s ease-in forwards;
+        }
+        
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes modalFadeOut {
+            from { opacity: 1; transform: scale(1) translateY(0); }
+            to { opacity: 0; transform: scale(0.95) translateY(10px); }
+        }
+
+        /* Toast Animation */
+        .toast-show {
+            animation: slideUpFade 0.4s ease-out forwards, fadeOutDown 0.4s ease-in forwards 2s;
+        }
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+        @keyframes fadeOutDown {
+            from { opacity: 1; transform: translate(-50%, 0); }
+            to { opacity: 0; transform: translate(-50%, 20px); visibility: hidden; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-12 px-4 shadow-lg text-center relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-full opacity-20 pointer-events-none">
+            <span class="absolute top-4 left-10 text-4xl transform -rotate-12">📐</span>
+            <span class="absolute bottom-4 right-20 text-5xl transform rotate-12">🧮</span>
+            <span class="absolute top-1/2 right-10 text-3xl">✖️</span>
+            <span class="absolute bottom-1/4 left-1/4 text-4xl">➗</span>
+        </div>
+        <div class="max-w-4xl mx-auto relative z-10">
+            <span class="bg-yellow-400 text-blue-900 text-sm font-bold px-3 py-1 rounded-full uppercase tracking-widest shadow-sm mb-4 inline-block">
+                Puti-AI 教學工具
+            </span>
+            <h1 class="text-4xl md:text-5xl font-black mb-4 drop-shadow-md">🚀 5年級數學學力檢測 衝刺計畫</h1>
+            <p class="text-lg md:text-xl text-blue-100 font-medium">10堂課的「高投資報酬率 (ROI)」奪分策略</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow w-full max-w-6xl mx-auto px-4 py-10" id="course-container">
+        <!-- Content injected by JS -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-300 py-8 text-center text-sm mt-auto">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col items-center justify-center gap-2">
+            <p class="font-bold text-yellow-400 text-base">© Puti-AI 教學工具庫</p>
+            <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣</p>
+            <p class="text-slate-400 text-xs mt-1">嚴禁商用與任何侵權、不尊重著作權的行為</p>
+            <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="mt-3 inline-flex items-center gap-2 bg-slate-700 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors duration-300">
+                <span>🔗 更多 Puti-AI 教學工具 點此前往</span>
+            </a>
+        </div>
+    </footer>
+
+    <!-- Modal Backdrop -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden flex items-center justify-center p-4">
+        <!-- Modal Content -->
+        <div id="modal-card" class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col opacity-0 scale-95 transform transition-all">
+            <!-- Modal Header -->
+            <div id="modal-header" class="px-6 py-4 flex justify-between items-center text-white">
+                <h3 id="modal-title" class="text-xl font-bold flex items-center gap-2"></h3>
+                <button id="close-modal" class="text-white/80 hover:text-white hover:rotate-90 transition-transform p-1">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto flex-grow bg-slate-50">
+                <div class="bg-white p-5 rounded-xl border border-slate-100 shadow-sm mb-6">
+                    <h4 class="font-bold text-slate-800 mb-2 border-b-2 border-slate-100 pb-2 flex items-center gap-2">
+                        <span>🎯</span> 複習重點與拿分策略
+                    </h4>
+                    <div id="modal-details" class="text-slate-600 leading-relaxed space-y-3"></div>
+                </div>
+
+                <div class="bg-blue-50 p-5 rounded-xl border border-blue-100 relative">
+                    <div class="absolute -top-3 -right-3 text-2xl animate-bounce">💡</div>
+                    <h4 class="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                        <span>🤖</span> AI 備課提示詞 (可直接複製打包)
+                    </h4>
+                    <div class="relative mt-3">
+                        <textarea id="modal-prompt" readonly class="w-full bg-white border border-blue-200 text-slate-700 rounded-lg p-4 h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-400 font-mono text-sm leading-relaxed"></textarea>
+                        <button id="copy-btn" class="absolute bottom-3 right-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-all flex items-center gap-2 active:scale-95">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            <span>複製提示詞</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 z-50 invisible">
+        <span>✨</span>
+        <span class="font-medium">提示詞已複製到剪貼簿！</span>
+    </div>
+
+    <script>
+        // --- 課程資料設定 ---
+        const courseData = [
+            {
+                stageTitle: "第一階段：搶分鐵票區 🥇",
+                stageDesc: "投資報酬率最高，強烈建議優先掌握。熟記規則與公式，幾乎穩拿分數。",
+                headerColor: "bg-rose-500",
+                borderColor: "border-rose-500",
+                iconColor: "text-rose-500",
+                cards: [
+                    {
+                        lesson: "第 1~2 堂",
+                        title: "整數四則運算與運算規律",
+                        emoji: "🧮",
+                        shortDesc: "結合律、分配律的靈活運用、連除等價算法。",
+                        details: "<p><strong>🔹 複習重點：</strong>結合律、分配律的靈活運用是歷年常客。例如利用乘法對加減法的分配律來簡化計算（如 <code>13×1997 + 1997×7</code> 的速算）。另外，連除的等價算法也是必考觀念（如 <code>9600÷4÷100 = 9600÷400</code>）。</p><p><strong>🏆 拿分策略：</strong>不要拿到題目就硬算，先觀察數字特徵，運用規律能大幅減少計算錯誤。</p>",
+                        prompt: "請扮演一位國小資深數學老師，幫我出 5 題適合五年級學力檢測的「整數四則運算」進階挑戰題。題目必須包含：\n1. 利用分配律的速算（如 a×b + b×c）\n2. 連除的等價算法觀念\n請附上詳細的「速算解析」以及「學生易錯點提醒」。"
+                    },
+                    {
+                        lesson: "第 3 堂",
+                        title: "因數與倍數",
+                        emoji: "🧩",
+                        shortDesc: "最大公因數、最小公倍數求法與生活應用。",
+                        details: "<p><strong>🔹 複習重點：</strong>最大公因數與最小公倍數的求法與生活應用。常見考題包含判斷哪些數是某些數的公倍數，或是將物品平分裝箱、用巧拼墊鋪滿地板等應用題。</p><p><strong>🏆 拿分策略：</strong>熟練短除法，並學會從題目關鍵字（如「平分」、「最多」、「同時出發」）判斷該求因數還是倍數。</p>",
+                        prompt: "請幫我設計 4 題五年級「因數與倍數」的情境應用題，專攻學力檢測。題型需包含：\n1. 求最大公因數（關鍵字：平分裝箱、最多）\n2. 求最小公倍數（關鍵字：同時出發、鋪滿地板）\n請在解答中示範如何使用「短除法」，並說明如何引導學生抓取題目關鍵字。"
+                    },
+                    {
+                        lesson: "第 4 堂",
+                        title: "平面圖形的面積與角度",
+                        emoji: "📐",
+                        shortDesc: "圖形面積公式、內角和180度、邊長關係。",
+                        details: "<p><strong>🔹 複習重點：</strong>三角形、平行四邊形與梯形的面積公式。必須熟記「三角形內角和為 180 度」以及「三角形任意兩邊之和大於第三邊」的幾何性質。</p><p><strong>🏆 拿分策略：</strong>圖形題經常會將圖形拆解或組合，只要把底和高找對（注意垂直符號），套用公式就能輕鬆得分。</p>",
+                        prompt: "請生成 3 題五年級「平面圖形與角度」的視覺化文字題。包含：\n1. 複合圖形（三角形+梯形）的面積計算，且給定多餘的干擾邊長資訊以測試學生找「底和高」的能力。\n2. 應用「三角形內角和180度」與「兩邊之和大於第三邊」的觀念判斷題。\n請附上清晰的解題步驟。"
+                    }
+                ]
+            },
+            {
+                stageTitle: "第二階段：核心概念區 🎯",
+                stageDesc: "出題頻率極高，佔據試卷極大比例。釐清特定陷阱就能大幅拉開差距。",
+                headerColor: "bg-amber-500",
+                borderColor: "border-amber-500",
+                iconColor: "text-amber-500",
+                cards: [
+                    {
+                        lesson: "第 5~6 堂",
+                        title: "分數與小數的進階運算",
+                        emoji: "⚖️",
+                        shortDesc: "等值分數、小數除法求商與「餘數陷阱」。",
+                        details: "<p><strong>🔹 複習重點：</strong><br>1. 等值分數與擴分/約分。<br>2. <strong>小數除法的「餘數陷阱」</strong>：這是超級大熱門與易錯點！求商到特定小數位數時，餘數的小數點位置必須與「被除數原來的小數點」對齊（如 53÷7 求商到小數第二位，餘數的實際位值）。</p><p><strong>🏆 拿分策略：</strong>特別加強「小數除法有餘數」的直式計算，做完務必驗算：商×除數+餘數=被除數，確認餘數小數點是否正確。</p>",
+                        prompt: "請幫我針對五年級最容易出錯的「小數除法餘數陷阱」設計 5 題測驗。題目要求：\n被除數為整數或小數，除數為整數，要求求商到小數第一位或第二位，並寫出餘數。\n請在解答特別標註「餘數小數點必須與被除數原小數點對齊」的觀念提醒，並給出驗算算式。"
+                    },
+                    {
+                        lesson: "第 7 堂",
+                        title: "體積、表面積與容積",
+                        emoji: "📦",
+                        shortDesc: "正方體/長方體計算，必考「沉水體積」。",
+                        details: "<p><strong>🔹 複習重點：</strong>正方體與長方體的體積及表面積計算。其中，<strong>「沉水體積（排開水的體積）」</strong>是極常出現的經典題型（如石頭放入水中，水面上升）。</p><p><strong>🏆 拿分策略：</strong>記住沉水物體體積的最快算法：<code>容器內部底面積 × 水面上升的高度</code>，不要去算總體積再相減，容易出錯。</p>",
+                        prompt: "請設計 3 題五年級「容積與沉水體積」的應用題。其中兩題必須是經典的「石頭丟入長方體水槽，求石頭體積」的題型。解答請強調使用「容器內部底面積 × 水面上升高度」的高效算法，並提供引導學生理解此觀念的教學話術。"
+                    }
+                ]
+            },
+            {
+                stageTitle: "第三階段：視覺直觀與生活應用區 👁️",
+                stageDesc: "不需要複雜計算，憑藉觀念理解和視覺判斷即可得分。易學易懂。",
+                headerColor: "bg-emerald-500",
+                borderColor: "border-emerald-500",
+                iconColor: "text-emerald-500",
+                cards: [
+                    {
+                        lesson: "第 8 堂",
+                        title: "線對稱圖形與扇形",
+                        emoji: "🦋",
+                        shortDesc: "判斷對稱軸數量、幾分之幾圓與圓心角換算。",
+                        details: "<p><strong>🔹 複習重點：</strong><br>1. 線對稱：判斷常見圖形（長方形、正三角形、菱形等）有幾條對稱軸，或透過對稱求角度邊長。<br>2. 扇形：能算出幾分之幾圓對應的圓心角度數（如 1/6 圓的圓心角）。</p><p><strong>🏆 拿分策略：</strong>線對稱圖形可以用「想像對摺是否完全重合」來直觀判斷；扇形則緊扣「一個圓是 360 度」進行等比例換算。</p>",
+                        prompt: "請為五年級學生出 6 題選擇題，主題為「線對稱圖形與扇形」。\n題型包含：\n1. 判斷正多邊形或特殊四邊形有幾條對稱軸。\n2. 給定幾分之幾圓，求圓心角度數；或給定圓心角，求是幾分之幾圓。\n請給出詳細解答與記憶口訣（如正N邊形就有N條對稱軸）。"
+                    },
+                    {
+                        lesson: "第 9 堂",
+                        title: "時間與單位的換算",
+                        emoji: "⏱️",
+                        shortDesc: "跨日時間加減運算、重量與容量單位換算。",
+                        details: "<p><strong>🔹 複習重點：</strong>時間的加減運算（跨日或時、分、秒換算）。基本重量與容量單位（公斤/公噸、公升/毫升）的換算也常融入計算中。</p><p><strong>🏆 拿分策略：</strong>時間計算切記進位與退位是「60 進制 或 24 進制」而非 10 進制，這是學生最常粗心的地方。畫時間線(數線)有助於跨日題型的思考。</p>",
+                        prompt: "請設計 4 題五年級「時間加減與單位換算」的情境題。必須包含：\n1. 跨日的時刻與時間長度計算（如：昨天晚上10點到今天下午3點，經過多久）。\n2. 包含公噸/公斤 或 公升/毫升 的單位陷阱題。\n請在解答中特別提醒「60進位/24進位」的易錯點，並示範畫時間線的方法。"
+                    }
+                ]
+            },
+            {
+                stageTitle: "第四階段：實戰演練與錯題掃雷 💣",
+                stageDesc: "確保前 9 堂課累積的實力順利轉化為實際分數。",
+                headerColor: "bg-indigo-500",
+                borderColor: "border-indigo-500",
+                iconColor: "text-indigo-500",
+                cards: [
+                    {
+                        lesson: "第 10 堂",
+                        title: "歷屆試題全真模擬與訂正",
+                        emoji: "📝",
+                        shortDesc: "40分鐘計時測驗，專注找出粗心盲點。",
+                        details: "<p><strong>🔹 複習重點：</strong>挑選 1 到 2 回近年的學力檢測卷進行 40 分鐘的計時測驗，訓練臨場感與時間分配。</p><p><strong>🏆 拿分策略：</strong>檢測卷通常包含陷阱選項（如單位未換算、小數點點錯）。專注於找出自己的「粗心盲點」並進行訂正（建立錯題本），比盲目刷題更重要。</p>",
+                        prompt: "我是國小五年級老師，請根據前面九堂課的重點（四則運算規律、因倍數、面積、小數除法餘數、沉水體積、對稱與扇形、時間單位），幫我生成一份「學力檢測考前精華模擬卷」。\n共 10 題選擇題，每題都要包含常見的「學生迷思概念陷阱選項」。\n請附上解答、詳解，以及「各錯誤選項對應的迷思概念分析」。"
+                    }
+                ]
+            }
+        ];
+
+        // --- 音效系統 (Web Audio API) ---
+        let audioCtx;
+        
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playClickSound() {
+            if (!audioCtx) return;
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.02);
+            gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        }
+
+        function playSuccessSound() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+            
+            // First note
+            const osc1 = audioCtx.createOscillator();
+            const gain1 = audioCtx.createGain();
+            osc1.type = 'triangle';
+            osc1.frequency.setValueAtTime(523.25, now); // C5
+            gain1.gain.setValueAtTime(0, now);
+            gain1.gain.linearRampToValueAtTime(0.3, now + 0.05);
+            gain1.gain.linearRampToValueAtTime(0, now + 0.15);
+            osc1.connect(gain1);
+            gain1.connect(audioCtx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.15);
+
+            // Second note
+            const osc2 = audioCtx.createOscillator();
+            const gain2 = audioCtx.createGain();
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(783.99, now + 0.1); // G5
+            gain2.gain.setValueAtTime(0, now + 0.1);
+            gain2.gain.linearRampToValueAtTime(0.3, now + 0.15);
+            gain2.gain.linearRampToValueAtTime(0, now + 0.4);
+            osc2.connect(gain2);
+            gain2.connect(audioCtx.destination);
+            osc2.start(now + 0.1);
+            osc2.stop(now + 0.4);
+        }
+
+        // --- 畫面渲染 ---
+        const container = document.getElementById('course-container');
+        
+        function renderContent() {
+            courseData.forEach((stage, stageIndex) => {
+                // 建立階段標題區塊
+                const stageSection = document.createElement('div');
+                stageSection.className = 'mb-12';
+                
+                stageSection.innerHTML = `
+                    <div class="border-b-2 ${stage.borderColor} pb-3 mb-6 flex flex-col md:flex-row md:items-end gap-3">
+                        <h2 class="text-2xl font-black text-slate-800">${stage.stageTitle}</h2>
+                        <p class="text-slate-500 font-medium pb-1">${stage.stageDesc}</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="stage-cards-${stageIndex}">
+                    </div>
+                `;
+                container.appendChild(stageSection);
+
+                const cardsContainer = document.getElementById(`stage-cards-${stageIndex}`);
+
+                // 建立卡片
+                stage.cards.forEach((card, cardIndex) => {
+                    const cardEl = document.createElement('div');
+                    cardEl.className = `bg-white rounded-xl p-6 border-t-4 ${stage.borderColor} card-hover shadow-md cursor-pointer relative overflow-hidden group`;
+                    
+                    // 隱藏的資料屬性，供點擊時使用
+                    cardEl.dataset.lesson = card.lesson;
+                    cardEl.dataset.title = card.title;
+                    cardEl.dataset.emoji = card.emoji;
+                    cardEl.dataset.details = card.details;
+                    cardEl.dataset.prompt = card.prompt;
+                    cardEl.dataset.color = stage.headerColor;
+
+                    cardEl.innerHTML = `
+                        <div class="flex justify-between items-start mb-4">
+                            <span class="text-xs font-bold text-white ${stage.headerColor} px-3 py-1 rounded-full shadow-sm">${card.lesson}</span>
+                            <span class="text-3xl filter drop-shadow-sm transition-transform group-hover:scale-125 duration-300">${card.emoji}</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800 mb-2 group-hover:${stage.iconColor} transition-colors">${card.title}</h3>
+                        <p class="text-slate-600 text-sm mb-4 line-clamp-2">${card.shortDesc}</p>
+                        <div class="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between text-sm font-bold ${stage.iconColor}">
+                            <span>查看詳細重點與提示詞</span>
+                            <span class="text-lg group-hover:translate-x-1 transition-transform">→</span>
+                        </div>
+                    `;
+
+                    // 點擊事件：開啟 Modal
+                    cardEl.addEventListener('click', () => {
+                        initAudio();
+                        playClickSound();
+                        openModal(cardEl.dataset);
+                    });
+
+                    cardsContainer.appendChild(cardEl);
+                });
+            });
+        }
+
+        // --- Modal 控制 ---
+        const modalBackdrop = document.getElementById('modal-backdrop');
+        const modalCard = document.getElementById('modal-card');
+        const modalHeader = document.getElementById('modal-header');
+        const modalTitle = document.getElementById('modal-title');
+        const modalDetails = document.getElementById('modal-details');
+        const modalPrompt = document.getElementById('modal-prompt');
+        const closeModalBtn = document.getElementById('close-modal');
+        const copyBtn = document.getElementById('copy-btn');
+        const toast = document.getElementById('toast');
+
+        function openModal(data) {
+            // 設定內容
+            modalTitle.innerHTML = `<span class="text-2xl">${data.emoji}</span> ${data.lesson}：${data.title}`;
+            modalDetails.innerHTML = data.details;
+            modalPrompt.value = data.prompt;
+            
+            // 設定標題顏色
+            modalHeader.className = `px-6 py-4 flex justify-between items-center text-white ${data.color}`;
+
+            // 顯示動畫
+            modalBackdrop.classList.remove('hidden');
+            modalCard.classList.remove('modal-exit');
+            modalCard.classList.add('modal-enter');
+            document.body.style.overflow = 'hidden'; // 防止背景滾動
+        }
+
+        function closeModal() {
+            modalCard.classList.remove('modal-enter');
+            modalCard.classList.add('modal-exit');
+            
+            // 等待動畫結束再隱藏
+            setTimeout(() => {
+                modalBackdrop.classList.add('hidden');
+                document.body.style.overflow = ''; 
+            }, 200);
+        }
+
+        closeModalBtn.addEventListener('click', () => {
+            playClickSound();
+            closeModal();
+        });
+        
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) {
+                closeModal();
+            }
+        });
+
+        // --- 複製功能 ---
+        copyBtn.addEventListener('click', () => {
+            initAudio();
+            modalPrompt.select();
+            modalPrompt.setSelectionRange(0, 99999); // for mobile
+
+            try {
+                // 優先使用 clipboard API
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(modalPrompt.value).then(showToast);
+                } else {
+                    // Fallback
+                    document.execCommand('copy');
+                    showToast();
+                }
+            } catch (err) {
+                console.error('複製失敗:', err);
+                alert('複製失敗，請手動選取複製。');
+            }
+        });
+
+        function showToast() {
+            playSuccessSound();
+            
+            // 按鈕視覺回饋
+            const originalHtml = copyBtn.innerHTML;
+            copyBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>已複製！</span>`;
+            copyBtn.classList.replace('bg-blue-600', 'bg-green-500');
+            copyBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-600');
+            
+            // Toast 動畫
+            toast.classList.remove('invisible');
+            toast.classList.remove('toast-show');
+            void toast.offsetWidth; // trigger reflow
+            toast.classList.add('toast-show');
+
+            setTimeout(() => {
+                copyBtn.innerHTML = originalHtml;
+                copyBtn.classList.replace('bg-green-500', 'bg-blue-600');
+                copyBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-700');
+            }, 2000);
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            renderContent();
+            
+            // 初始化音效 (綁定在第一次點擊任意處)
+            document.body.addEventListener('click', initAudio, { once: true });
+        });
+
+    </script>
+</body>
+</html>
