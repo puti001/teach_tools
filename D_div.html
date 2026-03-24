@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 直式除法產生器 (批次版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+        body {
+            font-family: 'Nunito', 'Microsoft JhengHei', sans-serif;
+            background-color: #f0f4f8; 
+        }
+        .puti-header {
+            background-color: #1A237E; 
+            color: #00FFFF; 
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+        }
+        .puti-btn {
+            background-color: #D4AF37; 
+            color: #1A237E;
+            transition: all 0.2s ease;
+        }
+        .puti-btn:hover {
+            background-color: #bfa030;
+            transform: translateY(-2px);
+        }
+        canvas {
+            background-color: #ffffff;
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+        input[type=range] {
+            accent-color: #D4AF37;
+        }
+        
+        /* 列印模式設定：隱藏不必要的 UI，讓畫面乾淨適合做解答本 */
+        @media print {
+            body { background-color: #ffffff; }
+            .no-print { display: none !important; }
+            .card-container { 
+                box-shadow: none !important; 
+                border: 1px solid #e2e8f0; 
+                page-break-inside: avoid; /* 避免題目被切成兩半 */
+                margin-bottom: 20px;
+            }
+            #resultsArea { gap: 20px; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <!-- 主控台 (列印時會隱藏) -->
+    <div class="no-print w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden mb-8 border-2 border-[#1A237E]/10">
+        <div class="puti-header p-6 text-center relative flex flex-col md:flex-row justify-between items-center">
+            <div class="md:w-1/4"></div> <!-- 排版平衡用 -->
+            <div class="text-center md:w-2/4">
+                <h1 class="text-3xl font-bold tracking-wider">Puti-AI 直式除法產生器</h1>
+                <p class="text-sm mt-2 text-cyan-100/80">GiGi 數位助手 - 支援多題批次生成</p>
+            </div>
+            <div class="mt-4 md:mt-0 md:w-1/4 text-right pr-4">
+                <button onclick="window.print()" class="bg-white text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow hover:bg-gray-100 transition flex items-center justify-center gap-2 ml-auto">
+                    <span>🖨️</span> 列印解答本
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <label class="block text-gray-700 font-bold mb-2">請貼上除法題庫 (每行一題，支援 / 或 ÷ )</label>
+            <div class="flex flex-col md:flex-row gap-4">
+                <textarea id="mathInput" rows="5" class="flex-1 px-4 py-3 text-lg border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#D4AF37] tracking-widest leading-relaxed resize-y" placeholder="例如：&#10;120 / 5&#10;1234 ÷ 12&#10;9876 / 34">120 / 5
+1234 ÷ 12</textarea>
+                <div class="flex flex-col justify-end gap-2">
+                    <button onclick="processBatchInput()" class="puti-btn font-bold py-4 px-8 rounded-lg shadow-md h-full md:h-auto whitespace-nowrap text-lg">
+                        🚀 一鍵生成
+                    </button>
+                </div>
+            </div>
+            <div id="errorMsg" class="text-red-500 font-bold mt-2 hidden">Oops！沒有找到正確格式的題目喔，請檢查一下格式 (如: 12 / 3)。</div>
+        </div>
+    </div>
+
+    <!-- 畫布結果區 -->
+    <div id="resultsArea" class="w-full max-w-6xl flex flex-wrap justify-center gap-8 mb-10">
+        <!-- 生成的畫布卡片會插在這裡 -->
+    </div>
+
+    <!-- 版權宣告區 -->
+    <div class="no-print mt-auto text-center text-gray-500 text-xs sm:text-sm px-4">
+        <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，</p>
+        <p>嚴禁商用與任何侵權、不尊重著作權的行為，</p>
+        <p>更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-500 hover:underline font-bold">點此前往</a></p>
+    </div>
+
+<script>
+    // 繪圖排版設定
+    const cellW = 35; 
+    const cellH = 45; 
+    const startX = 60; 
+    const startY = 60; 
+
+    // 初始化範例
+    window.onload = () => { processBatchInput(); };
+
+    function processBatchInput() {
+        const inputLines = document.getElementById("mathInput").value.split('\n');
+        const resultsArea = document.getElementById("resultsArea");
+        const errorMsg = document.getElementById("errorMsg");
+        
+        resultsArea.innerHTML = ''; // 清空舊的結果
+        errorMsg.classList.add('hidden');
+        
+        let validCount = 0;
+
+        inputLines.forEach((line, index) => {
+            let trimLine = line.trim();
+            if (!trimLine) return;
+
+            let parts = trimLine.split(/[/÷]/);
+            if (parts.length !== 2) return;
+
+            let dividendStr = parts[0].trim();
+            let divisorStr = parts[1].trim();
+
+            if (/^\d+$/.test(dividendStr) && /^\d+$/.test(divisorStr)) {
+                let divisor = parseInt(divisorStr, 10);
+                if (divisor > 0) {
+                    validCount++;
+                    createDivisionCard(dividendStr, divisor, trimLine, validCount);
+                }
+            }
+        });
+
+        if (validCount === 0) {
+            errorMsg.classList.remove('hidden');
+        }
+    }
+
+    // 負責計算座標資料的純函數
+    function calculateDivisionData(DStr, divisor) {
+        let renderData = { maxOrder: 0, chars: [], lines: [], symOrder: 0, len_d: divisor.toString().length, len_D: DStr.length };
+        
+        function addText(str, row, endCol, order) {
+            let s = str.toString();
+            for(let k=0; k<s.length; k++) {
+                renderData.chars.push({ char: s[s.length - 1 - k], row: row, col: endCol - k, order: order });
+            }
+        }
+
+        let order = 0; 
+        renderData.symOrder = order;
+        addText(divisor.toString(), 1, renderData.len_d - 1, order);
+        addText(DStr, 1, renderData.len_d + renderData.len_D, order);
+
+        let cur_row = 2;
+        let rem = 0;
+        let started = false;
+
+        for (let i = 0; i < renderData.len_D; i++) {
+            let digit = DStr[i];
+            let absCol = renderData.len_d + 1 + i;
+            let val = rem * 10 + parseInt(digit, 10);
+
+            if (!started) {
+                if (val >= divisor || i === renderData.len_D - 1) {
+                    started = true;
+                    let q = Math.floor(val / divisor);
+                    
+                    order++; addText(q.toString(), 0, absCol, order);
+
+                    if (q > 0) {
+                        let prod = q * divisor;
+                        order++; addText(prod.toString(), cur_row, absCol, order);
+
+                        order++; 
+                        let startCol = absCol - prod.toString().length + 1;
+                        let endCol = renderData.len_d + renderData.len_D; 
+                        renderData.lines.push({ row: cur_row, startCol: startCol, endCol: endCol, order: order });
+
+                        cur_row++;
+                        rem = val - prod;
+                        
+                        if (rem > 0 || i === renderData.len_D - 1) {
+                            order++; addText(rem.toString(), cur_row, absCol, order);
+                        }
+                    } else {
+                        rem = val;
+                        if (i === renderData.len_D - 1) {
+                            order++; addText(rem.toString(), cur_row, absCol, order);
+                        }
+                    }
+                } else { rem = val; }
+            } else {
+                order++; addText(digit, cur_row, absCol, order);
+                let q = Math.floor(val / divisor);
+                order++; addText(q.toString(), 0, absCol, order);
+
+                if (q > 0) {
+                    let prod = q * divisor;
+                    order++; addText(prod.toString(), cur_row + 1, absCol, order);
+
+                    order++; 
+                    let startCol = absCol - prod.toString().length + 1;
+                    let endCol = renderData.len_d + renderData.len_D; 
+                    renderData.lines.push({ row: cur_row + 1, startCol: startCol, endCol: endCol, order: order });
+
+                    cur_row += 2;
+                    rem = val - prod;
+                    
+                    if (rem > 0 || i === renderData.len_D - 1) {
+                        order++; addText(rem.toString(), cur_row, absCol, order);
+                    }
+                } else { rem = val; }
+            }
+        }
+        renderData.maxOrder = order;
+        renderData.finalRow = cur_row;
+        return renderData;
+    }
+
+    // 動態產生獨立的題目卡片 (Canvas + 控制器)
+    function createDivisionCard(DStr, divisor, originalText, idNum) {
+        const resultsArea = document.getElementById("resultsArea");
+        
+        let renderData = calculateDivisionData(DStr, divisor);
+        let canvasWidth = startX * 2 + (renderData.len_d + renderData.len_D + 1) * cellW;
+        let canvasHeight = startY * 2 + (renderData.finalRow + 1) * cellH;
+
+        // 建立卡片外框
+        const card = document.createElement('div');
+        card.className = "card-container bg-white p-4 rounded-xl shadow-lg flex flex-col items-center relative transition hover:shadow-xl w-full max-w-[400px]";
+        
+        // 題目編號標籤
+        const label = document.createElement('div');
+        label.className = "no-print absolute top-3 left-3 bg-[#1A237E]/10 text-[#1A237E] font-bold text-xs px-2 py-1 rounded";
+        label.innerText = `Q${idNum}: ${originalText}`;
+        card.appendChild(label);
+
+        // Canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        card.appendChild(canvas);
+
+        // 控制器區 (列印時隱藏)
+        const controlDiv = document.createElement('div');
+        controlDiv.className = "no-print w-full mt-4 bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col gap-2";
+        
+        const sliderLabel = document.createElement('div');
+        sliderLabel.className = "text-xs text-gray-500 font-bold flex justify-between";
+        sliderLabel.innerHTML = `<span>分步演示</span><span class="step-text text-[#D4AF37]">完成</span>`;
+        
+        const slider = document.createElement('input');
+        slider.type = "range";
+        slider.min = "0";
+        slider.max = renderData.maxOrder;
+        slider.value = renderData.maxOrder;
+        slider.className = "w-full cursor-pointer";
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = "mt-2 bg-gray-200 text-gray-700 hover:bg-[#D4AF37] hover:text-[#1A237E] font-bold py-1 px-3 rounded text-sm transition";
+        downloadBtn.innerText = "📥 儲存單題圖片";
+        downloadBtn.onclick = () => {
+            const link = document.createElement('a');
+            link.download = `直式_${originalText.replace(/\s+/g, '')}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+
+        controlDiv.appendChild(sliderLabel);
+        controlDiv.appendChild(slider);
+        controlDiv.appendChild(downloadBtn);
+        card.appendChild(controlDiv);
+        resultsArea.appendChild(card);
+
+        // 綁定繪圖邏輯到這個 Canvas
+        const ctx = canvas.getContext('2d');
+        const draw = () => drawCanvasContext(ctx, canvas, parseInt(slider.value, 10), renderData);
+        
+        slider.oninput = () => {
+            let val = parseInt(slider.value, 10);
+            let span = sliderLabel.querySelector('.step-text');
+            if (val === 0) span.innerText = "題目";
+            else if (val === renderData.maxOrder) span.innerText = "完成";
+            else span.innerText = `步 ${val}`;
+            draw();
+        };
+
+        // 首次繪製
+        draw();
+    }
+
+    // 實際將資料畫上畫布的函數
+    function drawCanvasContext(ctx, canvas, currentOrder, renderData) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Puti-AI 隨機隱藏水印
+        ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
+        ctx.font = "14px Arial";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "bottom";
+        ctx.fillText("©Puti-AI", canvas.width - 15, canvas.height - 15);
+        ctx.fillText("©Puti-AI", 70, 30);
+
+        ctx.font = "bold 28px 'Nunito', sans-serif"; 
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        renderData.chars.forEach(item => {
+            if (item.order <= currentOrder) {
+                let cx = startX + item.col * cellW + cellW/2;
+                let cy = startY + item.row * cellH + cellH/2;
+                ctx.fillStyle = (item.row === 0) ? "#D4AF37" : "#2d3748";
+                ctx.fillText(item.char, cx, cy);
+            }
+        });
+
+        ctx.strokeStyle = "#1A237E"; 
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+
+        if (renderData.symOrder <= currentOrder) {
+            let divLineX1 = startX + renderData.len_d * cellW + cellW * 0.15;
+            let divLineX2 = startX + (renderData.len_d + renderData.len_D + 1) * cellW;
+            let divLineY = startY + 1 * cellH;
+
+            ctx.beginPath();
+            ctx.moveTo(divLineX1, divLineY);
+            ctx.lineTo(divLineX2, divLineY);
+            ctx.stroke();
+
+            // 完美的右凸除號弧線
+            ctx.beginPath();
+            ctx.moveTo(divLineX1, divLineY);
+            ctx.quadraticCurveTo(divLineX1 + cellW * 0.25, divLineY + cellH * 0.5, divLineX1 - cellW * 0.2, divLineY + cellH);
+            ctx.stroke();
+        }
+
+        renderData.lines.forEach(line => {
+            if (line.order <= currentOrder) {
+                let lx1 = startX + line.startCol * cellW - cellW * 0.1;
+                let lx2 = startX + (line.endCol + 1) * cellW - cellW * 0.1;
+                let ly = startY + (line.row + 1) * cellH; 
+
+                ctx.beginPath();
+                ctx.moveTo(lx1, ly);
+                ctx.lineTo(lx2, ly);
+                ctx.stroke();
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
