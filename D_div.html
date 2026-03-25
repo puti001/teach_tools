@@ -64,7 +64,7 @@
             </div>
             <div class="mt-4 md:mt-0 md:w-1/4 text-right pr-4 flex flex-col gap-2">
                 <button onclick="downloadAllImages()" class="bg-[#D4AF37] text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow hover:bg-[#bfa030] transition flex items-center justify-center gap-2 ml-auto w-full md:w-auto">
-                    <span>📥</span> 下載全卷圖片 (推薦)
+                    <span>📥</span> 下載全卷圖片 (現況儲存)
                 </button>
                 <button onclick="window.print()" class="bg-white text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow border border-gray-200 hover:bg-gray-100 transition flex items-center justify-center gap-2 ml-auto text-sm w-full md:w-auto">
                     <span>🖨️</span> 列印(限獨立視窗)
@@ -221,7 +221,6 @@
         let renderData = { maxOrder: 0, chars: [], lines: [], dots: [], symOrder: 0, len_d: divisor.toString().length, len_D: 0 };
         
         let digits = DStr.replace('.', '').split('');
-        // 🚀 GiGi 修正：記錄原始被除數的長度，用來判定線條要向右延伸到哪個欄位
         let original_len_D = digits.length; 
         
         let has_dot = DStr.includes('.');
@@ -296,7 +295,6 @@
                         order++; 
                         let lineLen = Math.max(val.toString().length, prodStr.length);
                         let startCol = absCol - lineLen + 1;
-                        // 🚀 GiGi 修正：右端強制延伸到被除數的最右邊(個位數)，或者當前小數補零的位數
                         let endCol = Math.max(absCol, renderData.len_d + original_len_D);
                         renderData.lines.push({ row: cur_row, startCol: startCol, endCol: endCol, order: order });
 
@@ -343,7 +341,6 @@
                     order++; 
                     let lineLen = Math.max(val.toString().length, prodStr.length);
                     let startCol = absCol - lineLen + 1;
-                    // 🚀 GiGi 修正：右端強制延伸到被除數的最右邊(個位數)，或者當前小數補零的位數
                     let endCol = Math.max(absCol, renderData.len_d + original_len_D); 
                     renderData.lines.push({ row: cur_row + 1, startCol: startCol, endCol: endCol, order: order });
 
@@ -392,13 +389,15 @@
         
         const sliderLabel = document.createElement('div');
         sliderLabel.className = "text-xs text-gray-500 font-bold flex justify-between";
-        sliderLabel.innerHTML = `<span>分步演示</span><span class="step-text text-[#D4AF37]">完成</span>`;
+        // 🚀 GiGi 修改：預設文字改為「題目」
+        sliderLabel.innerHTML = `<span>分步演示</span><span class="step-text text-[#D4AF37]">題目</span>`;
         
         const slider = document.createElement('input');
         slider.type = "range";
         slider.min = "0";
         slider.max = renderData.maxOrder;
-        slider.value = renderData.maxOrder;
+        // 🚀 GiGi 修改：預設為 0 (只顯示題目)
+        slider.value = "0";
         slider.className = "w-full cursor-pointer";
 
         const downloadBtn = document.createElement('button');
@@ -429,6 +428,7 @@
             draw();
         };
 
+        // 初始繪製，將根據 slider.value = 0 渲染
         draw();
     }
 
@@ -495,8 +495,6 @@
 
         renderData.lines.forEach(line => {
             if (line.order <= currentOrder) {
-                // 🚀 GiGi 終極修正：拔除錯誤的霸氣外露，還原精準對齊的內縮 padding
-                // 搭配上方計算出的正確 endCol，現在線條會一路畫到被除數的最右側並精準收尾！
                 let lx1 = startX + line.startCol * cellW + cellW * 0.1;
                 let lx2 = startX + (line.endCol + 1) * cellW - cellW * 0.1;
                 let ly = startY + (line.row + 1) * cellH; 
@@ -516,13 +514,8 @@
             return;
         }
 
-        cards.forEach(card => {
-            let slider = card.querySelector('input[type="range"]');
-            if(slider) {
-                slider.value = slider.max;
-                slider.dispatchEvent(new Event('input')); 
-            }
-        });
+        // 🚀 GiGi 修正：拔除了「下載前強制將所有拉桿拉到最滿」的邏輯
+        // 現在直接使用畫布上的「現況」進行合併截圖
 
         const cols = 2;
         const padding = 50;
