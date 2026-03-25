@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puti-AI 直式除法產生器 (批次版)</title>
+    <title>Puti-AI 直式除法產生器 (完美排版/全卷下載版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
@@ -35,56 +35,87 @@
             accent-color: #D4AF37;
         }
         
-        /* 列印模式設定：隱藏不必要的 UI，讓畫面乾淨適合做解答本 */
         @media print {
             body { background-color: #ffffff; }
             .no-print { display: none !important; }
+            #resultsArea { 
+                display: grid !important; 
+                grid-template-columns: repeat(2, 1fr) !important; 
+                gap: 20px !important; 
+            }
             .card-container { 
                 box-shadow: none !important; 
-                border: 1px solid #e2e8f0; 
-                page-break-inside: avoid; /* 避免題目被切成兩半 */
-                margin-bottom: 20px;
+                border: 1px solid #cbd5e1 !important; 
+                break-inside: avoid; 
+                margin-bottom: 0;
             }
-            #resultsArea { gap: 20px; }
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center py-10 px-4">
 
-    <!-- 主控台 (列印時會隱藏) -->
-    <div class="no-print w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden mb-8 border-2 border-[#1A237E]/10">
-        <div class="puti-header p-6 text-center relative flex flex-col md:flex-row justify-between items-center">
-            <div class="md:w-1/4"></div> <!-- 排版平衡用 -->
+    <!-- 主控台 -->
+    <div class="no-print w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden mb-8 border-2 border-[#1A237E]/10">
+        <div class="puti-header p-6 relative flex flex-col md:flex-row justify-between items-center">
+            <div class="md:w-1/4"></div> 
             <div class="text-center md:w-2/4">
                 <h1 class="text-3xl font-bold tracking-wider">Puti-AI 直式除法產生器</h1>
-                <p class="text-sm mt-2 text-cyan-100/80">GiGi 數位助手 - 支援多題批次生成</p>
+                <p class="text-sm mt-2 text-cyan-100/80">GiGi 數位助手 - 自動出題與全卷匯出</p>
             </div>
-            <div class="mt-4 md:mt-0 md:w-1/4 text-right pr-4">
-                <button onclick="window.print()" class="bg-white text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow hover:bg-gray-100 transition flex items-center justify-center gap-2 ml-auto">
-                    <span>🖨️</span> 列印解答本
+            <div class="mt-4 md:mt-0 md:w-1/4 text-right pr-4 flex flex-col gap-2">
+                <button onclick="downloadAllImages()" class="bg-[#D4AF37] text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow hover:bg-[#bfa030] transition flex items-center justify-center gap-2 ml-auto w-full md:w-auto">
+                    <span>📥</span> 下載全卷圖片 (推薦)
+                </button>
+                <button onclick="window.print()" class="bg-white text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow border border-gray-200 hover:bg-gray-100 transition flex items-center justify-center gap-2 ml-auto text-sm w-full md:w-auto">
+                    <span>🖨️</span> 列印(限獨立視窗)
                 </button>
             </div>
         </div>
         
         <div class="p-6">
-            <label class="block text-gray-700 font-bold mb-2">請貼上除法題庫 (每行一題，支援 / 或 ÷ )</label>
+            <div class="bg-blue-50 border border-blue-100 p-5 rounded-xl mb-6 flex flex-wrap gap-4 items-end justify-between shadow-sm">
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="block text-sm text-[#1A237E] font-bold mb-1">出題數量</label>
+                        <input type="number" id="genCount" value="10" min="1" max="50" class="w-20 px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-[#1A237E] font-bold mb-1">被除數 (m位數)</label>
+                        <input type="number" id="genM" value="3" min="1" max="6" class="w-24 px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-[#1A237E] font-bold mb-1">除數 (n位數)</label>
+                        <input type="number" id="genN" value="1" min="1" max="4" class="w-24 px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-sm text-[#1A237E] font-bold mb-1">整除條件</label>
+                        <select id="genDivisible" class="px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none bg-white font-bold text-gray-700">
+                            <option value="any">隨機 (皆可)</option>
+                            <option value="yes" selected>✅ 必須整除</option>
+                            <option value="no">❌ 必須有餘數</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="generateQuestions()" class="bg-[#1A237E] text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-800 transition whitespace-nowrap">
+                    🎲 幫我出題
+                </button>
+            </div>
+
+            <label class="block text-gray-700 font-bold mb-2">或手動貼上題庫 (不必刻意刪除題號或等號，GiGi 會自動過濾！)</label>
             <div class="flex flex-col md:flex-row gap-4">
-                <textarea id="mathInput" rows="5" class="flex-1 px-4 py-3 text-lg border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#D4AF37] tracking-widest leading-relaxed resize-y" placeholder="例如：&#10;120 / 5&#10;1234 ÷ 12&#10;9876 / 34">120 / 5
-1234 ÷ 12</textarea>
+                <textarea id="mathInput" rows="5" class="flex-1 px-4 py-3 text-lg border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#D4AF37] tracking-widest leading-relaxed resize-y" placeholder="例如：&#10;1. 120 / 5 = &#10;第2題：1234 ÷ 12&#10;(3) 104 / 5="></textarea>
                 <div class="flex flex-col justify-end gap-2">
                     <button onclick="processBatchInput()" class="puti-btn font-bold py-4 px-8 rounded-lg shadow-md h-full md:h-auto whitespace-nowrap text-lg">
-                        🚀 一鍵生成
+                        🚀 一鍵生成直式
                     </button>
                 </div>
             </div>
-            <div id="errorMsg" class="text-red-500 font-bold mt-2 hidden">Oops！沒有找到正確格式的題目喔，請檢查一下格式 (如: 12 / 3)。</div>
+            <div id="errorMsg" class="text-red-500 font-bold mt-2 hidden"></div>
         </div>
     </div>
 
-    <!-- 畫布結果區 -->
-    <div id="resultsArea" class="w-full max-w-6xl flex flex-wrap justify-center gap-8 mb-10">
-        <!-- 生成的畫布卡片會插在這裡 -->
-    </div>
+    <!-- 畫布結果區 (雙欄排版) -->
+    <div id="resultsArea" class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 mb-10"></div>
 
     <!-- 版權宣告區 -->
     <div class="no-print mt-auto text-center text-gray-500 text-xs sm:text-sm px-4">
@@ -94,156 +125,268 @@
     </div>
 
 <script>
-    // 繪圖排版設定
     const cellW = 35; 
     const cellH = 45; 
     const startX = 60; 
-    const startY = 60; 
+    const startY = 70; 
 
-    // 初始化範例
-    window.onload = () => { processBatchInput(); };
+    function generateQuestions() {
+        let count = parseInt(document.getElementById('genCount').value) || 10;
+        let m = parseInt(document.getElementById('genM').value) || 3;
+        let n = parseInt(document.getElementById('genN').value) || 1;
+        let divRule = document.getElementById('genDivisible').value;
+
+        if (m < n) {
+            alert("GiGi 提醒：被除數的位數不能小於除數喔！");
+            return;
+        }
+
+        let generated = [];
+        for (let i = 0; i < count; i++) {
+            let dMin = Math.pow(10, n - 1);
+            let dMax = Math.pow(10, n) - 1;
+            if (n === 1) dMin = 2; 
+            
+            let d = Math.floor(Math.random() * (dMax - dMin + 1)) + dMin;
+            let DMin = Math.pow(10, m - 1);
+            let DMax = Math.pow(10, m) - 1;
+            
+            let D;
+            if (divRule === 'yes') { 
+                let qMin = Math.ceil(DMin / d);
+                let qMax = Math.floor(DMax / d);
+                if (qMin > qMax) {
+                    D = d * qMin; 
+                } else {
+                    let q = Math.floor(Math.random() * (qMax - qMin + 1)) + qMin;
+                    D = d * q;
+                }
+            } else if (divRule === 'no') { 
+                do {
+                    D = Math.floor(Math.random() * (DMax - DMin + 1)) + DMin;
+                } while (D % d === 0);
+            } else { 
+                D = Math.floor(Math.random() * (DMax - DMin + 1)) + DMin;
+            }
+            generated.push(`${D} ÷ ${d}`);
+        }
+        
+        document.getElementById('mathInput').value = generated.join('\n');
+        processBatchInput();
+    }
 
     function processBatchInput() {
         const inputLines = document.getElementById("mathInput").value.split('\n');
         const resultsArea = document.getElementById("resultsArea");
         const errorMsg = document.getElementById("errorMsg");
         
-        resultsArea.innerHTML = ''; // 清空舊的結果
+        resultsArea.innerHTML = ''; 
         errorMsg.classList.add('hidden');
         
         let validCount = 0;
+        let hasDivisorDecimalError = false;
 
-        inputLines.forEach((line, index) => {
+        inputLines.forEach((line) => {
             let trimLine = line.trim();
             if (!trimLine) return;
 
-            let parts = trimLine.split(/[/÷]/);
-            if (parts.length !== 2) return;
+            let mathMatch = trimLine.match(/(\d+(?:\.\d+)?)\s*[/÷]\s*(\d+(?:\.\d+)?)/);
+            
+            if (mathMatch) {
+                let dividendStr = mathMatch[1];
+                let divisorStr = mathMatch[2];
 
-            let dividendStr = parts[0].trim();
-            let divisorStr = parts[1].trim();
-
-            if (/^\d+$/.test(dividendStr) && /^\d+$/.test(divisorStr)) {
-                let divisor = parseInt(divisorStr, 10);
-                if (divisor > 0) {
-                    validCount++;
-                    createDivisionCard(dividendStr, divisor, trimLine, validCount);
+                if (divisorStr.includes('.')) {
+                    hasDivisorDecimalError = true;
+                } else {
+                    let divisor = parseInt(divisorStr, 10);
+                    if (divisor > 0) {
+                        validCount++;
+                        createDivisionCard(dividendStr, divisor, validCount);
+                    }
                 }
             }
         });
 
-        if (validCount === 0) {
+        if (hasDivisorDecimalError) {
+            errorMsg.innerHTML = "GiGi 報告：目前支援「被除數」有小數點，<strong>除數請先保持整數喔！</strong>";
+            errorMsg.classList.remove('hidden');
+        } else if (validCount === 0) {
+            errorMsg.innerHTML = "Oops！沒有找到正確格式的題目喔，請檢查一下。";
             errorMsg.classList.remove('hidden');
         }
     }
 
-    // 負責計算座標資料的純函數
     function calculateDivisionData(DStr, divisor) {
-        let renderData = { maxOrder: 0, chars: [], lines: [], symOrder: 0, len_d: divisor.toString().length, len_D: DStr.length };
+        let renderData = { maxOrder: 0, chars: [], lines: [], dots: [], symOrder: 0, len_d: divisor.toString().length, len_D: 0 };
         
-        function addText(str, row, endCol, order) {
-            let s = str.toString();
-            for(let k=0; k<s.length; k++) {
-                renderData.chars.push({ char: s[s.length - 1 - k], row: row, col: endCol - k, order: order });
-            }
-        }
-
+        let digits = DStr.replace('.', '').split('');
+        // 🚀 GiGi 修正：記錄原始被除數的長度，用來判定線條要向右延伸到哪個欄位
+        let original_len_D = digits.length; 
+        
+        let has_dot = DStr.includes('.');
+        let ones_index = has_dot ? DStr.indexOf('.') - 1 : digits.length - 1;
+        let dot_col_offset = has_dot ? DStr.indexOf('.') - 0.5 : -1;
+        
         let order = 0; 
         renderData.symOrder = order;
-        addText(divisor.toString(), 1, renderData.len_d - 1, order);
-        addText(DStr, 1, renderData.len_d + renderData.len_D, order);
+
+        let divisorStr = divisor.toString();
+        for(let k=0; k<divisorStr.length; k++) {
+            renderData.chars.push({ char: divisorStr[k], row: 1, col: renderData.len_d - 1 - (divisorStr.length - 1 - k), order: order });
+        }
+
+        for(let k=0; k<digits.length; k++) {
+            renderData.chars.push({ char: digits[k], row: 1, col: renderData.len_d + 1 + k, order: order });
+        }
+
+        if (has_dot) {
+            let dc = renderData.len_d + 1 + dot_col_offset;
+            renderData.dots.push({ row: 1, col: dc, order: order });
+            renderData.dots.push({ row: 0, col: dc, order: order });
+        }
 
         let cur_row = 2;
         let rem = 0;
         let started = false;
+        let max_added_zeros = 6; 
+        let added_zeros = 0;
+        let i = 0;
 
-        for (let i = 0; i < renderData.len_D; i++) {
-            let digit = DStr[i];
+        while (i < digits.length || rem > 0) {
+            if (i >= digits.length) {
+                if (added_zeros >= max_added_zeros) break; 
+                
+                if (!has_dot) {
+                    has_dot = true;
+                    dot_col_offset = i - 0.5;
+                    let dc = renderData.len_d + 1 + dot_col_offset;
+                    order++; 
+                    renderData.dots.push({ row: 1, col: dc, order: order }); 
+                    renderData.dots.push({ row: 0, col: dc, order: order }); 
+                }
+                
+                digits.push('0');
+                added_zeros++;
+                
+                order++;
+                renderData.chars.push({ char: '0', row: 1, col: renderData.len_d + 1 + i, order: order, color: '#9ca3af' }); 
+            }
+
+            let digit = digits[i];
             let absCol = renderData.len_d + 1 + i;
             let val = rem * 10 + parseInt(digit, 10);
 
             if (!started) {
-                if (val >= divisor || i === renderData.len_D - 1) {
+                if (val >= divisor || i >= ones_index) {
                     started = true;
                     let q = Math.floor(val / divisor);
                     
-                    order++; addText(q.toString(), 0, absCol, order);
+                    order++; 
+                    renderData.chars.push({ char: q.toString(), row: 0, col: absCol, order: order });
 
                     if (q > 0) {
                         let prod = q * divisor;
-                        order++; addText(prod.toString(), cur_row, absCol, order);
+                        order++; 
+                        let prodStr = prod.toString();
+                        for(let k=0; k<prodStr.length; k++) {
+                            renderData.chars.push({ char: prodStr[k], row: cur_row, col: absCol - (prodStr.length - 1 - k), order: order });
+                        }
 
                         order++; 
-                        let startCol = absCol - prod.toString().length + 1;
-                        let endCol = renderData.len_d + renderData.len_D; 
+                        let lineLen = Math.max(val.toString().length, prodStr.length);
+                        let startCol = absCol - lineLen + 1;
+                        // 🚀 GiGi 修正：右端強制延伸到被除數的最右邊(個位數)，或者當前小數補零的位數
+                        let endCol = Math.max(absCol, renderData.len_d + original_len_D);
                         renderData.lines.push({ row: cur_row, startCol: startCol, endCol: endCol, order: order });
 
                         cur_row++;
                         rem = val - prod;
                         
-                        if (rem > 0 || i === renderData.len_D - 1) {
-                            order++; addText(rem.toString(), cur_row, absCol, order);
+                        if (rem > 0 || i === digits.length - 1) {
+                            order++; 
+                            let remStr = rem.toString();
+                            for(let k=0; k<remStr.length; k++) {
+                                 renderData.chars.push({ char: remStr[k], row: cur_row, col: absCol - (remStr.length - 1 - k), order: order });
+                            }
                         }
                     } else {
                         rem = val;
-                        if (i === renderData.len_D - 1) {
-                            order++; addText(rem.toString(), cur_row, absCol, order);
+                        if (i === digits.length - 1) {
+                            order++;
+                            let remStr = rem.toString();
+                            for(let k=0; k<remStr.length; k++) {
+                                 renderData.chars.push({ char: remStr[k], row: cur_row, col: absCol - (remStr.length - 1 - k), order: order });
+                            }
                         }
                     }
-                } else { rem = val; }
+                } else { 
+                    rem = val; 
+                }
             } else {
-                order++; addText(digit, cur_row, absCol, order);
+                order++; 
+                let charColor = (i >= digits.length - added_zeros) ? '#9ca3af' : '#2d3748';
+                renderData.chars.push({ char: digit, row: cur_row, col: absCol, order: order, color: charColor });
+                
                 let q = Math.floor(val / divisor);
-                order++; addText(q.toString(), 0, absCol, order);
+                order++; 
+                renderData.chars.push({ char: q.toString(), row: 0, col: absCol, order: order });
 
                 if (q > 0) {
                     let prod = q * divisor;
-                    order++; addText(prod.toString(), cur_row + 1, absCol, order);
+                    order++; 
+                    let prodStr = prod.toString();
+                    for(let k=0; k<prodStr.length; k++) {
+                        renderData.chars.push({ char: prodStr[k], row: cur_row + 1, col: absCol - (prodStr.length - 1 - k), order: order });
+                    }
 
                     order++; 
-                    let startCol = absCol - prod.toString().length + 1;
-                    let endCol = renderData.len_d + renderData.len_D; 
+                    let lineLen = Math.max(val.toString().length, prodStr.length);
+                    let startCol = absCol - lineLen + 1;
+                    // 🚀 GiGi 修正：右端強制延伸到被除數的最右邊(個位數)，或者當前小數補零的位數
+                    let endCol = Math.max(absCol, renderData.len_d + original_len_D); 
                     renderData.lines.push({ row: cur_row + 1, startCol: startCol, endCol: endCol, order: order });
 
                     cur_row += 2;
                     rem = val - prod;
                     
-                    if (rem > 0 || i === renderData.len_D - 1) {
-                        order++; addText(rem.toString(), cur_row, absCol, order);
+                    if (rem > 0 || i === digits.length - 1) {
+                        order++; 
+                        let remStr = rem.toString();
+                        for(let k=0; k<remStr.length; k++) {
+                             renderData.chars.push({ char: remStr[k], row: cur_row, col: absCol - (remStr.length - 1 - k), order: order });
+                        }
                     }
-                } else { rem = val; }
+                } else { 
+                    rem = val; 
+                }
             }
+            i++;
         }
+        
         renderData.maxOrder = order;
         renderData.finalRow = cur_row;
+        renderData.len_D = digits.length; 
         return renderData;
     }
 
-    // 動態產生獨立的題目卡片 (Canvas + 控制器)
-    function createDivisionCard(DStr, divisor, originalText, idNum) {
+    function createDivisionCard(DStr, divisor, idNum) {
         const resultsArea = document.getElementById("resultsArea");
         
         let renderData = calculateDivisionData(DStr, divisor);
+        renderData.qText = `Q${idNum}:  ${DStr} ÷ ${divisor}`; 
+
         let canvasWidth = startX * 2 + (renderData.len_d + renderData.len_D + 1) * cellW;
         let canvasHeight = startY * 2 + (renderData.finalRow + 1) * cellH;
 
-        // 建立卡片外框
         const card = document.createElement('div');
-        card.className = "card-container bg-white p-4 rounded-xl shadow-lg flex flex-col items-center relative transition hover:shadow-xl w-full max-w-[400px]";
+        card.className = "card-container bg-white p-4 rounded-xl shadow-lg flex flex-col items-center relative transition hover:shadow-xl w-full";
         
-        // 題目編號標籤
-        const label = document.createElement('div');
-        label.className = "no-print absolute top-3 left-3 bg-[#1A237E]/10 text-[#1A237E] font-bold text-xs px-2 py-1 rounded";
-        label.innerText = `Q${idNum}: ${originalText}`;
-        card.appendChild(label);
-
-        // Canvas
         const canvas = document.createElement('canvas');
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
         card.appendChild(canvas);
 
-        // 控制器區 (列印時隱藏)
         const controlDiv = document.createElement('div');
         controlDiv.className = "no-print w-full mt-4 bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col gap-2";
         
@@ -263,7 +406,7 @@
         downloadBtn.innerText = "📥 儲存單題圖片";
         downloadBtn.onclick = () => {
             const link = document.createElement('a');
-            link.download = `直式_${originalText.replace(/\s+/g, '')}.png`;
+            link.download = `直式_Q${idNum}_${DStr}除以${divisor}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         };
@@ -274,7 +417,6 @@
         card.appendChild(controlDiv);
         resultsArea.appendChild(card);
 
-        // 綁定繪圖邏輯到這個 Canvas
         const ctx = canvas.getContext('2d');
         const draw = () => drawCanvasContext(ctx, canvas, parseInt(slider.value, 10), renderData);
         
@@ -287,22 +429,25 @@
             draw();
         };
 
-        // 首次繪製
         draw();
     }
 
-    // 實際將資料畫上畫布的函數
     function drawCanvasContext(ctx, canvas, currentOrder, renderData) {
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Puti-AI 隨機隱藏水印
+        ctx.fillStyle = "#1A237E"; 
+        ctx.font = "bold 18px 'Nunito', 'Microsoft JhengHei', sans-serif"; 
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText(renderData.qText, 15, 15);
+
         ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
         ctx.font = "14px Arial";
         ctx.textAlign = "right";
         ctx.textBaseline = "bottom";
         ctx.fillText("©Puti-AI", canvas.width - 15, canvas.height - 15);
-        ctx.fillText("©Puti-AI", 70, 30);
+        ctx.fillText("©Puti-AI", 70, 40);
 
         ctx.font = "bold 28px 'Nunito', sans-serif"; 
         ctx.textAlign = "center";
@@ -312,8 +457,19 @@
             if (item.order <= currentOrder) {
                 let cx = startX + item.col * cellW + cellW/2;
                 let cy = startY + item.row * cellH + cellH/2;
-                ctx.fillStyle = (item.row === 0) ? "#D4AF37" : "#2d3748";
+                ctx.fillStyle = item.color ? item.color : ((item.row === 0) ? "#D4AF37" : "#2d3748");
                 ctx.fillText(item.char, cx, cy);
+            }
+        });
+
+        renderData.dots.forEach(dot => {
+            if (dot.order <= currentOrder) {
+                let cx = startX + dot.col * cellW + cellW/2;
+                let cy = startY + dot.row * cellH + cellH/2 + cellH/4; 
+                ctx.fillStyle = (dot.row === 0) ? "#D4AF37" : "#2d3748";
+                ctx.beginPath();
+                ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+                ctx.fill();
             }
         });
 
@@ -331,7 +487,6 @@
             ctx.lineTo(divLineX2, divLineY);
             ctx.stroke();
 
-            // 完美的右凸除號弧線
             ctx.beginPath();
             ctx.moveTo(divLineX1, divLineY);
             ctx.quadraticCurveTo(divLineX1 + cellW * 0.25, divLineY + cellH * 0.5, divLineX1 - cellW * 0.2, divLineY + cellH);
@@ -340,7 +495,9 @@
 
         renderData.lines.forEach(line => {
             if (line.order <= currentOrder) {
-                let lx1 = startX + line.startCol * cellW - cellW * 0.1;
+                // 🚀 GiGi 終極修正：拔除錯誤的霸氣外露，還原精準對齊的內縮 padding
+                // 搭配上方計算出的正確 endCol，現在線條會一路畫到被除數的最右側並精準收尾！
+                let lx1 = startX + line.startCol * cellW + cellW * 0.1;
                 let lx2 = startX + (line.endCol + 1) * cellW - cellW * 0.1;
                 let ly = startY + (line.row + 1) * cellH; 
 
@@ -350,6 +507,95 @@
                 ctx.stroke();
             }
         });
+    }
+
+    function downloadAllImages() {
+        const cards = document.querySelectorAll('.card-container');
+        if (cards.length === 0) {
+            alert("GiGi 提醒：請先出題或貼上題目，再下載喔！");
+            return;
+        }
+
+        cards.forEach(card => {
+            let slider = card.querySelector('input[type="range"]');
+            if(slider) {
+                slider.value = slider.max;
+                slider.dispatchEvent(new Event('input')); 
+            }
+        });
+
+        const cols = 2;
+        const padding = 50;
+        const gap = 40;
+        const headerHeight = 100;
+        
+        let maxW = 0;
+        let canvases = [];
+        cards.forEach(card => {
+            let cvs = card.querySelector('canvas');
+            if(cvs) {
+                maxW = Math.max(maxW, cvs.width);
+                canvases.push(cvs);
+            }
+        });
+
+        const rows = Math.ceil(canvases.length / cols);
+        let rowHeights = new Array(rows).fill(0);
+        
+        canvases.forEach((cvs, idx) => {
+            let r = Math.floor(idx / cols);
+            rowHeights[r] = Math.max(rowHeights[r], cvs.height);
+        });
+
+        let totalHeight = padding * 2 + headerHeight + gap * Math.max(0, rows - 1);
+        rowHeights.forEach(h => totalHeight += h);
+        
+        let totalWidth = padding * 2 + maxW * 2 + gap;
+
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = totalWidth;
+        finalCanvas.height = totalHeight;
+        const ctx = finalCanvas.getContext('2d');
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, totalWidth, totalHeight);
+
+        ctx.fillStyle = "#1A237E";
+        ctx.font = "bold 42px 'Nunito', 'Microsoft JhengHei', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Puti-AI 直式除法解答卷", totalWidth / 2, padding + headerHeight / 2 - 15);
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
+        ctx.font = "30px Arial";
+        ctx.textAlign = "right";
+        for (let i = 0; i < totalHeight; i += 400) {
+            ctx.fillText("©Puti-AI", totalWidth - 40, i + 150);
+            ctx.fillText("©Puti-AI", 180, i + 350);
+        }
+
+        let currentY = padding + headerHeight;
+        for (let r = 0; r < rows; r++) {
+            let idx1 = r * cols;
+            let idx2 = r * cols + 1;
+
+            if (idx1 < canvases.length) {
+                let cvs1 = canvases[idx1];
+                let x1 = padding + (maxW - cvs1.width) / 2; 
+                ctx.drawImage(cvs1, x1, currentY);
+            }
+            if (idx2 < canvases.length) {
+                let cvs2 = canvases[idx2];
+                let x2 = padding + maxW + gap + (maxW - cvs2.width) / 2; 
+                ctx.drawImage(cvs2, x2, currentY);
+            }
+            currentY += rowHeights[r] + gap;
+        }
+
+        const link = document.createElement('a');
+        link.download = `Puti_AI_解答卷_${new Date().getTime()}.png`;
+        link.href = finalCanvas.toDataURL('image/png');
+        link.click();
     }
 </script>
 
