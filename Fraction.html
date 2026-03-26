@@ -75,7 +75,7 @@
                 </div>
             </div>
             <div class="hidden md:block text-gigi-cyan text-sm border border-gigi-cyan px-3 py-1 rounded-full bg-gigi-blue/50">
-                Hi! 我是小吉，要出幾年級的題目呢？交給我！
+                Hi! 我是小吉，課本教的拆解算法我學會囉！
             </div>
         </div>
         <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#00ffff 1px, transparent 1px); background-size: 20px 20px;"></div>
@@ -87,7 +87,7 @@
         <!-- Left Panel: Controls -->
         <div class="w-full lg:w-1/3 bg-white p-6 rounded-xl shadow-lg border-t-4 border-gigi-gray flex flex-col gap-5 h-fit">
             
-            <!-- 🌟 新增：自動出題區塊 -->
+            <!-- 🌟 自動出題區塊 -->
             <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
                 <label class="block text-gigi-blue font-bold mb-3 flex items-center gap-2">
                     <svg class="w-5 h-5 text-gigi-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
@@ -128,7 +128,7 @@
                 <p class="text-xs text-gray-500 mt-1">💡 可直接修改上方產生的題目。帶分數請用空格隔開：<code class="bg-gray-200 px-1 rounded">2 1/3</code></p>
             </div>
 
-            <!-- 🌟 排版與字體設定 -->
+            <!-- 🌟 排版與設定區塊 -->
             <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col gap-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
@@ -149,7 +149,18 @@
                     </div>
                 </div>
                 
-                <!-- 新增：字體大小拉桿 -->
+                <!-- 🌟 新增：加減法解題邏輯設定 -->
+                <div class="pt-2 border-t border-gray-200">
+                    <label class="block text-gray-700 font-bold text-sm mb-2 flex items-center gap-2">
+                        <span>🧠 加減法解題步驟</span>
+                    </label>
+                    <select id="calc-method" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-gigi-yellow text-sm font-medium" onchange="generateMath()">
+                        <option value="textbook" selected>課本直觀法 (整數算整數/借位法)</option>
+                        <option value="improper">全化為假分數 (代數通用法)</option>
+                    </select>
+                </div>
+
+                <!-- 字體大小拉桿 -->
                 <div class="pt-2 border-t border-gray-200">
                     <label class="block text-gray-700 font-bold text-sm mb-2 flex justify-between">
                         <span>🔠 數學字體大小</span>
@@ -233,23 +244,20 @@
         window.stepData = {};
 
         document.addEventListener("DOMContentLoaded", () => {
-            // 初始隨機出一組四年級題目作為示範
             document.getElementById('auto-grade').value = '4';
-            document.getElementById('auto-count').value = '6';
-            autoGenerate();
+            document.getElementById('auto-count').value = '4';
+            // 給予測試課本例題的預設值
+            document.getElementById('math-input').value = "1 7/10 + 8/10 =\n2 1/10 - 1 7/10 =\n1 3/4 + 1/2 =\n3 1/4 - 1 3/4 =";
+            generateMath();
         });
 
-        // 🌟 字體大小動態更新
         function updateFontSize() {
             const size = document.getElementById('font-size-slider').value;
             document.documentElement.style.setProperty('--math-font-size', size + 'em');
             document.getElementById('font-size-display').innerText = size + 'x';
         }
 
-        // 🌟 核心：隨機自動出題引擎
-        function rand(min, max) {
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
+        function rand(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
         function autoGenerate() {
             const grade = parseInt(document.getElementById('auto-grade').value);
@@ -259,7 +267,6 @@
             for (let i = 0; i < count; i++) {
                 let q = "";
                 if (grade === 3) {
-                    // 三年級：同分母簡單加減 (結果不超過1，不出現負數)
                     let d = rand(3, 9);
                     let op = rand(0, 1) === 0 ? '+' : '-';
                     if (op === '+') {
@@ -273,7 +280,6 @@
                         q = `${n1}/${d} - ${n2}/${d} =`;
                     }
                 } else if (grade === 4) {
-                    // 四年級：帶分數與同分母進階加減
                     let d = rand(3, 9);
                     let op = rand(0, 1) === 0 ? '+' : '-';
                     let w1 = rand(1, 3);
@@ -288,7 +294,6 @@
                     } else {
                         let w2 = rand(0, w1);
                         let n2 = rand(1, d - 1);
-                        // 確保減法為正數
                         let val1 = w1 + (n1 / d);
                         let val2 = w2 + (n2 / d);
                         if (val1 <= val2) { w1 = w2 + 1; }
@@ -297,53 +302,40 @@
                         q = `${t1} - ${t2} =`;
                     }
                 } else if (grade === 5) {
-                    // 五年級：異分母加減、分數乘法
-                    let type = rand(0, 2); // 0:+, 1:-, 2:*
+                    let type = rand(0, 2); 
                     if (type === 0 || type === 1) {
                         let op = type === 0 ? '+' : '-';
-                        let d1 = rand(2, 8);
-                        let d2 = rand(2, 8);
-                        while (d1 === d2) { d2 = rand(2, 8); } // 確保異分母
-                        let n1 = rand(1, d1 - 1);
-                        let n2 = rand(1, d2 - 1);
+                        let d1 = rand(2, 8), d2 = rand(2, 8);
+                        while (d1 === d2) { d2 = rand(2, 8); } 
+                        let n1 = rand(1, d1 - 1), n2 = rand(1, d2 - 1);
                         
                         if (op === '-') {
-                            let val1 = n1 / d1;
-                            let val2 = n2 / d2;
-                            if (val1 <= val2) {
-                                // 數值交換確保正數
-                                let tmpN = n1, tmpD = d1;
-                                n1 = n2; d1 = d2;
-                                n2 = tmpN; d2 = tmpD;
+                            if ((n1/d1) <= (n2/d2)) {
+                                let tmpN = n1, tmpD = d1; n1 = n2; d1 = d2; n2 = tmpN; d2 = tmpD;
                             }
                             if ((n1/d1) === (n2/d2)) { n1 = d1-1; n2 = 1; }
                         }
                         q = `${n1}/${d1} ${op} ${n2}/${d2} =`;
                     } else {
-                        // 乘法
                         let d1 = rand(2, 7), n1 = rand(1, d1 - 1);
                         let d2 = rand(2, 7), n2 = rand(1, d2 - 1);
                         if (rand(0, 1) === 0) {
-                            q = `${rand(2, 6)} x ${n2}/${d2} =`; // 整數乘分數
+                            q = `${rand(2, 6)} x ${n2}/${d2} =`; 
                         } else {
-                            q = `${n1}/${d1} x ${n2}/${d2} =`; // 分數乘分數
+                            q = `${n1}/${d1} x ${n2}/${d2} =`; 
                         }
                     }
                 } else if (grade === 6) {
-                    // 六年級：分數除法與複雜四則
                     let type = rand(0, 2);
                     if (type === 0) {
-                        // 真分數除真分數
                         let d1 = rand(2, 9), n1 = rand(1, d1 - 1);
                         let d2 = rand(2, 9), n2 = rand(1, d2 - 1);
                         q = `${n1}/${d1} ÷ ${n2}/${d2} =`;
                     } else if (type === 1) {
-                        // 帶分數除真分數
                         let w1 = rand(1, 3), d1 = rand(2, 6), n1 = rand(1, d1 - 1);
                         let d2 = rand(2, 6), n2 = rand(1, d2 - 1);
                         q = `${w1} ${n1}/${d1} ÷ ${n2}/${d2} =`;
                     } else {
-                        // 帶分數除帶分數
                         let w1 = rand(1, 2), d1 = rand(2, 5), n1 = rand(1, d1 - 1);
                         let w2 = rand(1, 2), d2 = rand(2, 5), n2 = rand(1, d2 - 1);
                         q = `${w1} ${n1}/${d1} ÷ ${w2} ${n2}/${d2} =`;
@@ -352,12 +344,11 @@
                 questions.push(q);
             }
             
-            // 寫入文字框並觸發更新
             document.getElementById('math-input').value = questions.join('\n');
             generateMath();
         }
 
-        // ----- 以下為原有的數學解析與渲染邏輯 -----
+        // ----- 數學解析邏輯 -----
         function gcd(a, b) {
             a = Math.abs(a); b = Math.abs(b);
             while (b !== 0) { let temp = b; b = a % b; a = temp; }
@@ -402,7 +393,8 @@
             return { w, n, d: imp.d };
         }
 
-        function buildBinarySteps(f1_str, op, f2_str) {
+        // 🌟 雙核運算引擎：包含「課本直觀法」與「全化假分數法」
+        function buildBinarySteps(f1_str, op, f2_str, calcMethod) {
             let steps = [];
             let o1 = parseToObj(f1_str);
             let o2 = parseToObj(f2_str);
@@ -410,60 +402,125 @@
             
             steps.push(`${objToLatex(o1)} ${opL} ${objToLatex(o2)}`); 
 
-            let i1 = objToImproper(o1);
-            let i2 = objToImproper(o2);
-            if (o1.w > 0 || o2.w > 0) {
-                steps.push(`${improperToLatex(i1)} ${opL} ${improperToLatex(i2)}`); 
-            }
+            // 判斷是否為加減法，若是且設定為 textbook，則使用課本直觀法
+            if (calcMethod === 'textbook' && (op === '+' || op === '-')) {
+                let l = lcm(o1.d, o2.d);
+                let n1_new = o1.n * (l / o1.d);
+                let n2_new = o2.n * (l / o2.d);
 
-            let resN, resD;
-            if (op === '+' || op === '-') {
-                let l = lcm(i1.d, i2.d);
-                let n1_new = i1.n * (l / i1.d);
-                let n2_new = i2.n * (l / i2.d);
-                
-                if (i1.d !== i2.d) {
-                    steps.push(`\\frac{${n1_new}}{${l}} ${opL} \\frac{${n2_new}}{${l}}`); 
+                // 1. 通分 (若分母不同)
+                if (o1.d !== o2.d) {
+                    steps.push(`${objToLatex({w: o1.w, n: n1_new, d: l})} ${opL} ${objToLatex({w: o2.w, n: n2_new, d: l})}`); 
                 }
-                
-                resN = op === '+' ? n1_new + n2_new : n1_new - n2_new;
-                resD = l;
-                steps.push(`\\frac{${resN}}{${resD}}`); 
-            } 
-            else if (opL === '\\times') {
-                steps.push(`\\frac{${i1.n} \\times ${i2.n}}{${i1.d} \\times ${i2.d}}`); 
-                resN = i1.n * i2.n;
-                resD = i1.d * i2.d;
-                steps.push(`\\frac{${resN}}{${resD}}`); 
-            } 
-            else if (opL === '\\div') {
-                steps.push(`${improperToLatex(i1)} \\times ${improperToLatex({n: i2.d, d: i2.n})}`); 
-                steps.push(`\\frac{${i1.n} \\times ${i2.d}}{${i1.d} \\times ${i2.n}}`);
-                resN = i1.n * i2.d;
-                resD = i1.d * i2.n;
-                steps.push(`\\frac{${resN}}{${resD}}`);
-            }
 
-            if (resN === 0) {
-                if (steps[steps.length-1] !== "0") steps.push("0");
+                let resW = 0, resN = 0, resD = l;
+
+                if (op === '+') {
+                    resW = o1.w + o2.w;
+                    resN = n1_new + n2_new;
+
+                    // 若產生帶分數裡的假分數 (例如 1 15/10)，先呈現這一步
+                    if (resN > 0 && o1.w + o2.w > 0) { 
+                        let stepStr = objToLatex({w: resW, n: resN, d: l});
+                        if (steps[steps.length - 1] !== stepStr) steps.push(stepStr);
+                    }
+
+                    // 處理假分數進位
+                    if (resN >= l) {
+                        resW += Math.floor(resN / l);
+                        resN = resN % l;
+                        let stepStr = objToLatex({w: resW, n: resN, d: l});
+                        if (steps[steps.length - 1] !== stepStr) steps.push(stepStr);
+                    }
+                } else if (op === '-') {
+                    let tempW1 = o1.w;
+                    let tempN1 = n1_new;
+
+                    // 判斷是否夠減，不夠減則借位
+                    if (tempN1 < n2_new) {
+                        if (tempW1 > 0) {
+                            tempW1 -= 1;
+                            tempN1 += l;
+                            let borrowStr = `${objToLatex({w: tempW1, n: tempN1, d: l})} ${opL} ${objToLatex({w: o2.w, n: n2_new, d: l})}`;
+                            if (steps[steps.length - 1] !== borrowStr) steps.push(borrowStr);
+                        }
+                    }
+
+                    resW = tempW1 - o2.w;
+                    resN = tempN1 - n2_new;
+                    
+                    let stepStr = objToLatex({w: resW, n: resN, d: l});
+                    if (steps[steps.length - 1] !== stepStr) steps.push(stepStr);
+                }
+
+                // 結尾約分化簡
+                if (resN > 0) {
+                    let g = Math.abs(gcd(resN, l));
+                    if (g > 1) { 
+                        resN /= g; resD /= g;
+                        let simpStr = objToLatex({w: resW, n: resN, d: resD});
+                        if (steps[steps.length - 1] !== simpStr) steps.push(simpStr);
+                    }
+                }
+
             } else {
-                let g = Math.abs(gcd(resN, resD));
-                let signStr = resN < 0 ? "-" : "";
-                let absN = Math.abs(resN);
-
-                if (g > 1) { 
-                    absN /= g; resD /= g;
-                    let simpStr = resD === 1 ? `${signStr}${absN}` : `${signStr}\\frac{${absN}}{${resD}}`;
-                    steps.push(simpStr);
+                // 🔹 原本的「全化假分數法」邏輯 (乘除法也走這裡)
+                let i1 = objToImproper(o1);
+                let i2 = objToImproper(o2);
+                if (o1.w > 0 || o2.w > 0) {
+                    steps.push(`${improperToLatex(i1)} ${opL} ${improperToLatex(i2)}`); 
                 }
-                
-                if (absN > resD && resD !== 1) { 
-                    let mObj = improperToMixedObj({n: absN, d: resD});
-                    let mStr = `${signStr}${objToLatex({w: mObj.w, n: mObj.n, d: mObj.d})}`;
-                    if (steps[steps.length-1] !== mStr) steps.push(mStr);
+
+                let resN, resD;
+                if (op === '+' || op === '-') {
+                    let l = lcm(i1.d, i2.d);
+                    let n1_new = i1.n * (l / i1.d);
+                    let n2_new = i2.n * (l / i2.d);
+                    
+                    if (i1.d !== i2.d) {
+                        steps.push(`\\frac{${n1_new}}{${l}} ${opL} \\frac{${n2_new}}{${l}}`); 
+                    }
+                    
+                    resN = op === '+' ? n1_new + n2_new : n1_new - n2_new;
+                    resD = l;
+                    steps.push(`\\frac{${resN}}{${resD}}`); 
+                } 
+                else if (opL === '\\times') {
+                    steps.push(`\\frac{${i1.n} \\times ${i2.n}}{${i1.d} \\times ${i2.d}}`); 
+                    resN = i1.n * i2.n;
+                    resD = i1.d * i2.d;
+                    steps.push(`\\frac{${resN}}{${resD}}`); 
+                } 
+                else if (opL === '\\div') {
+                    steps.push(`${improperToLatex(i1)} \\times ${improperToLatex({n: i2.d, d: i2.n})}`); 
+                    steps.push(`\\frac{${i1.n} \\times ${i2.d}}{${i1.d} \\times ${i2.n}}`);
+                    resN = i1.n * i2.d;
+                    resD = i1.d * i2.n;
+                    steps.push(`\\frac{${resN}}{${resD}}`);
+                }
+
+                if (resN === 0) {
+                    if (steps[steps.length-1] !== "0") steps.push("0");
+                } else {
+                    let g = Math.abs(gcd(resN, resD));
+                    let signStr = resN < 0 ? "-" : "";
+                    let absN = Math.abs(resN);
+
+                    if (g > 1) { 
+                        absN /= g; resD /= g;
+                        let simpStr = resD === 1 ? `${signStr}${absN}` : `${signStr}\\frac{${absN}}{${resD}}`;
+                        steps.push(simpStr);
+                    }
+                    
+                    if (absN > resD && resD !== 1) { 
+                        let mObj = improperToMixedObj({n: absN, d: resD});
+                        let mStr = `${signStr}${objToLatex({w: mObj.w, n: mObj.n, d: mObj.d})}`;
+                        if (steps[steps.length-1] !== mStr) steps.push(mStr);
+                    }
                 }
             }
 
+            // 去除連續重複的步驟
             let uniqueSteps = [steps[0]];
             for (let i = 1; i < steps.length; i++) {
                 if (steps[i] !== steps[i-1]) uniqueSteps.push(steps[i]);
@@ -471,7 +528,7 @@
             return uniqueSteps;
         }
 
-        function generateStepsArray(exp) {
+        function generateStepsArray(exp, calcMethod) {
             const tokenRegex = /([0-9]+\s+[0-9]+\/[0-9]+|[0-9]+\/[0-9]+|[0-9]+|[\+\-\*\/\÷xX×])/g;
             const tokens = exp.match(tokenRegex);
             if (!tokens) return [exp];
@@ -482,7 +539,7 @@
 
             if (ops.length === 1 && nums.length === 2) {
                 try {
-                    return buildBinarySteps(nums[0], ops[0], nums[1]);
+                    return buildBinarySteps(nums[0], ops[0], nums[1], calcMethod);
                 } catch(e) { console.error(e); }
             }
             
@@ -529,6 +586,7 @@
             const outputArea = document.getElementById('preview-grid');
             const hideAnswers = document.getElementById('hide-answers').checked;
             const cols = document.getElementById('grid-cols').value;
+            const calcMethod = document.getElementById('calc-method').value;
             
             outputArea.innerHTML = '';
             outputArea.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
@@ -542,7 +600,8 @@
                 if (!exp) return;
 
                 const itemId = `item-${qIndex}`;
-                const stepsArray = generateStepsArray(exp);
+                // 傳入 calcMethod 讓解題引擎決定邏輯
+                const stepsArray = generateStepsArray(exp, calcMethod);
                 
                 window.stepData[itemId] = {
                     steps: stepsArray,
