@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 分數運算產生器 (全能自動出題版)</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeX for Math Rendering -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    
+    <!-- Math.js for fraction calculation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    
+    <!-- html2canvas & jsPDF for exporting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'gigi-yellow': '#D4AF37', // 芥末黃/金橙色
+                        'gigi-blue': '#1a2b4c',   // 深藍色
+                        'gigi-cyan': '#00ffff',   // 螢光青藍色
+                        'gigi-gray': '#4a4a4a'    // 深灰色金屬
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            /* 🌟 新增字體大小 CSS 變數，用於動態調整 */
+            --math-font-size: 1.4em;
+        }
+
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background-color: #f0f4f8; }
+        
+        /* 應用動態字體大小 */
+        .katex { font-size: var(--math-font-size) !important; } 
+        
+        /* 🌟 確保分數線有足夠厚度，讓截圖套件抓得到 */
+        .katex .frac-line {
+            border-bottom-width: 1.5px !important; 
+            border-bottom-color: #1a2b4c !important;
+            transition: transform 0s; 
+        }
+
+        /* 🌟 匯出專用的位移校正 */
+        .export-mode .katex .frac-line {
+            transform: translateY(0.28em) !important;
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-gigi-blue text-white shadow-md border-b-4 border-gigi-yellow relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between relative z-10">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-gigi-gray rounded-full border-2 border-gigi-cyan flex items-center justify-center overflow-hidden">
+                    <span class="text-gigi-cyan font-bold text-xs glow">GiGi</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gigi-yellow tracking-wide">Puti-AI 分數運算產生器</h1>
+                    <p class="text-sm text-gray-300">智慧自動出題 × 步驟解析 × 高清匯出</p>
+                </div>
+            </div>
+            <div class="hidden md:block text-gigi-cyan text-sm border border-gigi-cyan px-3 py-1 rounded-full bg-gigi-blue/50">
+                Hi! 我是小吉，要出幾年級的題目呢？交給我！
+            </div>
+        </div>
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#00ffff 1px, transparent 1px); background-size: 20px 20px;"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 py-8 w-full flex flex-col lg:flex-row gap-6">
+        
+        <!-- Left Panel: Controls -->
+        <div class="w-full lg:w-1/3 bg-white p-6 rounded-xl shadow-lg border-t-4 border-gigi-gray flex flex-col gap-5 h-fit">
+            
+            <!-- 🌟 新增：自動出題區塊 -->
+            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <label class="block text-gigi-blue font-bold mb-3 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gigi-yellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                    🎲 隨機自動出題 (依課綱進度)
+                </label>
+                <div class="grid grid-cols-2 gap-2 mb-3 text-sm">
+                    <div>
+                        <select id="auto-grade" class="w-full p-2 border border-blue-300 rounded focus:ring-2 focus:ring-gigi-cyan bg-white">
+                            <option value="3">三年級 (同分母簡單加減)</option>
+                            <option value="4">四年級 (帶分數加減/真假換算)</option>
+                            <option value="5">五年級 (異分母加減/通分/乘法)</option>
+                            <option value="6">六年級 (分數除法/四則)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <select id="auto-count" class="w-full p-2 border border-blue-300 rounded focus:ring-2 focus:ring-gigi-cyan bg-white">
+                            <option value="4">4 題</option>
+                            <option value="6" selected>6 題</option>
+                            <option value="8">8 題</option>
+                            <option value="10">10 題</option>
+                            <option value="12">12 題</option>
+                            <option value="16">16 題</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="autoGenerate()" class="w-full bg-white border-2 border-gigi-cyan text-gigi-blue hover:bg-cyan-50 font-bold py-2 rounded transition shadow-sm text-sm">
+                    ✨ 一鍵產生並覆蓋到下方
+                </button>
+            </div>
+
+            <!-- 手動輸入區塊 -->
+            <div>
+                <label class="block text-gray-700 font-bold mb-2 flex items-center gap-2">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                    ✍️ 手動輸入/編輯區 (每行一題)
+                </label>
+                <textarea id="math-input" class="w-full h-32 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gigi-yellow focus:border-transparent resize-none font-mono text-sm bg-gray-50"></textarea>
+                <p class="text-xs text-gray-500 mt-1">💡 可直接修改上方產生的題目。帶分數請用空格隔開：<code class="bg-gray-200 px-1 rounded">2 1/3</code></p>
+            </div>
+
+            <!-- 🌟 排版與字體設定 -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex flex-col gap-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-bold text-sm mb-2">排版欄數</label>
+                        <select id="grid-cols" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-gigi-yellow text-sm" onchange="generateMath()">
+                            <option value="1">1 欄 (直排)</option>
+                            <option value="2" selected>2 欄</option>
+                            <option value="3">3 欄</option>
+                            <option value="4">4 欄</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-bold text-sm mb-2">顯示模式</label>
+                        <label class="flex items-center gap-2 cursor-pointer mt-2">
+                            <input type="checkbox" id="hide-answers" class="w-4 h-4 text-gigi-blue focus:ring-gigi-yellow rounded border-gray-300" onchange="generateMath()">
+                            <span class="text-gray-700 font-medium text-sm">隱藏答案(考卷)</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- 新增：字體大小拉桿 -->
+                <div class="pt-2 border-t border-gray-200">
+                    <label class="block text-gray-700 font-bold text-sm mb-2 flex justify-between">
+                        <span>🔠 數學字體大小</span>
+                        <span id="font-size-display" class="text-gigi-blue font-bold">1.4x</span>
+                    </label>
+                    <input type="range" id="font-size-slider" min="1" max="2.5" step="0.1" value="1.4" class="w-full accent-gigi-yellow" oninput="updateFontSize()">
+                </div>
+            </div>
+
+            <div class="border-t border-gray-200 pt-4 flex flex-col gap-3">
+                <button onclick="generateMath()" class="w-full bg-gigi-blue hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-lg transition shadow-md flex justify-center items-center gap-2">
+                    <svg class="w-5 h-5 text-gigi-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    更新右側預覽畫面
+                </button>
+                
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <button onclick="setAllSteps(0)" class="text-sm bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold py-2 rounded transition">
+                        全收合 (回原題)
+                    </button>
+                    <button onclick="setAllSteps('max')" class="text-sm bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold py-2 rounded transition">
+                        全展開 (秀解答)
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-2">
+                    <button onclick="downloadImage()" class="w-full bg-gigi-yellow hover:bg-yellow-500 text-gigi-blue font-bold py-2 px-4 rounded-lg transition shadow-md flex justify-center items-center gap-2 text-sm">
+                        下載圖片
+                    </button>
+                    <button onclick="downloadPDF()" class="w-full border-2 border-gigi-blue text-gigi-blue hover:bg-blue-50 font-bold py-2 px-4 rounded-lg transition shadow-md flex justify-center items-center gap-2 text-sm">
+                        下載 PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Preview Area -->
+        <div class="w-full lg:w-2/3 flex flex-col">
+            <div class="bg-gray-200 p-2 rounded-t-xl text-center text-sm font-bold text-gray-600 border-b border-gray-300">
+                預覽與匯出區 (列印時會自動隱藏步驟按鈕)
+            </div>
+            
+            <div class="bg-white p-8 rounded-b-xl shadow-lg overflow-auto no-scrollbar relative flex-grow">
+                <div id="export-area" class="w-full min-h-[842px] bg-white text-black p-8 relative mx-auto transition-transform duration-75" style="max-width: 794px;">
+                    
+                    <div class="flex justify-between items-end border-b-2 border-gray-800 pb-4 mb-8">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800">分數運算練習卷</h2>
+                        </div>
+                        <div class="flex gap-6 text-lg font-medium text-gray-700">
+                            <div>姓名：<span class="inline-block border-b border-gray-400 w-32"></span></div>
+                            <div>得分：<span class="inline-block border-b border-gray-400 w-20"></span></div>
+                        </div>
+                    </div>
+
+                    <div id="preview-grid" class="grid gap-y-6 gap-x-6 w-full">
+                        <!-- 動態生成內容 -->
+                    </div>
+
+                    <div class="absolute bottom-4 right-8 opacity-40 text-gray-400 font-bold text-sm pointer-events-none">
+                        ©Puti-AI
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-100 border-t border-gray-300 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 py-6 text-center text-sm text-gray-600">
+            <p class="mb-2">屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+            <p>更多 <span class="font-bold text-gigi-blue">Puti-AI 教學工具</span> 點此前往：
+                <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-600 hover:text-blue-800 underline">https://padlet.com/clongwh/puti_ai_tools</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        try { math.config({ number: 'Fraction' }); } catch(e) {}
+
+        window.stepData = {};
+
+        document.addEventListener("DOMContentLoaded", () => {
+            // 初始隨機出一組四年級題目作為示範
+            document.getElementById('auto-grade').value = '4';
+            document.getElementById('auto-count').value = '6';
+            autoGenerate();
+        });
+
+        // 🌟 字體大小動態更新
+        function updateFontSize() {
+            const size = document.getElementById('font-size-slider').value;
+            document.documentElement.style.setProperty('--math-font-size', size + 'em');
+            document.getElementById('font-size-display').innerText = size + 'x';
+        }
+
+        // 🌟 核心：隨機自動出題引擎
+        function rand(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function autoGenerate() {
+            const grade = parseInt(document.getElementById('auto-grade').value);
+            const count = parseInt(document.getElementById('auto-count').value);
+            let questions = [];
+
+            for (let i = 0; i < count; i++) {
+                let q = "";
+                if (grade === 3) {
+                    // 三年級：同分母簡單加減 (結果不超過1，不出現負數)
+                    let d = rand(3, 9);
+                    let op = rand(0, 1) === 0 ? '+' : '-';
+                    if (op === '+') {
+                        let n1 = rand(1, d - 1);
+                        let max_n2 = (d - n1) > 0 ? (d - n1) : 1; 
+                        let n2 = rand(1, max_n2);
+                        q = `${n1}/${d} + ${n2}/${d} =`;
+                    } else {
+                        let n1 = rand(2, d - 1);
+                        let n2 = rand(1, n1 - 1);
+                        q = `${n1}/${d} - ${n2}/${d} =`;
+                    }
+                } else if (grade === 4) {
+                    // 四年級：帶分數與同分母進階加減
+                    let d = rand(3, 9);
+                    let op = rand(0, 1) === 0 ? '+' : '-';
+                    let w1 = rand(1, 3);
+                    let n1 = rand(1, d - 1);
+                    
+                    if (op === '+') {
+                        let w2 = rand(0, 2);
+                        let n2 = rand(1, d - 1);
+                        let t1 = `${w1} ${n1}/${d}`;
+                        let t2 = w2 > 0 ? `${w2} ${n2}/${d}` : `${n2}/${d}`;
+                        q = `${t1} + ${t2} =`;
+                    } else {
+                        let w2 = rand(0, w1);
+                        let n2 = rand(1, d - 1);
+                        // 確保減法為正數
+                        let val1 = w1 + (n1 / d);
+                        let val2 = w2 + (n2 / d);
+                        if (val1 <= val2) { w1 = w2 + 1; }
+                        let t1 = `${w1} ${n1}/${d}`;
+                        let t2 = w2 > 0 ? `${w2} ${n2}/${d}` : `${n2}/${d}`;
+                        q = `${t1} - ${t2} =`;
+                    }
+                } else if (grade === 5) {
+                    // 五年級：異分母加減、分數乘法
+                    let type = rand(0, 2); // 0:+, 1:-, 2:*
+                    if (type === 0 || type === 1) {
+                        let op = type === 0 ? '+' : '-';
+                        let d1 = rand(2, 8);
+                        let d2 = rand(2, 8);
+                        while (d1 === d2) { d2 = rand(2, 8); } // 確保異分母
+                        let n1 = rand(1, d1 - 1);
+                        let n2 = rand(1, d2 - 1);
+                        
+                        if (op === '-') {
+                            let val1 = n1 / d1;
+                            let val2 = n2 / d2;
+                            if (val1 <= val2) {
+                                // 數值交換確保正數
+                                let tmpN = n1, tmpD = d1;
+                                n1 = n2; d1 = d2;
+                                n2 = tmpN; d2 = tmpD;
+                            }
+                            if ((n1/d1) === (n2/d2)) { n1 = d1-1; n2 = 1; }
+                        }
+                        q = `${n1}/${d1} ${op} ${n2}/${d2} =`;
+                    } else {
+                        // 乘法
+                        let d1 = rand(2, 7), n1 = rand(1, d1 - 1);
+                        let d2 = rand(2, 7), n2 = rand(1, d2 - 1);
+                        if (rand(0, 1) === 0) {
+                            q = `${rand(2, 6)} x ${n2}/${d2} =`; // 整數乘分數
+                        } else {
+                            q = `${n1}/${d1} x ${n2}/${d2} =`; // 分數乘分數
+                        }
+                    }
+                } else if (grade === 6) {
+                    // 六年級：分數除法與複雜四則
+                    let type = rand(0, 2);
+                    if (type === 0) {
+                        // 真分數除真分數
+                        let d1 = rand(2, 9), n1 = rand(1, d1 - 1);
+                        let d2 = rand(2, 9), n2 = rand(1, d2 - 1);
+                        q = `${n1}/${d1} ÷ ${n2}/${d2} =`;
+                    } else if (type === 1) {
+                        // 帶分數除真分數
+                        let w1 = rand(1, 3), d1 = rand(2, 6), n1 = rand(1, d1 - 1);
+                        let d2 = rand(2, 6), n2 = rand(1, d2 - 1);
+                        q = `${w1} ${n1}/${d1} ÷ ${n2}/${d2} =`;
+                    } else {
+                        // 帶分數除帶分數
+                        let w1 = rand(1, 2), d1 = rand(2, 5), n1 = rand(1, d1 - 1);
+                        let w2 = rand(1, 2), d2 = rand(2, 5), n2 = rand(1, d2 - 1);
+                        q = `${w1} ${n1}/${d1} ÷ ${w2} ${n2}/${d2} =`;
+                    }
+                }
+                questions.push(q);
+            }
+            
+            // 寫入文字框並觸發更新
+            document.getElementById('math-input').value = questions.join('\n');
+            generateMath();
+        }
+
+        // ----- 以下為原有的數學解析與渲染邏輯 -----
+        function gcd(a, b) {
+            a = Math.abs(a); b = Math.abs(b);
+            while (b !== 0) { let temp = b; b = a % b; a = temp; }
+            return a;
+        }
+        function lcm(a, b) { return (a * b) / gcd(a, b); }
+
+        function parseToObj(str) {
+            str = str.trim();
+            let w = 0, n = 0, d = 1;
+            if (str.includes(' ')) {
+                let parts = str.split(' ').filter(p => p);
+                w = parseInt(parts[0]) || 0;
+                let fracParts = parts[1].split('/');
+                n = parseInt(fracParts[0]) || 0;
+                d = parseInt(fracParts[1]) || 1;
+            } else if (str.includes('/')) {
+                let fracParts = str.split('/');
+                n = parseInt(fracParts[0]) || 0;
+                d = parseInt(fracParts[1]) || 1;
+            } else {
+                w = parseInt(str) || 0;
+            }
+            return { w, n, d };
+        }
+
+        function objToImproper(obj) { return { n: obj.w * obj.d + obj.n, d: obj.d }; }
+        function objToLatex(obj) {
+            if (obj.w === 0 && obj.n === 0) return "0";
+            if (obj.n === 0) return `${obj.w}`;
+            if (obj.w === 0) return `\\frac{${obj.n}}{${obj.d}}`;
+            return `${obj.w}\\frac{${obj.n}}{${obj.d}}`;
+        }
+        function improperToLatex(imp) {
+            if (imp.n === 0) return "0";
+            if (imp.d === 1) return `${imp.n}`;
+            return `\\frac{${imp.n}}{${imp.d}}`;
+        }
+        function improperToMixedObj(imp) {
+            let w = Math.floor(imp.n / imp.d);
+            let n = imp.n % imp.d;
+            return { w, n, d: imp.d };
+        }
+
+        function buildBinarySteps(f1_str, op, f2_str) {
+            let steps = [];
+            let o1 = parseToObj(f1_str);
+            let o2 = parseToObj(f2_str);
+            let opL = op === '*' || op.toLowerCase() === 'x' || op === '×' ? '\\times' : (op === '/' || op === '÷' ? '\\div' : op);
+            
+            steps.push(`${objToLatex(o1)} ${opL} ${objToLatex(o2)}`); 
+
+            let i1 = objToImproper(o1);
+            let i2 = objToImproper(o2);
+            if (o1.w > 0 || o2.w > 0) {
+                steps.push(`${improperToLatex(i1)} ${opL} ${improperToLatex(i2)}`); 
+            }
+
+            let resN, resD;
+            if (op === '+' || op === '-') {
+                let l = lcm(i1.d, i2.d);
+                let n1_new = i1.n * (l / i1.d);
+                let n2_new = i2.n * (l / i2.d);
+                
+                if (i1.d !== i2.d) {
+                    steps.push(`\\frac{${n1_new}}{${l}} ${opL} \\frac{${n2_new}}{${l}}`); 
+                }
+                
+                resN = op === '+' ? n1_new + n2_new : n1_new - n2_new;
+                resD = l;
+                steps.push(`\\frac{${resN}}{${resD}}`); 
+            } 
+            else if (opL === '\\times') {
+                steps.push(`\\frac{${i1.n} \\times ${i2.n}}{${i1.d} \\times ${i2.d}}`); 
+                resN = i1.n * i2.n;
+                resD = i1.d * i2.d;
+                steps.push(`\\frac{${resN}}{${resD}}`); 
+            } 
+            else if (opL === '\\div') {
+                steps.push(`${improperToLatex(i1)} \\times ${improperToLatex({n: i2.d, d: i2.n})}`); 
+                steps.push(`\\frac{${i1.n} \\times ${i2.d}}{${i1.d} \\times ${i2.n}}`);
+                resN = i1.n * i2.d;
+                resD = i1.d * i2.n;
+                steps.push(`\\frac{${resN}}{${resD}}`);
+            }
+
+            if (resN === 0) {
+                if (steps[steps.length-1] !== "0") steps.push("0");
+            } else {
+                let g = Math.abs(gcd(resN, resD));
+                let signStr = resN < 0 ? "-" : "";
+                let absN = Math.abs(resN);
+
+                if (g > 1) { 
+                    absN /= g; resD /= g;
+                    let simpStr = resD === 1 ? `${signStr}${absN}` : `${signStr}\\frac{${absN}}{${resD}}`;
+                    steps.push(simpStr);
+                }
+                
+                if (absN > resD && resD !== 1) { 
+                    let mObj = improperToMixedObj({n: absN, d: resD});
+                    let mStr = `${signStr}${objToLatex({w: mObj.w, n: mObj.n, d: mObj.d})}`;
+                    if (steps[steps.length-1] !== mStr) steps.push(mStr);
+                }
+            }
+
+            let uniqueSteps = [steps[0]];
+            for (let i = 1; i < steps.length; i++) {
+                if (steps[i] !== steps[i-1]) uniqueSteps.push(steps[i]);
+            }
+            return uniqueSteps;
+        }
+
+        function generateStepsArray(exp) {
+            const tokenRegex = /([0-9]+\s+[0-9]+\/[0-9]+|[0-9]+\/[0-9]+|[0-9]+|[\+\-\*\/\÷xX×])/g;
+            const tokens = exp.match(tokenRegex);
+            if (!tokens) return [exp];
+
+            let cleanTokens = tokens.map(t => t.trim());
+            let ops = cleanTokens.filter(t => /^[\+\-\*\/\÷xX×]$/.test(t));
+            let nums = cleanTokens.filter(t => !/^[\+\-\*\/\÷xX×]$/.test(t));
+
+            if (ops.length === 1 && nums.length === 2) {
+                try {
+                    return buildBinarySteps(nums[0], ops[0], nums[1]);
+                } catch(e) { console.error(e); }
+            }
+            
+            let latexStr = '', evalStr = '';
+            cleanTokens.forEach(t => {
+                if (/^[\+\-\*\/\÷xX×]$/.test(t)) {
+                    if (t === '*' || t.toLowerCase() === 'x' || t === '×') { latexStr += ' \\times '; evalStr += ' * '; } 
+                    else if (t === '/' || t === '÷') { latexStr += ' \\div '; evalStr += ' / '; } 
+                    else { latexStr += ` ${t} `; evalStr += ` ${t} `; }
+                } else {
+                    if (t.includes('/')) {
+                        let parts = t.split(/\s+/);
+                        if (parts.length === 2) {
+                            let [w, frac] = parts; let [n, d] = frac.split('/');
+                            latexStr += `${w}\\frac{${n}}{${d}}`; evalStr += `(${w} + ${n}/${d})`;
+                        } else {
+                            let [n, d] = t.split('/');
+                            latexStr += `\\frac{${n}}{${d}}`; evalStr += `(${n}/${d})`;
+                        }
+                    } else { latexStr += t; evalStr += t; }
+                }
+            });
+            try {
+                let ans = toMixedLatex(math.evaluate(evalStr));
+                return [latexStr, ans];
+            } catch(e) { return [latexStr]; }
+        }
+
+        function toMixedLatex(frac) {
+            if (typeof frac === 'number' || typeof frac === 'string') return String(frac);
+            if (!frac || typeof frac.n === 'undefined' || typeof frac.d === 'undefined') return String(frac);
+            let n = frac.n, d = frac.d, s = frac.s;
+            if (d === 1) return (s < 0 ? "-" : "") + n;
+            if (n === 0) return "0";
+            if (n < d) return (s < 0 ? "-" : "") + `\\frac{${n}}{${d}}`;
+            let whole = Math.floor(n / d), rem = n % d, signStr = s < 0 ? "-" : "";
+            if (rem === 0) return signStr + whole;
+            return signStr + `${whole}\\frac{${rem}}{${d}}`;
+        }
+
+        function generateMath() {
+            const inputText = document.getElementById('math-input').value;
+            const lines = inputText.split('\n').filter(line => line.trim() !== '');
+            const outputArea = document.getElementById('preview-grid');
+            const hideAnswers = document.getElementById('hide-answers').checked;
+            const cols = document.getElementById('grid-cols').value;
+            
+            outputArea.innerHTML = '';
+            outputArea.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+            window.stepData = {};
+            let qIndex = 1;
+
+            lines.forEach((originalLine) => {
+                let exp = originalLine.replace(/[\uff01-\uff5e]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xfee0)).replace(/\u3000/g, ' ');
+                exp = exp.replace(/又/g, ' ').replace(/[∕⁄]/g, '/').replace(/[=＝].*$/, '').replace(/[?？]/g, '');
+                exp = exp.replace(/\s*\/\s*/g, '/').trim().replace(/\s+/g, ' ');
+                if (!exp) return;
+
+                const itemId = `item-${qIndex}`;
+                const stepsArray = generateStepsArray(exp);
+                
+                window.stepData[itemId] = {
+                    steps: stepsArray,
+                    currentStep: hideAnswers ? 0 : stepsArray.length - 1,
+                    hideAnswers: hideAnswers
+                };
+
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'relative flex flex-col p-4 border border-gray-200 rounded-xl shadow-sm bg-white hover:shadow-md transition break-inside-avoid';
+                itemDiv.style.minHeight = '160px'; 
+                
+                const qNum = document.createElement('span');
+                qNum.className = 'absolute top-3 left-3 text-base text-gray-400 font-bold';
+                qNum.innerText = `(${qIndex})`;
+                itemDiv.appendChild(qNum);
+
+                const mathContainer = document.createElement('div');
+                mathContainer.className = 'flex-grow flex items-center justify-center pt-8 pb-4 overflow-x-auto';
+                const mathSpan = document.createElement('span');
+                mathSpan.id = `math-span-${itemId}`;
+                mathContainer.appendChild(mathSpan);
+                itemDiv.appendChild(mathContainer);
+
+                if (!hideAnswers && stepsArray.length > 1) {
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = 'flex justify-between items-center mt-auto pt-3 border-t border-gray-100 text-gray-500';
+                    controlsDiv.setAttribute('data-html2canvas-ignore', 'true');
+
+                    const btnPrev = document.createElement('button');
+                    btnPrev.id = `btn-prev-${itemId}`;
+                    btnPrev.className = 'px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-xs font-bold disabled:opacity-30 transition';
+                    btnPrev.innerText = '◀ 上一步';
+                    btnPrev.onclick = () => { window.stepData[itemId].currentStep--; renderStep(itemId); };
+
+                    const indicator = document.createElement('span');
+                    indicator.id = `step-indicator-${itemId}`;
+                    indicator.className = 'text-xs font-mono font-bold text-gigi-blue bg-blue-50 px-2 py-1 rounded';
+
+                    const btnNext = document.createElement('button');
+                    btnNext.id = `btn-next-${itemId}`;
+                    btnNext.className = 'px-3 py-1.5 bg-gigi-blue text-white hover:bg-blue-700 rounded-md text-xs font-bold disabled:opacity-30 transition';
+                    btnNext.innerText = '下一步 ▶';
+                    btnNext.onclick = () => { window.stepData[itemId].currentStep++; renderStep(itemId); };
+
+                    controlsDiv.appendChild(btnPrev);
+                    controlsDiv.appendChild(indicator);
+                    controlsDiv.appendChild(btnNext);
+                    itemDiv.appendChild(controlsDiv);
+                }
+
+                outputArea.appendChild(itemDiv);
+                renderStep(itemId);
+                qIndex++;
+            });
+        }
+
+        function renderStep(id) {
+            let data = window.stepData[id];
+            let finalLatex = "";
+
+            if (data.hideAnswers) {
+                finalLatex = data.steps[0] + ' = ';
+            } else {
+                let lines = [`& ${data.steps[0]}`];
+                for (let i = 1; i <= data.currentStep; i++) {
+                    lines.push(`&= ${data.steps[i]}`);
+                }
+                finalLatex = `\\begin{aligned} ${lines.join(' \\\\ ')} \\end{aligned}`;
+            }
+            
+            let container = document.getElementById(`math-span-${id}`);
+            katex.render(finalLatex, container, { displayMode: true, throwOnError: false, strict: false });
+
+            if (!data.hideAnswers && data.steps.length > 1) {
+                document.getElementById(`btn-prev-${id}`).disabled = data.currentStep === 0;
+                document.getElementById(`btn-next-${id}`).disabled = data.currentStep === data.steps.length - 1;
+                document.getElementById(`step-indicator-${id}`).innerText = `${data.currentStep + 1}/${data.steps.length}`;
+            }
+        }
+
+        function setAllSteps(target) {
+            for (let id in window.stepData) {
+                if (window.stepData[id].hideAnswers) continue;
+                window.stepData[id].currentStep = target === 'max' ? window.stepData[id].steps.length - 1 : 0;
+                renderStep(id);
+            }
+        }
+
+        async function downloadImage() {
+            const element = document.getElementById('export-area');
+            element.classList.add('export-mode'); 
+            await new Promise(r => setTimeout(r, 50)); 
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+            element.classList.remove('export-mode'); 
+            const link = document.createElement('a');
+            link.download = 'Puti-AI-分數互動練習卷.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        async function downloadPDF() {
+            const element = document.getElementById('export-area');
+            element.classList.add('export-mode');
+            await new Promise(r => setTimeout(r, 50));
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true, backgroundColor: "#ffffff" });
+            element.classList.remove('export-mode');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save('Puti-AI-分數互動練習卷.pdf');
+        }
+    </script>
+</body>
+</html>
