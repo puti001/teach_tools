@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 直式乘法產生器 (完美排版/全卷下載版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+        body {
+            font-family: 'Nunito', 'Microsoft JhengHei', sans-serif;
+            background-color: #f0f4f8; 
+        }
+        .puti-header {
+            background-color: #1A237E; 
+            color: #00FFFF; 
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+        }
+        .puti-btn {
+            background-color: #D4AF37; 
+            color: #1A237E;
+            transition: all 0.2s ease;
+        }
+        .puti-btn:hover {
+            background-color: #bfa030;
+            transform: translateY(-2px);
+        }
+        canvas {
+            background-color: #ffffff;
+            border-radius: 8px;
+            max-width: 100%;
+            height: auto;
+        }
+        input[type=range] {
+            accent-color: #D4AF37;
+        }
+        
+        @media print {
+            body { background-color: #ffffff; }
+            .no-print { display: none !important; }
+            #resultsArea { 
+                display: grid !important; 
+                grid-template-columns: repeat(2, 1fr) !important; 
+                gap: 20px !important; 
+            }
+            .card-container { 
+                box-shadow: none !important; 
+                border: 1px solid #cbd5e1 !important; 
+                break-inside: avoid; 
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4">
+
+    <!-- 主控台 -->
+    <div class="no-print w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden mb-8 border-2 border-[#1A237E]/10">
+        <div class="puti-header p-6 relative flex flex-col md:flex-row justify-between items-center">
+            <div class="md:w-1/4"></div> 
+            <div class="text-center md:w-2/4">
+                <h1 class="text-3xl font-bold tracking-wider">Puti-AI 直式乘法產生器</h1>
+                <p class="text-sm mt-2 text-cyan-100/80">GiGi 數位助手 - 自動出題與全卷匯出</p>
+            </div>
+            <div class="mt-4 md:mt-0 md:w-1/4 text-right pr-4 flex flex-col gap-2">
+                <button onclick="downloadAllImages()" class="bg-[#D4AF37] text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow hover:bg-[#bfa030] transition flex items-center justify-center gap-2 ml-auto w-full md:w-auto">
+                    <span>📥</span> 下載全卷圖片 (現況儲存)
+                </button>
+                <button onclick="window.print()" class="bg-white text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow border border-gray-200 hover:bg-gray-100 transition flex items-center justify-center gap-2 ml-auto text-sm w-full md:w-auto">
+                    <span>🖨️</span> 列印(限獨立視窗)
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6">
+            <div class="bg-blue-50 border border-blue-100 p-5 rounded-xl mb-6 flex flex-wrap gap-4 items-end justify-between shadow-sm">
+                <div class="flex flex-wrap gap-4 items-end">
+                    <div>
+                        <label class="block text-sm text-[#1A237E] font-bold mb-1">數量</label>
+                        <input type="number" id="genCount" value="10" min="1" max="50" class="w-16 px-2 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                    </div>
+                    <div class="flex flex-col gap-1 border-l-2 border-gray-200 pl-4">
+                        <label class="block text-sm text-[#1A237E] font-bold">被乘數</label>
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm font-bold text-gray-600">整數</span>
+                            <input type="number" id="genAInt" value="2" min="1" max="5" class="w-14 px-1 py-1 rounded border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                            <span class="text-sm font-bold text-gray-600">位，小數</span>
+                            <input type="number" id="genADec" value="1" min="0" max="4" class="w-14 px-1 py-1 rounded border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                            <span class="text-sm font-bold text-gray-600">位</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1 border-l-2 border-gray-200 pl-4">
+                        <label class="block text-sm text-[#1A237E] font-bold">乘數</label>
+                        <div class="flex items-center gap-1">
+                            <span class="text-sm font-bold text-gray-600">整數</span>
+                            <input type="number" id="genBInt" value="1" min="1" max="4" class="w-14 px-1 py-1 rounded border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                            <span class="text-sm font-bold text-gray-600">位，小數</span>
+                            <input type="number" id="genBDec" value="1" min="0" max="4" class="w-14 px-1 py-1 rounded border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                            <span class="text-sm font-bold text-gray-600">位</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="generateQuestions()" class="bg-[#1A237E] text-white font-bold py-3 px-6 rounded-lg shadow-md hover:bg-blue-800 transition whitespace-nowrap">
+                    🎲 幫我出題
+                </button>
+            </div>
+
+            <label class="block text-gray-700 font-bold mb-2">或手動貼上題庫 (支援 * 或 x 或 × ，GiGi 會自動過濾文字！)</label>
+            <div class="flex flex-col md:flex-row gap-4">
+                <textarea id="mathInput" rows="5" class="flex-1 px-4 py-3 text-lg border-2 border-gray-200 rounded-lg focus:outline-none focus:border-[#D4AF37] tracking-widest leading-relaxed resize-y" placeholder="例如：&#10;1. 120 * 45 = &#10;第2題：3.14 x 5&#10;(3) 0.25 × 0.4="></textarea>
+                <div class="flex flex-col justify-end gap-2">
+                    <button onclick="processBatchInput()" class="puti-btn font-bold py-4 px-8 rounded-lg shadow-md h-full md:h-auto whitespace-nowrap text-lg">
+                        🚀 一鍵生成直式
+                    </button>
+                </div>
+            </div>
+            <div id="errorMsg" class="text-red-500 font-bold mt-2 hidden"></div>
+        </div>
+    </div>
+
+    <!-- 全卷控制列 (批次操作) -->
+    <div id="batchControls" class="no-print w-full max-w-5xl flex justify-end gap-3 mb-4 hidden">
+        <button onclick="showAllQuestions()" class="bg-white border-2 border-[#1A237E] text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-blue-50 transition flex items-center gap-2">
+            <span>📝</span> 全卷顯示題目 (印考卷)
+        </button>
+        <button onclick="showAllAnswers()" class="bg-[#1A237E] text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:bg-blue-800 transition flex items-center gap-2">
+            <span>✅</span> 全卷顯示解答 (印解答)
+        </button>
+    </div>
+
+    <!-- 畫布結果區 (雙欄排版) -->
+    <div id="resultsArea" class="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 mb-10"></div>
+
+    <!-- 版權宣告區 -->
+    <div class="no-print mt-auto text-center text-gray-500 text-xs sm:text-sm px-4">
+        <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，</p>
+        <p>嚴禁商用與任何侵權、不尊重著作權的行為，</p>
+        <p>更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-500 hover:underline font-bold">點此前往</a></p>
+    </div>
+
+<script>
+    const cellW = 35; 
+    const cellH = 45; 
+    const startX = 60; 
+    const startY = 70; 
+
+    function generateExactNumber(intLen, decLen) {
+        let intPart = '';
+        if (intLen === 1) {
+            // 若有小數，整數部分有機會是 0 (例如 0.25)
+            if (decLen > 0) {
+                intPart = Math.random() < 0.3 ? '0' : (Math.floor(Math.random() * 9) + 1).toString();
+            } else {
+                intPart = (Math.floor(Math.random() * 9) + 1).toString();
+            }
+        } else if (intLen > 1) {
+            intPart += Math.floor(Math.random() * 9) + 1; // 首位不為0
+            for(let i = 1; i < intLen; i++) {
+                intPart += Math.floor(Math.random() * 10);
+            }
+        } else {
+            intPart = '0';
+        }
+
+        if (decLen === 0) return intPart;
+
+        let decPart = '';
+        for (let i = 0; i < decLen - 1; i++) {
+            decPart += Math.floor(Math.random() * 10);
+        }
+        // 小數最後一位不為0，確保位數精確
+        decPart += Math.floor(Math.random() * 9) + 1;
+
+        return intPart + '.' + decPart;
+    }
+
+    function generateQuestions() {
+        let count = parseInt(document.getElementById('genCount').value) || 10;
+        let aInt = parseInt(document.getElementById('genAInt').value) || 1;
+        let aDec = parseInt(document.getElementById('genADec').value) || 0;
+        let bInt = parseInt(document.getElementById('genBInt').value) || 1;
+        let bDec = parseInt(document.getElementById('genBDec').value) || 0;
+
+        let generated = [];
+        for (let i = 0; i < count; i++) {
+            let A = generateExactNumber(aInt, aDec);
+            let B = generateExactNumber(bInt, bDec);
+            generated.push(`${A} × ${B}`);
+        }
+        
+        document.getElementById('mathInput').value = generated.join('\n');
+        processBatchInput();
+    }
+
+    function processBatchInput() {
+        const inputLines = document.getElementById("mathInput").value.split('\n');
+        const resultsArea = document.getElementById("resultsArea");
+        const errorMsg = document.getElementById("errorMsg");
+        const batchControls = document.getElementById("batchControls");
+        
+        resultsArea.innerHTML = ''; 
+        errorMsg.classList.add('hidden');
+        batchControls.classList.add('hidden');
+        window.cardControllers = []; // 初始化全域控制器陣列，用來一鍵控制所有卡片
+        
+        let validCount = 0;
+
+        inputLines.forEach((line) => {
+            let trimLine = line.trim();
+            if (!trimLine) return;
+
+            // 支援 *, x, X, × 符號
+            let mathMatch = trimLine.match(/(\d+(?:\.\d+)?)\s*[*xX×]\s*(\d+(?:\.\d+)?)/);
+            
+            if (mathMatch) {
+                let strA = mathMatch[1];
+                let strB = mathMatch[2];
+                validCount++;
+                createMultiplicationCard(strA, strB, validCount);
+            }
+        });
+
+        if (validCount > 0) {
+            // 有成功出題，顯示批次按鈕
+            batchControls.classList.remove('hidden');
+        } else {
+            errorMsg.innerHTML = "Oops！沒有找到正確格式的題目喔，請檢查一下（需包含乘號如 * 或 ×）。";
+            errorMsg.classList.remove('hidden');
+        }
+    }
+
+    function calculateMultiplicationData(strA, strB) {
+        let renderData = { maxOrder: 0, chars: [], lines: [], dots: [], finalRow: 0 };
+        
+        let cleanA = strA.replace('.', '');
+        let cleanB = strB.replace('.', '');
+
+        let decA = strA.includes('.') ? strA.length - 1 - strA.indexOf('.') : 0;
+        let decB = strB.includes('.') ? strB.length - 1 - strB.indexOf('.') : 0;
+        let totalDec = decA + decB;
+
+        let finalProd = BigInt(cleanA) * BigInt(cleanB);
+        let finalProdStr = finalProd.toString();
+        
+        // 補齊前導零以符合小數點位數
+        while (finalProdStr.length <= totalDec) {
+            finalProdStr = '0' + finalProdStr;
+        }
+
+        let partialProductsCount = 0;
+        for (let i = cleanB.length - 1; i >= 0; i--) {
+            if (i < cleanB.length - 1) {
+                let leftPart = cleanB.substring(0, i + 1);
+                if (BigInt(leftPart) === 0n) continue;
+            }
+            partialProductsCount++;
+        }
+
+        // 計算最大欄位寬度 (預先模擬部分積長度來抓最大寬度)
+        let minCol = -(Math.max(cleanA.length, cleanB.length) + 1); 
+        for (let i = cleanB.length - 1; i >= 0; i--) {
+            if (i < cleanB.length - 1 && BigInt(cleanB.substring(0, i + 1)) === 0n) continue;
+            let pProdStr = (BigInt(cleanA) * BigInt(cleanB[i])).toString();
+            let shift = cleanB.length - 1 - i;
+            minCol = Math.min(minCol, -(shift + pProdStr.length - 1));
+        }
+        minCol = Math.min(minCol, -(finalProdStr.length - 1));
+
+        // 基準欄位索引 (確保最左邊的數字不會跑到邊界外)
+        let C = Math.abs(minCol);
+        
+        // --- 核心邏輯修改：第1步 (Setup) 顯示完整題目與橫線 ---
+        let order = 1;
+
+        // 1. 寫出被乘數 (A)
+        for (let k = 0; k < cleanA.length; k++) {
+            renderData.chars.push({ char: cleanA[k], row: 0, col: C - cleanA.length + 1 + k, order: order });
+        }
+        if (strA.includes('.')) {
+            renderData.dots.push({ row: 0, col: C - decA + 0.5, order: order });
+        }
+
+        // 2. 寫出乘數 (B) 與 乘號
+        for (let k = 0; k < cleanB.length; k++) {
+            renderData.chars.push({ char: cleanB[k], row: 1, col: C - cleanB.length + 1 + k, order: order });
+        }
+        renderData.chars.push({ char: '×', row: 1, col: C - Math.max(cleanA.length, cleanB.length) - 1, order: order, color: '#D4AF37' });
+        if (strB.includes('.')) {
+            renderData.dots.push({ row: 1, col: C - decB + 0.5, order: order });
+        }
+
+        // 3. 畫出第一條橫線
+        let line1Start = C - Math.max(cleanA.length, cleanB.length) - 1;
+        renderData.lines.push({ row: 1, startCol: line1Start, endCol: C, order: order });
+
+        // --- 第2步開始：逐「位數」產生部分積 (符合截圖邏輯) ---
+        let cur_row = 2;
+
+        for (let j = cleanB.length - 1; j >= 0; j--) {
+            let digitB = parseInt(cleanB[j], 10);
+            
+            // 過濾無意義的前導零
+            if (j < cleanB.length - 1 && BigInt(cleanB.substring(0, j + 1)) === 0n) continue;
+
+            let carry = 0;
+            let shift = cleanB.length - 1 - j;
+            let current_col = C - shift;
+            
+            let isFinalAns = (partialProductsCount <= 1);
+            let textColor = isFinalAns ? '#1A237E' : '#4b5563';
+
+            for (let i = cleanA.length - 1; i >= 0; i--) {
+                let digitA = parseInt(cleanA[i], 10);
+                let val = digitA * digitB + carry;
+                
+                order++; // 每乘一個數字就推進一步 (對應截圖中的圓圈號碼)
+
+                if (i === 0) {
+                    // 最左邊的數字，直接寫出含進位的完整數值
+                    let valStr = val.toString();
+                    for(let k = valStr.length - 1; k >= 0; k--) {
+                        renderData.chars.push({ char: valStr[k], row: cur_row, col: current_col, order: order, color: textColor });
+                        current_col--;
+                    }
+                } else {
+                    // 寫出個位數，保留進位給下一輪
+                    let writeDigit = val % 10;
+                    carry = Math.floor(val / 10);
+                    renderData.chars.push({ char: writeDigit.toString(), row: cur_row, col: current_col, order: order, color: textColor });
+                    current_col--;
+                }
+            }
+            cur_row++;
+        }
+
+        // --- 最後一步：畫出第二條線與加總結果 ---
+        if (partialProductsCount > 1) {
+            order++; 
+            renderData.lines.push({ row: cur_row - 1, startCol: C - finalProdStr.length, endCol: C, order: order });
+            
+            for (let k = 0; k < finalProdStr.length; k++) {
+                renderData.chars.push({ char: finalProdStr[k], row: cur_row, col: C - finalProdStr.length + 1 + k, order: order, color: '#1A237E' });
+            }
+            if (totalDec > 0) {
+                renderData.dots.push({ row: cur_row, col: C - totalDec + 0.5, order: order });
+            }
+            cur_row++;
+        } else {
+            // 如果只有一行部分積，補上最終的小數點 (作為最後一步)
+            if (totalDec > 0) {
+                order++; 
+                renderData.dots.push({ row: cur_row - 1, col: C - totalDec + 0.5, order: order });
+            }
+        }
+
+        renderData.maxOrder = order;
+        renderData.finalRow = cur_row - 1; 
+        renderData.cols = C + 1;
+        return renderData;
+    }
+
+    function createMultiplicationCard(strA, strB, idNum) {
+        const resultsArea = document.getElementById("resultsArea");
+        
+        let renderData = calculateMultiplicationData(strA, strB);
+        renderData.qText = `Q${idNum}:  ${strA} × ${strB}`; 
+
+        let canvasWidth = startX * 2 + renderData.cols * cellW;
+        let canvasHeight = startY * 2 + (renderData.finalRow + 1) * cellH;
+
+        const card = document.createElement('div');
+        card.className = "card-container bg-white p-4 rounded-xl shadow-lg flex flex-col items-center relative transition hover:shadow-xl w-full";
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+        card.appendChild(canvas);
+
+        const controlDiv = document.createElement('div');
+        controlDiv.className = "no-print w-full mt-4 bg-gray-50 p-3 rounded-lg border border-gray-100 flex flex-col gap-2";
+        
+        const stepLabel = document.createElement('div');
+        stepLabel.className = "text-sm text-gray-600 font-bold flex justify-between items-center mb-1";
+        stepLabel.innerHTML = `<span>分步演示</span><span class="step-text text-[#1A237E] bg-blue-100 px-2 py-1 rounded">第 1 步 / 共 ${renderData.maxOrder} 步</span>`;
+        
+        const btnGroup = document.createElement('div');
+        btnGroup.className = "flex gap-2 w-full";
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = "flex-1 bg-white border-2 border-[#1A237E] text-[#1A237E] font-bold py-2 rounded-lg hover:bg-blue-50 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed";
+        prevBtn.innerHTML = "◀ 上一步";
+        prevBtn.disabled = true;
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = "flex-1 bg-[#1A237E] text-white font-bold py-2 rounded-lg hover:bg-blue-800 transition flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed";
+        nextBtn.innerHTML = "下一步 ▶";
+        if (renderData.maxOrder <= 1) nextBtn.disabled = true;
+
+        btnGroup.appendChild(prevBtn);
+        btnGroup.appendChild(nextBtn);
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = "mt-2 bg-gray-200 text-gray-700 hover:bg-[#D4AF37] hover:text-[#1A237E] font-bold py-1 px-3 rounded text-sm transition";
+        downloadBtn.innerText = "📥 儲存單題圖片";
+        downloadBtn.onclick = () => {
+            const link = document.createElement('a');
+            link.download = `直式乘法_Q${idNum}_${strA}乘以${strB}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+
+        controlDiv.appendChild(stepLabel);
+        controlDiv.appendChild(btnGroup);
+        controlDiv.appendChild(downloadBtn);
+        card.appendChild(controlDiv);
+        resultsArea.appendChild(card);
+
+        const ctx = canvas.getContext('2d');
+        let currentStep = 1;
+
+        const draw = () => drawCanvasContext(ctx, canvas, currentStep, renderData);
+        
+        const updateUI = () => {
+            let span = stepLabel.querySelector('.step-text');
+            if (currentStep === 1) span.innerText = `第 1 步 (題目)`;
+            else if (currentStep === renderData.maxOrder) span.innerText = `完成！(共 ${renderData.maxOrder} 步)`;
+            else span.innerText = `第 ${currentStep} 步 / 共 ${renderData.maxOrder} 步`;
+
+            prevBtn.disabled = (currentStep <= 1);
+            nextBtn.disabled = (currentStep >= renderData.maxOrder);
+            draw();
+        };
+
+        // 註冊這張卡片的控制方法到全域，讓外面的批次按鈕可以呼叫
+        window.cardControllers.push({
+            showQuestion: () => {
+                currentStep = 1;
+                updateUI();
+            },
+            showAnswer: () => {
+                currentStep = renderData.maxOrder;
+                updateUI();
+            }
+        });
+
+        prevBtn.onclick = () => {
+            if (currentStep > 1) {
+                currentStep--;
+                updateUI();
+            }
+        };
+
+        nextBtn.onclick = () => {
+            if (currentStep < renderData.maxOrder) {
+                currentStep++;
+                updateUI();
+            }
+        };
+
+        // 初始繪製
+        updateUI();
+    }
+
+    // 全卷顯示題目的廣播方法
+    function showAllQuestions() {
+        if(window.cardControllers) {
+            window.cardControllers.forEach(c => c.showQuestion());
+        }
+    }
+
+    // 全卷顯示解答的廣播方法
+    function showAllAnswers() {
+        if(window.cardControllers) {
+            window.cardControllers.forEach(c => c.showAnswer());
+        }
+    }
+
+    function drawCanvasContext(ctx, canvas, currentOrder, renderData) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = "#1A237E"; 
+        ctx.font = "bold 18px 'Nunito', 'Microsoft JhengHei', sans-serif"; 
+        ctx.textAlign = "left";
+        ctx.textBaseline = "top";
+        ctx.fillText(renderData.qText, 15, 15);
+
+        // 浮水印
+        ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
+        ctx.font = "14px Arial";
+        ctx.textAlign = "right";
+        ctx.textBaseline = "bottom";
+        ctx.fillText("©Puti-AI", canvas.width - 15, canvas.height - 15);
+        ctx.fillText("©Puti-AI", 70, 40);
+
+        ctx.font = "bold 28px 'Nunito', sans-serif"; 
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        renderData.chars.forEach(item => {
+            if (item.order <= currentOrder) {
+                let cx = startX + item.col * cellW + cellW/2;
+                let cy = startY + item.row * cellH + cellH/2;
+                ctx.fillStyle = item.color ? item.color : "#2d3748";
+                ctx.fillText(item.char, cx, cy);
+            }
+        });
+
+        // 繪製小數點
+        renderData.dots.forEach(dot => {
+            if (dot.order <= currentOrder) {
+                // 加 0.5 單位恰好落在兩個數字格子的中間線上
+                let cx = startX + dot.col * cellW + cellW/2;
+                let cy = startY + dot.row * cellH + cellH/2 + cellH/4; 
+                ctx.fillStyle = "#1A237E"; // 使用主視覺深藍色
+                ctx.beginPath();
+                ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        ctx.strokeStyle = "#1A237E"; 
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+
+        renderData.lines.forEach(line => {
+            if (line.order <= currentOrder) {
+                let lx1 = startX + line.startCol * cellW + cellW * 0.1;
+                let lx2 = startX + (line.endCol + 1) * cellW - cellW * 0.1;
+                let ly = startY + (line.row + 1) * cellH; 
+
+                ctx.beginPath();
+                ctx.moveTo(lx1, ly);
+                ctx.lineTo(lx2, ly);
+                ctx.stroke();
+            }
+        });
+    }
+
+    function downloadAllImages() {
+        const cards = document.querySelectorAll('.card-container');
+        if (cards.length === 0) {
+            alert("GiGi 提醒：請先出題或貼上題目，再下載喔！");
+            return;
+        }
+
+        const cols = 2;
+        const padding = 50;
+        const gap = 40;
+        const headerHeight = 100;
+        
+        let maxW = 0;
+        let canvases = [];
+        cards.forEach(card => {
+            let cvs = card.querySelector('canvas');
+            if(cvs) {
+                maxW = Math.max(maxW, cvs.width);
+                canvases.push(cvs);
+            }
+        });
+
+        const rows = Math.ceil(canvases.length / cols);
+        let rowHeights = new Array(rows).fill(0);
+        
+        canvases.forEach((cvs, idx) => {
+            let r = Math.floor(idx / cols);
+            rowHeights[r] = Math.max(rowHeights[r], cvs.height);
+        });
+
+        let totalHeight = padding * 2 + headerHeight + gap * Math.max(0, rows - 1);
+        rowHeights.forEach(h => totalHeight += h);
+        
+        let totalWidth = padding * 2 + maxW * 2 + gap;
+
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = totalWidth;
+        finalCanvas.height = totalHeight;
+        const ctx = finalCanvas.getContext('2d');
+
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, totalWidth, totalHeight);
+
+        ctx.fillStyle = "#1A237E";
+        ctx.font = "bold 42px 'Nunito', 'Microsoft JhengHei', sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("Puti-AI 直式乘法解答卷", totalWidth / 2, padding + headerHeight / 2 - 15);
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
+        ctx.font = "30px Arial";
+        ctx.textAlign = "right";
+        for (let i = 0; i < totalHeight; i += 400) {
+            ctx.fillText("©Puti-AI", totalWidth - 40, i + 150);
+            ctx.fillText("©Puti-AI", 180, i + 350);
+        }
+
+        let currentY = padding + headerHeight;
+        for (let r = 0; r < rows; r++) {
+            let idx1 = r * cols;
+            let idx2 = r * cols + 1;
+
+            if (idx1 < canvases.length) {
+                let cvs1 = canvases[idx1];
+                let x1 = padding + (maxW - cvs1.width) / 2; 
+                ctx.drawImage(cvs1, x1, currentY);
+            }
+            if (idx2 < canvases.length) {
+                let cvs2 = canvases[idx2];
+                let x2 = padding + maxW + gap + (maxW - cvs2.width) / 2; 
+                ctx.drawImage(cvs2, x2, currentY);
+            }
+            currentY += rowHeights[r] + gap;
+        }
+
+        const link = document.createElement('a');
+        link.download = `Puti_AI_乘法解答卷_${new Date().getTime()}.png`;
+        link.href = finalCanvas.toDataURL('image/png');
+        link.click();
+    }
+</script>
+
+</body>
+</html>
