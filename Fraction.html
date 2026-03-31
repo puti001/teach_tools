@@ -246,8 +246,8 @@
         document.addEventListener("DOMContentLoaded", () => {
             document.getElementById('auto-grade').value = '4';
             document.getElementById('auto-count').value = '4';
-            // 給予測試課本例題的預設值
-            document.getElementById('math-input').value = "1 7/10 + 8/10 =\n2 1/10 - 1 7/10 =\n1 3/4 + 1/2 =\n3 1/4 - 1 3/4 =";
+            // 給予測試課本例題的預設值，加入四則混合示範
+            document.getElementById('math-input').value = "( 1/2 + 1/3 ) x 1/4 =\n1 7/10 + 8/10 =\n2 1/10 - 1 7/10 =\n3 1/4 - 1 3/4 =";
             generateMath();
         });
 
@@ -393,6 +393,56 @@
             return { w, n, d: imp.d };
         }
 
+        // 🌟 新增：強大的遞迴表達式解析工具群
+        function formatTokenToLatex(t) {
+            if (t === '(') return '\\left(';
+            if (t === ')') return '\\right)';
+            if (t === '*' || t.toLowerCase() === 'x' || t === '×') return '\\times';
+            if (t === '/' || t === '÷') return '\\div';
+            if (t === '+' || t === '-') return t;
+            return objToLatex(parseToObj(t));
+        }
+
+        function tokensToLatex(tokens) {
+            return tokens.map(formatTokenToLatex).join(' ');
+        }
+
+        function isOperator(t) {
+            return /^[\+\-\*\/\÷xX×]$/.test(t);
+        }
+
+        function toEvalStr(t) {
+            if (t.includes('/')) {
+                let parts = t.split(/\s+/);
+                if (parts.length === 2) {
+                    return `(${parts[0]} + ${parts[1]})`;
+                } else {
+                    return `(${t})`;
+                }
+            }
+            return t;
+        }
+
+        function toEvalOp(op) {
+            if (op === '*' || op.toLowerCase() === 'x' || op === '×') return '*';
+            if (op === '/' || op === '÷') return '/';
+            return op;
+        }
+
+        function toMixedString(frac) {
+            if (typeof frac === 'number' || typeof frac === 'string') return String(frac);
+            if (!frac || typeof frac.n === 'undefined' || typeof frac.d === 'undefined') return String(frac);
+            let n = frac.n, d = frac.d, s = frac.s;
+            if (d === 1) return (s < 0 ? "-" : "") + n;
+            if (n === 0) return "0";
+            let signStr = s < 0 ? "-" : "";
+            if (n < d) return signStr + `${n}/${d}`;
+            let w = Math.floor(n / d);
+            let rem = n % d;
+            if (rem === 0) return signStr + w;
+            return signStr + `${w} ${rem}/${d}`;
+        }
+
         // 🌟 雙核運算引擎：包含「課本直觀法」與「全化假分數法」
         function buildBinarySteps(f1_str, op, f2_str, calcMethod) {
             let steps = [];
@@ -528,56 +578,101 @@
             return uniqueSteps;
         }
 
+        // 🌟 重寫：支援四則運算、括號「先乘除後加減」的遞迴解題引擎
         function generateStepsArray(exp, calcMethod) {
-            const tokenRegex = /([0-9]+\s+[0-9]+\/[0-9]+|[0-9]+\/[0-9]+|[0-9]+|[\+\-\*\/\÷xX×])/g;
-            const tokens = exp.match(tokenRegex);
+            const tokenRegex = /([0-9]+\s+[0-9]+\/[0-9]+|[0-9]+\/[0-9]+|[0-9]+|[\+\-\*\/\÷xX×\(\)])/g;
+            let tokens = exp.match(tokenRegex);
             if (!tokens) return [exp];
+            tokens = tokens.map(t => t.trim()).filter(t => t !== '');
 
-            let cleanTokens = tokens.map(t => t.trim());
-            let ops = cleanTokens.filter(t => /^[\+\-\*\/\÷xX×]$/.test(t));
-            let nums = cleanTokens.filter(t => !/^[\+\-\*\/\÷xX×]$/.test(t));
+            let steps = [];
+            steps.push(tokensToLatex(tokens));
 
-            if (ops.length === 1 && nums.length === 2) {
-                try {
-                    return buildBinarySteps(nums[0], ops[0], nums[1], calcMethod);
-                } catch(e) { console.error(e); }
-            }
-            
-            let latexStr = '', evalStr = '';
-            cleanTokens.forEach(t => {
-                if (/^[\+\-\*\/\÷xX×]$/.test(t)) {
-                    if (t === '*' || t.toLowerCase() === 'x' || t === '×') { latexStr += ' \\times '; evalStr += ' * '; } 
-                    else if (t === '/' || t === '÷') { latexStr += ' \\div '; evalStr += ' / '; } 
-                    else { latexStr += ` ${t} `; evalStr += ` ${t} `; }
-                } else {
-                    if (t.includes('/')) {
-                        let parts = t.split(/\s+/);
-                        if (parts.length === 2) {
-                            let [w, frac] = parts; let [n, d] = frac.split('/');
-                            latexStr += `${w}\\frac{${n}}{${d}}`; evalStr += `(${w} + ${n}/${d})`;
-                        } else {
-                            let [n, d] = t.split('/');
-                            latexStr += `\\frac{${n}}{${d}}`; evalStr += `(${n}/${d})`;
-                        }
-                    } else { latexStr += t; evalStr += t; }
+            let safety = 0;
+            while (tokens.length > 1 && safety++ < 30) {
+                // 1. 去除已經運算完畢的多餘括號 (例如: ( 5/6 ) -> 5/6 )
+                let modifiedParens = false;
+                for (let i = 0; i < tokens.length - 2; i++) {
+                    if (tokens[i] === '(' && tokens[i+2] === ')' && !isOperator(tokens[i+1])) {
+                        tokens.splice(i+2, 1);
+                        tokens.splice(i, 1);
+                        modifiedParens = true;
+                        break;
+                    }
                 }
-            });
-            try {
-                let ans = toMixedLatex(math.evaluate(evalStr));
-                return [latexStr, ans];
-            } catch(e) { return [latexStr]; }
-        }
+                if (modifiedParens) {
+                    let currentLatex = tokensToLatex(tokens);
+                    if (steps[steps.length - 1] !== currentLatex) steps.push(currentLatex);
+                    continue;
+                }
 
-        function toMixedLatex(frac) {
-            if (typeof frac === 'number' || typeof frac === 'string') return String(frac);
-            if (!frac || typeof frac.n === 'undefined' || typeof frac.d === 'undefined') return String(frac);
-            let n = frac.n, d = frac.d, s = frac.s;
-            if (d === 1) return (s < 0 ? "-" : "") + n;
-            if (n === 0) return "0";
-            if (n < d) return (s < 0 ? "-" : "") + `\\frac{${n}}{${d}}`;
-            let whole = Math.floor(n / d), rem = n % d, signStr = s < 0 ? "-" : "";
-            if (rem === 0) return signStr + whole;
-            return signStr + `${whole}\\frac{${rem}}{${d}}`;
+                // 2. 尋找最內層括號
+                let l = -1, r = tokens.length;
+                for (let i = tokens.length - 1; i >= 0; i--) {
+                    if (tokens[i] === '(') { l = i; break; }
+                }
+                if (l !== -1) {
+                    r = tokens.indexOf(')', l);
+                    if (r === -1) r = tokens.length; 
+                } else {
+                    l = 0; r = tokens.length;
+                }
+
+                // 3. 依照「先乘除、後加減」尋找運算目標
+                let opIndex = -1;
+                for (let i = l + 1; i < r; i++) {
+                    if (tokens[i] === '*' || tokens[i].toLowerCase() === 'x' || tokens[i] === '×' || tokens[i] === '/' || tokens[i] === '÷') {
+                        opIndex = i; break;
+                    }
+                }
+                if (opIndex === -1) {
+                    for (let i = l + 1; i < r; i++) {
+                        if (tokens[i] === '+' || tokens[i] === '-') {
+                            opIndex = i; break;
+                        }
+                    }
+                }
+
+                if (opIndex === -1) break; // 避免無限迴圈
+
+                let leftToken = tokens[opIndex - 1];
+                let opToken = tokens[opIndex];
+                let rightToken = tokens[opIndex + 1];
+
+                if (!leftToken || !rightToken || isOperator(leftToken) || isOperator(rightToken) || leftToken==='(' || rightToken===')') {
+                    break; 
+                }
+
+                // 4. 獲取這個「單一運算」的詳細步驟
+                let subSteps = buildBinarySteps(leftToken, opToken, rightToken, calcMethod);
+
+                // 5. 將這些子步驟，完美無縫嵌入到「完整的長算式」中
+                for (let k = 1; k < subSteps.length; k++) {
+                    let stepLatex = "";
+                    for (let i = 0; i < tokens.length; i++) {
+                        if (i === opIndex - 1) {
+                            stepLatex += subSteps[k] + " ";
+                            i = opIndex + 1; // 跳過已替換的運算符和右側數字
+                        } else {
+                            stepLatex += formatTokenToLatex(tokens[i]) + " ";
+                        }
+                    }
+                    stepLatex = stepLatex.trim();
+                    if (steps[steps.length - 1] !== stepLatex) steps.push(stepLatex);
+                }
+
+                // 6. 計算此步驟結果，並更新代幣陣列供下一次迴圈使用
+                let evalStr = toEvalStr(leftToken) + " " + toEvalOp(opToken) + " " + toEvalStr(rightToken);
+                let rawResult = "";
+                try {
+                    let fracResult = math.evaluate(evalStr);
+                    rawResult = toMixedString(fracResult);
+                } catch(e) { break; }
+
+                tokens.splice(opIndex - 1, 3, rawResult);
+            }
+
+            return steps;
         }
 
         function generateMath() {
