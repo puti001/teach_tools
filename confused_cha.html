@@ -342,7 +342,7 @@
                         登錄排行榜
                     </button>
                     <button onclick="skipHighScore()" class="w-full max-w-xs text-gray-400 text-xs sm:text-sm hover:text-gray-600 underline">
-                        跳過並回首頁
+                        跳過不留名
                     </button>
                 </div>
 
@@ -758,9 +758,9 @@
         }
 
         function skipHighScore() {
+            // 【修正：直接讓使用者回到一般的結算畫面，不要跳回首頁，這樣就能看到挑戰錯題的按鈕了】
             document.getElementById('highScoreView').classList.add('hidden');
             document.getElementById('normalEndView').classList.remove('hidden');
-            showCategorySelection();
         }
 
         function forceQuitGame() {
@@ -1071,6 +1071,25 @@
                     document.getElementById('gachaOpen').classList.add('hidden');
                 }
 
+                // 【修正：把回饋文字跟錯題按鈕的判斷，從 else 裡面獨立出來】
+                // 這樣無論有沒有破紀錄，錯題按鈕跟回饋訊息都會正確被產生！
+                endTitle.innerText = "時間到！";
+                if (mistakeBank.length === 0 && currentScore > 0) {
+                    feedbackMsg.innerHTML = "<strong>神級表現！</strong><br>完全沒有失誤，你的同音字辨識能力無懈可擊！";
+                } else if (mistakeBank.length > 0) {
+                    feedbackMsg.innerHTML = `<strong>發現弱點！</strong><br>雖然分數不錯，但有 ${mistakeBank.length} 個詞彙容易選錯。<br>快點擊下方紅色按鈕進行特訓！`;
+                } else {
+                    feedbackMsg.innerHTML = "<strong>熱身結束？</strong><br>分數有點低喔，是不是還沒抓到訣竅？";
+                }
+
+                if (mistakeBank.length > 0) {
+                    btnMistake.classList.remove('hidden');
+                    mistakeCountSpan.innerText = mistakeBank.length;
+                } else {
+                    btnMistake.classList.add('hidden');
+                }
+
+                // 【判斷是否破紀錄，若是則隱藏 normalEndView 改顯示 highScoreView】
                 if (isHighScore(currentCategoryKey, currentScore)) {
                     normalEndView.classList.add('hidden');
                     highScoreView.classList.remove('hidden');
@@ -1078,22 +1097,6 @@
                     document.getElementById('playerNameInput').value = ''; 
                     playSound('correct');
                     triggerConfetti();
-                } else {
-                    endTitle.innerText = "時間到！";
-                    if (mistakeBank.length === 0 && currentScore > 0) {
-                        feedbackMsg.innerHTML = "<strong>神級表現！</strong><br>完全沒有失誤，你的同音字辨識能力無懈可擊！";
-                    } else if (mistakeBank.length > 0) {
-                        feedbackMsg.innerHTML = `<strong>發現弱點！</strong><br>雖然分數不錯，但有 ${mistakeBank.length} 個詞彙容易選錯。<br>快點擊下方紅色按鈕進行特訓！`;
-                    } else {
-                        feedbackMsg.innerHTML = "<strong>熱身結束？</strong><br>分數有點低喔，是不是還沒抓到訣竅？";
-                    }
-
-                    if (mistakeBank.length > 0) {
-                        btnMistake.classList.remove('hidden');
-                        mistakeCountSpan.innerText = mistakeBank.length;
-                    } else {
-                        btnMistake.classList.add('hidden');
-                    }
                 }
             }
         }
