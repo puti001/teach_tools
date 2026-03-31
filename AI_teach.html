@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 教師AI教學現況調查</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background-color: #f2f2f2; 
+            overflow-x: hidden;
+        }
+        
+        /* 遊戲化背景與漸層 */
+        .game-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        .lobby-bg {
+            background: #f3f4f6 url('data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%239C92AC" fill-opacity="0.1" fill-rule="evenodd"%3E%3Ccircle cx="3" cy="3" r="3"/%3E%3Ccircle cx="13" cy="13" r="3"/%3E%3C/g%3E%3C/svg%3E');
+        }
+
+        /* 選項按鈕樣式 */
+        .ans-btn {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .ans-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+            filter: brightness(1.1);
+        }
+        .ans-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 rgba(0,0,0,0);
+        }
+        .ans-btn.selected {
+            transform: scale(0.98);
+            box-shadow: 0 0 0 rgba(0,0,0,0);
+            border: 4px solid #fff;
+            filter: brightness(0.8);
+        }
+        .ans-btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* 選項專屬顏色 */
+        .color-A { background-color: #e21b3c; } /* 紅 🔺 */
+        .color-B { background-color: #1368ce; } /* 藍 🔹 */
+        .color-C { background-color: #d89e00; } /* 黃 🟡 */
+        .color-D { background-color: #26890c; } /* 綠 🟩 */
+        .color-E { background-color: #864cbf; } /* 紫 🟣 */
+
+        .shape { font-size: 1.5rem; margin-right: 0.5rem; drop-shadow: 1px 1px 2px rgba(0,0,0,0.3); }
+
+        .progress-bar { transition: width 0.4s ease-in-out; }
+
+        @keyframes bounce-in {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-bounce-in { animation: bounce-in 0.5s ease-out forwards; }
+
+        /* 文字截斷與排版修正 */
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;  
+            overflow: hidden;
+        }
+
+        /* 列印/輸出 PDF 專用樣式 */
+        @media print {
+            body { background-color: #ffffff; }
+            header, footer, .no-print { display: none !important; }
+            #section-results { display: flex !important; width: 100% !important; max-width: none !important; padding: 0 !important; }
+            .shadow-sm, .shadow-inner, .shadow-xl { box-shadow: none !important; border: 1px solid #ddd !important; }
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            .canvas-wrapper { page-break-inside: avoid; }
+            #text-report-section { page-break-before: always; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col lobby-bg">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-white shadow-md z-10 sticky top-0">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 bg-yellow-400 rounded-full border-2 border-gray-700 flex items-center justify-center shadow-inner relative flex-shrink-0">
+                    <div class="w-7 h-3 bg-gray-800 rounded-full flex justify-around items-center px-0.5">
+                        <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></div>
+                        <div class="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></div>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-black text-gray-800 tracking-tight">Puti-AI <span class="text-blue-600">教師AI教學現況調查</span></h1>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="showSection('lobby')" class="text-sm font-bold text-gray-500 hover:text-blue-600 transition">回到大廳</button>
+                <button onclick="showResultsDirectly()" class="text-sm font-bold text-gray-500 hover:text-blue-600 transition">直接看圖表</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow w-full flex flex-col items-center justify-center p-4">
+        
+        <!-- 區塊 1: 大廳 -->
+        <div id="section-lobby" class="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-6 md:p-10 animate-bounce-in border-t-8 border-blue-600 relative overflow-hidden">
+            <div class="absolute -right-10 -top-10 w-32 h-32 bg-yellow-100 rounded-full opacity-50"></div>
+            <div class="absolute -left-10 -bottom-10 w-24 h-24 bg-blue-100 rounded-full opacity-50"></div>
+            
+            <div class="text-center mb-8 relative z-10">
+                <h2 class="text-3xl font-black text-gray-800 mb-2">準備好開始了嗎？</h2>
+                <p class="text-gray-500 font-medium">請先建立您的遊戲角色資訊 🎮</p>
+            </div>
+
+            <form id="lobbyForm" onsubmit="startGame(event)" class="space-y-5 relative z-10">
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">🏫 服務單位</label>
+                    <select id="unit" required class="w-full bg-gray-100 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 focus:bg-white focus:ring-0 focus:border-blue-500 transition">
+                        <option value="">請選擇</option>
+                        <option value="大學">大學</option>
+                        <option value="高中">高中</option>
+                        <option value="國中">國中</option>
+                        <option value="國小">國小</option>
+                        <option value="幼教">幼教</option>
+                        <option value="補教">補教</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">👤 顯示暱稱</label>
+                    <input type="text" id="nickname" required placeholder="輸入帥氣/可愛的暱稱" class="w-full bg-gray-100 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 focus:bg-white focus:ring-0 focus:border-blue-500 transition">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">🎂 年齡層</label>
+                        <select id="age" required class="w-full bg-gray-100 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 focus:bg-white focus:ring-0 focus:border-blue-500 transition">
+                            <option value="">請選擇</option>
+                            <option value="20-29歲">20-29 歲</option>
+                            <option value="30-39歲">30-39 歲</option>
+                            <option value="40-49歲">40-49 歲</option>
+                            <option value="50-59歲">50-59 歲</option>
+                            <option value="60歲以上">60 歲以上</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">🚻 性別</label>
+                        <select id="gender" required class="w-full bg-gray-100 border-2 border-gray-200 rounded-xl px-4 py-3 font-bold text-gray-700 focus:bg-white focus:ring-0 focus:border-blue-500 transition">
+                            <option value="">請選擇</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="w-full mt-6 bg-gray-900 hover:bg-gray-800 text-white font-black text-xl py-4 rounded-xl shadow-lg transform transition hover:scale-[1.02]">
+                    進入遊戲 (Start) 🚀
+                </button>
+            </form>
+        </div>
+
+        <!-- 區塊 2: 遊戲答題區 (隱藏) -->
+        <div id="section-game" class="hidden w-full max-w-4xl flex-col items-center">
+            <div class="w-full flex justify-center mb-4">
+                <div class="bg-white rounded-2xl px-6 py-2 shadow flex items-center gap-3 border-2 border-yellow-400">
+                    <span class="font-bold text-blue-600" id="gigi-msg">Hi！輕鬆點選最符合你的選項喔！</span>
+                </div>
+            </div>
+
+            <div class="w-full bg-white rounded-2xl shadow-xl p-6 md:p-10 mb-6 text-center border-t-8 border-gray-800">
+                <div class="flex justify-between items-center mb-4 text-gray-400 font-bold text-sm">
+                    <span id="q-counter">Question 1 / 15</span>
+                    <div class="w-1/2 bg-gray-200 rounded-full h-2">
+                        <div id="q-progress" class="bg-green-500 h-2 rounded-full progress-bar" style="width: 6.6%;"></div>
+                    </div>
+                </div>
+                <h2 id="q-title" class="text-2xl md:text-3xl font-black text-gray-800 leading-tight mb-2">題目載入中...</h2>
+            </div>
+
+            <div id="options-container" class="w-full grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+            <div id="other-input-container" class="hidden w-full mt-4 bg-white p-4 rounded-xl shadow-lg border-2 border-purple-400 animate-bounce-in">
+                <label class="block text-purple-700 font-bold mb-2">請說明您的其他情況：</label>
+                <input type="text" id="other-text" placeholder="輸入文字後即可進入下一題..." class="w-full bg-gray-50 border-2 border-gray-300 rounded-lg px-4 py-3 font-bold text-gray-700 focus:border-purple-500 focus:ring-0" oninput="checkOtherInput()">
+            </div>
+
+            <div class="w-full flex justify-end mt-8">
+                <button id="next-btn" onclick="nextQuestion()" class="hidden bg-gray-800 hover:bg-gray-700 text-white font-black text-xl py-3 px-10 rounded-xl shadow-xl transform transition hover:scale-105">
+                    下一題 ⏭
+                </button>
+            </div>
+        </div>
+
+        <!-- 區塊 3: 傳送中畫面 (隱藏) -->
+        <div id="section-loading" class="hidden flex-col items-center justify-center">
+            <div class="w-20 h-20 border-8 border-gray-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+            <h2 class="text-2xl font-black text-gray-700">資料讀取/傳送中...</h2>
+        </div>
+
+        <!-- 區塊 4: 結果儀表板 (隱藏) -->
+        <div id="section-results" class="hidden w-full max-w-5xl flex-col items-center">
+            <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8 mb-4 text-center border-t-8 border-green-500 w-full">
+                <h2 class="text-3xl font-black text-gray-800 mb-2">🏆 全服統計儀表板</h2>
+                <p class="text-gray-500 font-medium">來看看大家在 AI 教學上的現況與想法吧！</p>
+                <div class="mt-4 flex justify-center gap-4">
+                    <button onclick="loadResults()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-xl shadow transition">
+                        🔄 從伺服器刷新
+                    </button>
+                    <button onclick="showSection('lobby')" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-6 rounded-xl shadow transition">
+                        📝 再玩一次
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 動態資料篩選器與總人數顯示 -->
+            <div class="w-full bg-blue-50 rounded-2xl border border-blue-200 p-4 mb-6 shadow-inner flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-2 bg-white px-5 py-3 rounded-xl shadow-sm border border-gray-200 shrink-0">
+                    <span class="text-gray-700 font-bold text-lg">👥 符合條件人數：</span>
+                    <span id="display-total-count" class="text-3xl font-black text-blue-600">0</span>
+                    <span class="text-gray-500 font-bold">人</span>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 justify-end w-full">
+                    <!-- 新增暱稱搜尋框 -->
+                    <input type="text" id="filter-nickname" oninput="applyFiltersAndRender()" placeholder="🔍 搜尋暱稱 (如: hjps-)" class="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none w-full md:w-auto min-w-[150px]">
+                    <select id="filter-unit" onchange="applyFiltersAndRender()" class="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                        <option value="all">🏢 所有單位</option>
+                        <option value="大學">大學</option>
+                        <option value="高中">高中</option>
+                        <option value="國中">國中</option>
+                        <option value="國小">國小</option>
+                        <option value="幼教">幼教</option>
+                        <option value="補教">補教</option>
+                    </select>
+                    <select id="filter-gender" onchange="applyFiltersAndRender()" class="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                        <option value="all">🚻 所有性別</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                        <option value="其他">其他</option>
+                    </select>
+                    <select id="filter-age" onchange="applyFiltersAndRender()" class="bg-white border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg focus:ring-2 focus:ring-blue-400 focus:outline-none">
+                        <option value="all">🎂 所有年齡層</option>
+                        <option value="20-29歲">20-29 歲</option>
+                        <option value="30-39歲">30-39 歲</option>
+                        <option value="40-49歲">40-49 歲</option>
+                        <option value="50-59歲">50-59 歲</option>
+                        <option value="60歲以上">60 歲以上</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="chartsContainer" class="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 動態生成圖表 -->
+            </div>
+            
+            <!-- 文字版統計結果區塊 -->
+            <div id="text-report-section" class="w-full bg-white rounded-2xl border border-gray-200 p-6 md:p-8 mt-8 shadow-sm">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                    <h3 class="text-2xl font-black text-gray-800">📄 文字版統計結果</h3>
+                    <div class="flex flex-wrap gap-2 no-print">
+                        <button onclick="copyTextReport()" class="bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-xl shadow-sm transition flex items-center gap-2">
+                            📋 複製文字
+                        </button>
+                        <button onclick="downloadTextReport()" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-700 font-bold py-2 px-4 rounded-xl shadow-sm transition flex items-center gap-2">
+                            💾 下載 TXT
+                        </button>
+                        <button onclick="printTextReport()" class="bg-purple-100 hover:bg-purple-200 text-purple-700 font-bold py-2 px-4 rounded-xl shadow-sm transition flex items-center gap-2">
+                            🖨️ 存成 PDF
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-gray-50 border border-gray-300 rounded-xl p-6 overflow-x-auto shadow-inner">
+                    <pre id="text-report-content" class="text-gray-700 font-mono text-sm md:text-base leading-relaxed whitespace-pre-wrap"></pre>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer 版權宣告 -->
+    <footer class="bg-gray-800 text-gray-300 py-6 mt-auto">
+        <div class="max-w-4xl mx-auto px-4 text-center text-sm leading-relaxed font-medium">
+            <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣。</p>
+            <p>嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+            <p class="mt-2">
+                更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-yellow-400 hover:text-yellow-300 underline font-bold">點此前往</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // --- 1. 設定區 ---
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxmsFi54gLl6-tFbIn9_B2xPmXpLfu6B3vqrE3HVAFR9WC3vysDL0lYLvA2fBXOMhkpbg/exec"; 
+
+        // --- 2. 題目資料庫 ---
+        const questionsData = [
+            { id: 'q1', title: '關於生成式 AI 的基本原理與限制，您的了解程度為何？', prefix: '【認知熟練】', options: ['完全不了解', '聽過，但不清楚邏輯限制', '略懂，知道會產生幻覺', '非常熟悉，能向他人解釋'] },
+            { id: 'q2', title: '在日常教學準備中，您使用 AI 工具的頻率為何？', prefix: '【使用頻率】', options: ['從不使用', '偶爾使用(每月<1次)', '有時使用(每週1~2次)', '頻繁使用(幾乎每天)'] },
+            { id: 'q3', title: '您最常在下列哪一個環節使用 AI 輔助工作？', prefix: '【使用時機】', options: ['課前準備(教案/素材)', '課中教學(展示/即時生成)', '課後評量與行政', '個人專業增能'] },
+            { id: 'q4', title: '對於「提示詞(Prompt)」撰寫技巧，您的掌握度？', prefix: '【技能運用】', options: ['不知道，僅輸入關鍵字', '會簡單指令，結果常不理想', '具備基礎架構觀念(角色/目標)', '擅長精準調校多次引導'] },
+            { id: 'q5', title: '關於 AI 生成多媒體資源(圖像/影片)，您的運用經驗？', prefix: '【技能運用】', options: ['完全沒有相關經驗', '曾嘗試，但未用於教學', '能生成教學圖片/簡報素材', '能整合多種AI產出互動媒材'] },
+            { id: 'q6', title: '面對 AI 快速進入校園，您心理上最普遍的感受是？', prefix: '【情意素養】', options: ['焦慮壓力，擔心跟不上', '懷疑態度，認為實質幫助有限', '保持好奇，願意嘗試', '興奮期待，積極尋求融入'] },
+            { id: 'q7', title: '對於 AI 引發的倫理與法律問題，您的關注程度為何？', prefix: '【情意素養】', options: ['從未思考過', '略有耳聞，不知如何處理', '相當關注，會提醒學生', '已建立一套規範引導學生'] },
+            { id: 'q8', title: '若提供 AI 教學增能研習，您最希望學習的主題是？', prefix: '【需求分析】', options: ['基礎操作與入門工具', '各科領域結合實戰案例', '提示詞(Prompt)進階技巧', '倫理、法律規範與素養'] },
+            { id: 'q9', title: '嘗試將 AI 融入教學時，遇到的最大障礙是什麼？', prefix: '【問題困難】', options: ['缺乏時間鑽研與調整', '軟硬體不足或網路不佳', '缺乏系統性教材或策略', '擔心學生過度依賴喪失思考'] },
+            { id: 'q10', title: '未來一年內，您將 AI 整合進正式課堂的意願如何？', prefix: '【未來意願】', options: ['完全沒有意願', '意願較低，暫維持現狀', '意願中等，局部嘗試', '意願極高，納為核心環節'] },
+            { id: 'q11', title: '您目前是否有付費訂閱任何 AI 服務？', prefix: '【工具資源】', options: ['沒有付費，僅用免費版', '有，訂閱 ChatGPT', '有，訂閱 Gemini', '有，訂閱 Claude'] },
+            { id: 'q12', title: '日常教學工作中，最迫切需要 AI 輔助的功能是？', prefix: '【實務需求】', options: ['命題相關(段考、素養題)', '作文相關(批閱、學習單)', '課程設計(教案、跨領域)', '素材生成(簡報、圖片)'] },
+            { id: 'q13', title: '學校行政端對於推推動 AI 融入教學的態度與支援為何？', prefix: '【行政支持】', options: ['尚未關注，無討論或鼓勵', '態度保守，傾向限制', '鼓勵探索，但無實質支持', '積極推動，提供研習/資源'] },
+            { id: 'q14', title: '若學生接觸過 AI 工具，您觀察到最大的正面影響是？', prefix: '【教學觀察】', options: ['尚未讓學生接觸，無從觀察', '提升學習動機與課堂參與', '幫助突破發想瓶頸，展現創意', '促進自主學習向AI提問'] },
+            { id: 'q15', title: '整體而言，AI 工具對您備課或行政時間的影響是？', prefix: '【效能評估】', options: ['尚未真正使用，無法評估', '反而增加時間(需學習/修改)', '影響不大，跟原本差不多', '顯著節省時間，能專注教學'] }
+        ];
+
+        let currentQuestionIndex = 0;
+        let userData = {};
+        let userAnswers = {};
+        let currentSelectedValue = null;
+        let chartInstances = {};
+        
+        // 全域變數，用於存放所有取得的「原始回覆清單」以利篩選
+        let globalRawSurveyData = [];
+
+        const shapes = ['🔺', '🔹', '🟡', '🟩', '🟣'];
+        const colors = ['color-A', 'color-B', 'color-C', 'color-D', 'color-E'];
+        const letters = ['A', 'B', 'C', 'D', 'E'];
+
+        // --- 音效與震動回饋系統 ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playFeedback(type) {
+            if ("vibrate" in navigator) {
+                if (type === 'click') navigator.vibrate(30);
+                else if (type === 'next' || type === 'start') navigator.vibrate([30, 50, 30]);
+                else if (type === 'success') navigator.vibrate([100, 50, 100, 50, 200]);
+            }
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+                gainNode.gain.setValueAtTime(0.2, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if (type === 'next' || type === 'start') {
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+                gainNode.gain.setValueAtTime(0.15, now); gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            } else if (type === 'success') {
+                osc.type = 'square'; osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2);
+                gainNode.gain.setValueAtTime(0.15, now); gainNode.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            }
+        }
+
+        // --- 畫面切換控制 ---
+        function showSection(sectionId) {
+            document.getElementById('section-lobby').classList.add('hidden');
+            document.getElementById('section-game').classList.add('hidden');
+            document.getElementById('section-loading').classList.add('hidden');
+            document.getElementById('section-results').classList.add('hidden');
+            
+            if(sectionId === 'game') {
+                document.body.classList.remove('lobby-bg'); document.body.classList.add('game-bg');
+            } else {
+                document.body.classList.remove('game-bg'); document.body.classList.add('lobby-bg');
+            }
+
+            document.getElementById(`section-${sectionId}`).classList.remove('hidden');
+            if (sectionId === 'results' || sectionId === 'loading' || sectionId === 'game') {
+                document.getElementById(`section-${sectionId}`).classList.add('flex');
+            }
+        }
+
+        function showResultsDirectly() {
+            showSection('loading');
+            loadResults();
+        }
+
+        // --- 遊戲流程邏輯 ---
+        function startGame(event) {
+            event.preventDefault();
+            playFeedback('start');
+            userData = {
+                unit: document.getElementById('unit').value,
+                nickname: document.getElementById('nickname').value,
+                age: document.getElementById('age').value,
+                gender: document.getElementById('gender').value
+            };
+            userAnswers = {};
+            currentQuestionIndex = 0;
+            showSection('game');
+            renderSingleQuestion(currentQuestionIndex);
+        }
+
+        function renderSingleQuestion(index) {
+            const q = questionsData[index];
+            currentSelectedValue = null;
+            
+            document.getElementById('q-counter').innerText = `Question ${index + 1} / ${questionsData.length}`;
+            document.getElementById('q-progress').style.width = `${((index + 1) / questionsData.length) * 100}%`;
+            document.getElementById('q-title').innerHTML = `<span class="text-blue-500 text-xl block mb-1">${q.prefix}</span>${q.title}`;
+            
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            document.getElementById('other-input-container').classList.add('hidden');
+            document.getElementById('other-text').value = '';
+            const nextBtn = document.getElementById('next-btn');
+            nextBtn.classList.add('hidden');
+            
+            if (index === questionsData.length - 1) {
+                nextBtn.innerHTML = '送出成績 🚀';
+                nextBtn.classList.replace('bg-gray-800', 'bg-blue-600');
+                nextBtn.classList.replace('hover:bg-gray-700', 'hover:bg-blue-700');
+            } else {
+                nextBtn.innerHTML = '下一題 ⏭';
+                nextBtn.classList.replace('bg-blue-600', 'bg-gray-800');
+                nextBtn.classList.replace('hover:bg-blue-700', 'hover:bg-gray-700');
+            }
+
+            const gigiMsgs = ["這題你怎麼看呢？", "選直覺浮現的那個！", "快完成了，加油！", "你的意見很珍貴喔！", "答題節奏很好喔！"];
+            document.getElementById('gigi-msg').innerText = gigiMsgs[index % gigiMsgs.length];
+
+            let allOptions = [...q.options, '其他 (請說明)'];
+            allOptions.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                const val = letters[i];
+                btn.className = `ans-btn ${colors[i]} text-white font-bold text-lg md:text-xl p-6 rounded-xl flex items-center justify-start text-left w-full h-full min-h-[100px]`;
+                btn.innerHTML = `<span class="shape">${shapes[i]}</span> <span class="leading-snug">${opt}</span>`;
+                btn.onclick = () => selectOption(val, btn);
+                btn.id = `btn-opt-${val}`;
+                container.appendChild(btn);
+            });
+            
+            container.classList.remove('animate-bounce-in');
+            void container.offsetWidth; 
+            container.classList.add('animate-bounce-in');
+        }
+
+        function selectOption(val, clickedBtn) {
+            playFeedback('click');
+            currentSelectedValue = val;
+            
+            const btns = document.querySelectorAll('.ans-btn');
+            btns.forEach(b => {
+                b.classList.remove('selected'); b.classList.add('disabled');
+            });
+            clickedBtn.classList.remove('disabled'); clickedBtn.classList.add('selected');
+
+            const otherContainer = document.getElementById('other-input-container');
+            const nextBtn = document.getElementById('next-btn');
+            
+            if (val === 'E') {
+                otherContainer.classList.remove('hidden');
+                document.getElementById('gigi-msg').innerText = "請在下方告訴我詳細內容吧！✏️";
+                nextBtn.classList.add('hidden'); 
+                document.getElementById('other-text').focus();
+            } else {
+                otherContainer.classList.add('hidden');
+                document.getElementById('gigi-msg').innerText = "選得好！點擊「下一題」繼續！✨";
+                nextBtn.classList.remove('hidden');
+                nextBtn.classList.add('animate-bounce-in');
+            }
+        }
+
+        function checkOtherInput() {
+            const txt = document.getElementById('other-text').value.trim();
+            const nextBtn = document.getElementById('next-btn');
+            if (txt.length > 0) nextBtn.classList.remove('hidden');
+            else nextBtn.classList.add('hidden');
+        }
+
+        function nextQuestion() {
+            playFeedback('next');
+            const qId = questionsData[currentQuestionIndex].id;
+            if (currentSelectedValue === 'E') userAnswers[qId] = 'E: ' + document.getElementById('other-text').value.trim();
+            else userAnswers[qId] = currentSelectedValue;
+
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questionsData.length) renderSingleQuestion(currentQuestionIndex);
+            else submitGamifiedForm();
+        }
+
+        // --- 送出資料與讀取圖表 ---
+        async function submitGamifiedForm() {
+            showSection('loading');
+            playFeedback('success');
+
+            const payload = {
+                ...userData,
+                answers: userAnswers
+            };
+
+            if (GAS_WEB_APP_URL) {
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL, { method: 'POST', body: JSON.stringify(payload) });
+                    const result = await response.json();
+                    if(result.status === 'success') loadResults();
+                    else {
+                        alert('傳送失敗，請稍後再試。');
+                        showSection('game');
+                    }
+                } catch (err) {
+                    alert('網路錯誤。已為您切換為本機展示模式。');
+                    saveMockData(payload);
+                    loadResults();
+                }
+            } else {
+                saveMockData(payload);
+                setTimeout(() => loadResults(), 1500);
+            }
+        }
+
+        function saveMockData(data) {
+            let mockDb = JSON.parse(localStorage.getItem('putiai_mock_db') || '[]');
+            mockDb.push(data);
+            localStorage.setItem('putiai_mock_db', JSON.stringify(mockDb));
+        }
+
+        // --- 核心：取得資料並動態篩選 ---
+        async function loadResults() {
+            if(GAS_WEB_APP_URL) {
+                try {
+                    const response = await fetch(GAS_WEB_APP_URL);
+                    const result = await response.json();
+                    
+                    // 檢查後端是否更新支援回傳陣列 (未更新的話，回傳的是物件格式)
+                    if(Array.isArray(result)) {
+                        globalRawSurveyData = result;
+                    } else {
+                        console.warn("後端 GAS 尚未更新，無法使用篩選功能。");
+                        alert("請記得更新後端 GAS 程式碼以啟用進階篩選功能！目前套用本機展示資料。");
+                        globalRawSurveyData = getMockRawData();
+                    }
+                } catch (err) {
+                    console.log("改用本地展示數據");
+                    globalRawSurveyData = getMockRawData();
+                }
+            } else {
+                globalRawSurveyData = getMockRawData();
+            }
+            
+            showSection('results');
+            applyFiltersAndRender();
+        }
+
+        function getMockRawData() {
+            let mockDb = JSON.parse(localStorage.getItem('putiai_mock_db') || '[]');
+            if(mockDb.length === 0) {
+                mockDb = generateFakeRawData(150); 
+                localStorage.setItem('putiai_mock_db', JSON.stringify(mockDb));
+            }
+            return mockDb;
+        }
+
+        function generateFakeRawData(num) {
+            let fake = [];
+            const units = ['大學', '高中', '國中', '國小', '幼教', '補教'];
+            const ages = ['20-29歲', '30-39歲', '40-49歲', '50-59歲', '60歲以上'];
+            const genders = ['男', '女', '其他'];
+
+            for(let i=0; i<num; i++) {
+                // 為了方便測試，特意塞入一些帶有 hjps- 前綴的假資料
+                let isHjps = Math.random() < 0.2; 
+                let mockNickname = isHjps ? `hjps-teacher${i}` : `user_${Math.floor(Math.random()*1000)}`;
+
+                let rec = { 
+                    unit: units[Math.floor(Math.random() * units.length)],
+                    age: ages[Math.floor(Math.random() * ages.length)],
+                    gender: genders[Math.floor(Math.random() * genders.length)],
+                    nickname: mockNickname,
+                    answers: {} 
+                };
+                questionsData.forEach(q => {
+                    let r = Math.random();
+                    let ans = '';
+                    if(r < 0.15) ans = 'A';
+                    else if (r < 0.35) ans = 'B';
+                    else if (r < 0.75) ans = 'C';
+                    else if (r < 0.95) ans = 'D';
+                    else ans = 'E: 其他';
+                    rec.answers[q.id] = ans;
+                });
+                fake.push(rec);
+            }
+            return fake;
+        }
+
+        // 進行資料篩選與繪圖
+        function applyFiltersAndRender() {
+            const filterUnit = document.getElementById('filter-unit').value;
+            const filterGender = document.getElementById('filter-gender').value;
+            const filterAge = document.getElementById('filter-age').value;
+            // 取得搜尋框文字，並轉小寫以利比對
+            const filterNickname = document.getElementById('filter-nickname').value.trim().toLowerCase();
+
+            // 1. 根據條件過濾清單
+            const filteredData = globalRawSurveyData.filter(record => {
+                let match = true;
+                if(filterUnit !== 'all' && record.unit !== filterUnit) match = false;
+                if(filterGender !== 'all' && record.gender !== filterGender) match = false;
+                if(filterAge !== 'all' && record.age !== filterAge) match = false;
+                
+                // 加入暱稱模糊/前綴搜尋邏輯
+                if(filterNickname !== '') {
+                    if(!record.nickname || !record.nickname.toLowerCase().includes(filterNickname)) {
+                        match = false;
+                    }
+                }
+                
+                return match;
+            });
+
+            // 2. 更新總人數顯示
+            document.getElementById('display-total-count').innerText = filteredData.length;
+
+            // 3. 進行答案統計加總
+            let aggregated = {};
+            questionsData.forEach(q => aggregated[q.id] = { A:0, B:0, C:0, D:0, E:0 });
+            
+            filteredData.forEach(rec => {
+                if(rec.answers) {
+                    for(const [qid, ans] of Object.entries(rec.answers)) {
+                        if(ans && aggregated[qid]) {
+                            let baseAns = ans.charAt(0).toUpperCase();
+                            if(aggregated[qid][baseAns] !== undefined) {
+                                aggregated[qid][baseAns]++;
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 4. 重繪圖表
+            renderAllCharts(aggregated);
+
+            // 5. 渲染文字報告 (把 filterNickname 也傳進去顯示)
+            renderTextReport(aggregated, filteredData.length, filterUnit, filterGender, filterAge, filterNickname);
+        }
+
+        function renderAllCharts(aggregatedData) {
+            const container = document.getElementById('chartsContainer');
+            container.innerHTML = ''; 
+
+            questionsData.forEach((q) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center hover:shadow-md transition';
+                
+                // 修正：排版改良，使用 line-clamp-2 並調整 min-height，確保不被截斷且對齊
+                const title = document.createElement('h3');
+                title.className = 'text-sm font-bold text-gray-700 mb-4 text-center w-full px-1 flex-grow-0 min-h-[3rem]';
+                title.innerHTML = `<span class="text-blue-600 block mb-1">${q.prefix}</span><span class="line-clamp-2" title="${q.title}">${q.title}</span>`;
+                
+                const canvasWrapper = document.createElement('div');
+                canvasWrapper.className = 'w-full max-w-[200px] aspect-square relative mb-2 canvas-wrapper';
+                
+                const canvas = document.createElement('canvas');
+                canvas.id = `chart_${q.id}`;
+                
+                canvasWrapper.appendChild(canvas);
+                wrapper.appendChild(title);
+                wrapper.appendChild(canvasWrapper);
+                container.appendChild(wrapper);
+
+                const ctx = canvas.getContext('2d');
+                const qData = aggregatedData[q.id] || { A:0, B:0, C:0, D:0, E:0 };
+                const total = qData.A + qData.B + qData.C + qData.D + qData.E;
+                const dataValues = [qData.A, qData.B, qData.C, qData.D, qData.E];
+                
+                if(chartInstances[q.id]) chartInstances[q.id].destroy();
+
+                chartInstances[q.id] = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['A', 'B', 'C', 'D', 'E(其他)'],
+                        datasets: [{
+                            data: total === 0 ? [1] : dataValues,
+                            backgroundColor: total === 0 ? ['#f3f4f6'] : [
+                                '#e21b3c', '#1368ce', '#d89e00', '#26890c', '#864cbf'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        layout: {
+                            padding: 10 // 增加邊距避免被切到
+                        },
+                        plugins: {
+                            legend: { display: false }, 
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        if(total === 0) return ' 無符合條件的資料';
+                                        let val = context.raw;
+                                        let perc = Math.round((val / total) * 100);
+                                        let optText = q.options[context.dataIndex] || '其他';
+                                        return ` ${optText}: ${val}人 (${perc}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
+        // --- 新增：文字報告相關功能 ---
+        function renderTextReport(aggregated, totalCount, unit, gender, age, nicknameKeyword) {
+            let report = `Puti-AI 教師AI教學現況調查 - 統計報告\n`;
+            report += `產生時間：${new Date().toLocaleString('zh-TW')}\n`;
+            report += `篩選條件：單位(${unit === 'all' ? '全部' : unit}) / 性別(${gender === 'all' ? '全部' : gender}) / 年齡(${age === 'all' ? '全部' : age}) / 關鍵字(${nicknameKeyword || '無'})\n`;
+            report += `總符合人數：${totalCount} 人\n`;
+            report += `=========================================\n\n`;
+
+            questionsData.forEach((q, index) => {
+                report += `${index + 1}. ${q.prefix} ${q.title}\n`;
+                const qData = aggregated[q.id] || { A:0, B:0, C:0, D:0, E:0 };
+                const total = qData.A + qData.B + qData.C + qData.D + qData.E;
+                
+                const opts = ['A', 'B', 'C', 'D', 'E'];
+                opts.forEach((optKey, i) => {
+                    const count = qData[optKey];
+                    const perc = total === 0 ? 0 : Math.round((count / total) * 100);
+                    const optText = q.options[i] || '其他';
+                    report += `  - (${optKey}) ${optText}：${count}人 (${perc}%)\n`;
+                });
+                report += `\n`;
+            });
+
+            document.getElementById('text-report-content').innerText = report;
+        }
+
+        function copyTextReport() {
+            playFeedback('click');
+            const text = document.getElementById('text-report-content').innerText;
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert('已成功複製到剪貼簿！');
+            } catch (ex) {
+                alert('複製失敗，請手動選取複製。');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function downloadTextReport() {
+            playFeedback('click');
+            const text = document.getElementById('text-report-content').innerText;
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Puti-AI_教學調查結果_${new Date().getTime()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function printTextReport() {
+            playFeedback('click');
+            // 延遲一點點讓音效可以播出來再跳出列印視窗
+            setTimeout(() => {
+                window.print();
+            }, 150);
+        }
+    </script>
+</body>
+</html>
