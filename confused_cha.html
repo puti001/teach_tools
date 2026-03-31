@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Puti-AI 易混淆字大對決</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0fdf4;
+            background-image: radial-gradient(#bbf7d0 1px, transparent 1px);
+            background-size: 20px 20px;
+            touch-action: manipulation;
+            user-select: none;
+            overflow: hidden; /* 防止整體頁面捲動 */
+        }
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .game-btn {
+            transition: all 0.1s;
+        }
+        .game-btn:active {
+            transform: scale(0.95);
+        }
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: pop 0.2s ease-out forwards;
+        }
+        /* Combo 動畫 */
+        @keyframes combo-pop {
+            0% { transform: scale(0.5) rotate(10deg); opacity: 0; }
+            30% { transform: scale(1.2) rotate(10deg); opacity: 1; }
+            70% { transform: scale(1) rotate(10deg); opacity: 1; }
+            100% { transform: scale(0.8) rotate(10deg); opacity: 0; }
+        }
+        .animate-combo {
+            animation: combo-pop 0.6s ease-out forwards;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake {
+            animation: shake 0.3s ease-in-out;
+        }
+        .text-outline {
+            text-shadow: 
+                2px 2px 0 #000,
+                -1px -1px 0 #000,  
+                1px -1px 0 #000,
+                -1px 1px 0 #000,
+                1px 1px 0 #000;
+        }
+        /* 排行榜表格樣式 */
+        .rank-row:nth-child(1) .rank-num { color: #eab308; } 
+        .rank-row:nth-child(2) .rank-num { color: #94a3b8; } 
+        .rank-row:nth-child(3) .rank-num { color: #b45309; }
+        
+        /* 貼紙樣式 */
+        .sticker-slot {
+            transition: transform 0.2s;
+        }
+        .sticker-slot:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+        .sticker-new-badge {
+            animation: bounce 1s infinite;
+        }
+        
+        /* 彩帶特效 Canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+        }
+        /* 隱藏滾動條 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl card-shadow overflow-hidden border-4 border-green-200 relative h-[95vh] sm:h-auto sm:min-h-[550px] flex flex-col">
+        
+        <!-- Header -->
+        <div class="bg-emerald-600 p-3 text-center relative overflow-hidden shrink-0">
+            <div class="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+            <h1 class="text-xl sm:text-2xl font-bold text-white tracking-wider relative z-10">Puti-AI 易混淆字大對決</h1>
+            <p id="headerSubtitle" class="text-emerald-100 text-[10px] sm:text-xs mt-0.5 relative z-10">擊破同音錯別字！</p>
+        </div>
+
+        <div class="p-3 sm:p-5 flex-grow flex flex-col items-center justify-between relative overflow-hidden">
+            
+            <!-- Game Control Bar (遊戲進行中的控制項) -->
+            <div class="flex justify-between w-full mb-2 z-10 shrink-0">
+                <button onclick="forceQuitGame()" class="text-xs sm:text-sm bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-1 px-3 rounded-full shadow-sm flex items-center gap-1 transition-colors">
+                    🏠 回首頁
+                </button>
+                <button onclick="forceRestartGame()" class="text-xs sm:text-sm bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-bold py-1 px-3 rounded-full shadow-sm flex items-center gap-1 transition-colors">
+                    🔄 再玩一次
+                </button>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="flex justify-between w-full mb-2 font-bold text-gray-600 text-xs sm:text-sm relative z-10 shrink-0">
+                <div class="flex items-center gap-2">
+                    <span class="bg-yellow-100 px-2 sm:px-3 py-1 rounded-full text-yellow-700 border border-yellow-200 shadow-sm">🏆 <span id="scoreLabel">分數</span>: <span id="scoreDisplay">0</span></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-blue-100 px-2 sm:px-3 py-1 rounded-full text-blue-700 border border-blue-200 shadow-sm">⏳ <span id="timeLabel">時間</span>: <span id="timerDisplay">60</span></span>
+                </div>
+            </div>
+
+            <!-- Combo Effect Overlay -->
+            <div id="comboContainer" class="absolute top-16 right-2 pointer-events-none z-50 hidden">
+                <div class="text-center transform rotate-[10deg]">
+                    <div class="text-xl sm:text-2xl font-black text-yellow-400 text-outline italic tracking-tighter">COMBO</div>
+                    <div class="text-4xl sm:text-5xl font-black text-white text-outline drop-shadow-xl" id="comboCountDisplay">x2</div>
+                </div>
+            </div>
+
+            <!-- Sticker Album Screen (Overlay) -->
+            <div id="stickerScreen" class="absolute inset-0 bg-white z-50 flex flex-col items-center p-4 hidden">
+                <div class="w-full flex justify-between items-center mb-2 shrink-0">
+                    <h2 class="text-lg font-bold text-gray-800">📒 我的貼紙簿</h2>
+                    <button onclick="closeStickerAlbum()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <p class="text-xs text-gray-500 mb-2 shrink-0">蒐集進度: <span id="stickerProgress" class="font-bold text-emerald-600">0/20</span></p>
+                
+                <div class="bg-yellow-50 w-full flex-grow overflow-y-auto rounded-xl border-2 border-yellow-200 p-3 no-scrollbar">
+                    <div id="stickerGrid" class="grid grid-cols-4 gap-2">
+                        <!-- JS will populate -->
+                    </div>
+                </div>
+
+                <div class="mt-3 w-full shrink-0">
+                    <button onclick="closeStickerAlbum()" class="w-full game-btn bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 sm:py-3 rounded-xl shadow-md">
+                        關閉
+                    </button>
+                </div>
+            </div>
+
+            <!-- Leaderboard Screen (Overlay) -->
+            <div id="leaderboardScreen" class="absolute inset-0 bg-white z-40 flex flex-col items-center p-4 hidden">
+                <div class="w-full flex justify-between items-center mb-2 shrink-0">
+                    <h2 class="text-lg font-bold text-gray-800">🏆 榮譽排行榜</h2>
+                    <button onclick="closeLeaderboard()" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <div class="bg-emerald-50 w-full p-2 rounded-lg text-center text-emerald-800 font-bold mb-2 text-sm shrink-0" id="lbCategoryTitle">
+                    -
+                </div>
+                
+                <div class="w-full flex-grow overflow-y-auto no-scrollbar">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="text-gray-400 text-xs border-b border-gray-200">
+                                <th class="pb-1 pl-2">名次</th>
+                                <th class="pb-1">名字</th>
+                                <th class="pb-1 text-right pr-2">分數</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardList" class="text-sm">
+                            <!-- JS will populate this -->
+                        </tbody>
+                    </table>
+                    <div id="noDataMsg" class="text-center text-gray-400 mt-8 text-sm hidden">
+                        尚未有紀錄，快來挑戰！
+                    </div>
+                </div>
+
+                <div class="mt-3 w-full shrink-0">
+                    <button onclick="closeLeaderboard()" class="w-full game-btn bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 sm:py-3 rounded-xl">
+                        返回
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category Selection Screen (Initial) -->
+            <div id="categoryScreen" class="absolute inset-0 bg-white z-30 flex flex-col items-center justify-start p-3 sm:p-4 text-center">
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-1 shrink-0">請選擇挑戰關卡</h2>
+                <p class="text-gray-500 mb-2 text-xs shrink-0">注意看題目中的空格該填哪一個字！</p>
+                
+                <!-- 6宮格 排版：動態填滿剩餘高度，不捲動 -->
+                <div class="grid grid-cols-2 grid-rows-3 gap-2 w-full flex-grow mb-2 min-h-0">
+                    
+                    <button onclick="selectCategory('de_de')" class="game-btn bg-white border-2 border-pink-100 hover:border-pink-400 hover:bg-pink-50 p-1 rounded-xl flex flex-col items-center justify-center shadow-sm group w-full h-full">
+                        <div class="text-xl sm:text-2xl mb-0.5">🎯</div>
+                        <div class="text-base sm:text-lg font-black text-pink-600 group-hover:text-pink-700">的 vs 得</div>
+                        <div class="text-[10px] text-gray-400">我的 / 跑得快</div>
+                    </button>
+
+                    <button onclick="selectCategory('zai_zai')" class="game-btn bg-white border-2 border-blue-100 hover:border-blue-400 hover:bg-blue-50 p-1 rounded-xl flex flex-col items-center justify-center shadow-sm group w-full h-full">
+                        <div class="text-xl sm:text-2xl mb-0.5">🔄</div>
+                        <div class="text-base sm:text-lg font-black text-blue-600 group-hover:text-blue-700">在 vs 再</div>
+                        <div class="text-[10px] text-gray-400">現在 / 再見</div>
+                    </button>
+                    
+                    <button onclick="selectCategory('zuo_zuo')" class="game-btn bg-white border-2 border-orange-100 hover:border-orange-400 hover:bg-orange-50 p-1 rounded-xl flex flex-col items-center justify-center shadow-sm group w-full h-full">
+                        <div class="text-xl sm:text-2xl mb-0.5">✍️</div>
+                        <div class="text-base sm:text-lg font-black text-orange-600 group-hover:text-orange-700">做 vs 作</div>
+                        <div class="text-[10px] text-gray-400">做事 / 作業</div>
+                    </button>
+
+                    <button onclick="selectCategory('hou_hou')" class="game-btn bg-white border-2 border-purple-100 hover:border-purple-400 hover:bg-purple-50 p-1 rounded-xl flex flex-col items-center justify-center shadow-sm group w-full h-full">
+                        <div class="text-xl sm:text-2xl mb-0.5">⏳</div>
+                        <div class="text-base sm:text-lg font-black text-purple-600 group-hover:text-purple-700">候 vs 後</div>
+                        <div class="text-[10px] text-gray-400">時候 / 後面</div>
+                    </button>
+
+                    <button onclick="selectCategory('qi_qi')" class="game-btn bg-white border-2 border-teal-100 hover:border-teal-400 hover:bg-teal-50 p-1 rounded-xl flex flex-col items-center justify-center shadow-sm group w-full h-full">
+                        <div class="text-xl sm:text-2xl mb-0.5">💨</div>
+                        <div class="text-base sm:text-lg font-black text-teal-600 group-hover:text-teal-700">汽 vs 氣</div>
+                        <div class="text-[10px] text-gray-400">汽車 / 生氣</div>
+                    </button>
+
+                    <button onclick="selectCategory('yin_ying')" class="game-btn bg-white border-2 border-indigo-100 hover:border-indigo-400 hover:bg-indigo-50 p-1 rounded-xl flex flex-col items-center justify-center shadow-sm group w-full h-full">
+                        <div class="text-xl sm:text-2xl mb-0.5">💡</div>
+                        <div class="text-base sm:text-lg font-black text-indigo-600 group-hover:text-indigo-700">因 vs 應</div>
+                        <div class="text-[10px] text-gray-400">因為 / 應該</div>
+                    </button>
+                </div>
+                
+                <button onclick="openStickerAlbum()" class="w-full py-2 sm:py-3 bg-yellow-100 text-yellow-700 border-2 border-yellow-300 rounded-xl text-sm font-bold hover:bg-yellow-200 hover:scale-[1.02] transition-transform shadow-sm flex items-center justify-center gap-2 shrink-0">
+                    📒 我的貼紙簿 <span class="bg-red-500 text-white text-[10px] px-2 rounded-full hidden" id="newStickerBadge">NEW</span>
+                </button>
+            </div>
+
+            <!-- Start Screen (Ready) -->
+            <div id="startScreen" class="hidden absolute inset-0 bg-white z-20 flex flex-col items-center justify-center p-4 text-center">
+                <div class="text-6xl sm:text-7xl mb-4 animate-bounce" id="categoryEmoji">🔥</div>
+                <h2 id="readyTitle" class="text-xl sm:text-2xl font-bold text-gray-800 mb-1">準備好了嗎？</h2>
+                <p class="text-gray-500 mb-4 text-xs sm:text-sm">從下方選項找出能填入「 ? 」的正確字</p>
+                
+                <div class="grid grid-cols-2 gap-3 mb-4 w-full max-w-xs text-left text-xs sm:text-sm bg-gray-50 p-3 rounded-xl">
+                    <div>
+                        <span id="demoChar1" class="text-pink-500 font-bold text-base">-</span> <br><span id="demoDesc1" class="text-gray-400">-</span>
+                    </div>
+                    <div>
+                        <span id="demoChar2" class="text-purple-500 font-bold text-base">-</span> <br><span id="demoDesc2" class="text-gray-400">-</span>
+                    </div>
+                </div>
+
+                <div class="flex gap-2 w-full max-w-xs mb-4">
+                    <button onclick="openLeaderboard()" class="flex-1 py-2 bg-yellow-50 border border-yellow-200 text-yellow-700 rounded-lg text-xs sm:text-sm font-bold hover:bg-yellow-100">
+                        🏆 排行榜
+                    </button>
+                </div>
+
+                <button onclick="startGame()" class="game-btn bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-lg sm:text-xl font-bold py-3 sm:py-4 px-10 rounded-full shadow-lg transform transition hover:-translate-y-1 w-full max-w-xs">
+                    開始挑戰
+                </button>
+                <button onclick="showCategorySelection()" class="mt-3 text-gray-400 text-xs sm:text-sm hover:text-gray-600 underline">
+                    回上一頁
+                </button>
+            </div>
+
+            <!-- End Screen -->
+            <div id="endScreen" class="hidden absolute inset-0 bg-white/98 z-30 flex flex-col items-center justify-center p-4 text-center backdrop-blur-md overflow-y-auto">
+                
+                <!-- Normal End View -->
+                <div id="normalEndView" class="w-full flex flex-col items-center">
+                    <div id="rankBadge" class="text-xs bg-gray-200 text-gray-600 px-3 py-1 rounded-full mb-2 font-bold">字彙練習生</div>
+                    <div id="endEmoji" class="text-5xl sm:text-6xl mb-2 animate-bounce">🎉</div>
+                    <h2 id="endTitle" class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">時間到！</h2>
+                    
+                    <div class="flex items-center gap-4 mb-3">
+                        <div class="text-center">
+                             <div class="text-[10px] text-gray-400">分數</div>
+                             <div id="finalScore" class="text-3xl sm:text-4xl font-black text-emerald-600 tracking-tighter">0</div>
+                        </div>
+                        <div class="w-px h-8 bg-gray-300"></div>
+                        <div class="text-center">
+                             <div class="text-[10px] text-gray-400">最大連擊</div>
+                             <div id="maxComboValueEnd" class="text-3xl sm:text-4xl font-black text-yellow-500 tracking-tighter">0</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Reward Section (Gacha) -->
+                    <div id="gachaSection" class="w-full max-w-xs bg-yellow-50 border-2 border-yellow-200 rounded-xl p-2 mb-3 hidden">
+                         <div id="gachaClosed" class="flex flex-col items-center">
+                             <p class="text-xs text-yellow-800 font-bold mb-1">🎁 你獲得一次抽獎機會！</p>
+                             <button onclick="playGacha()" class="game-btn bg-yellow-400 hover:bg-yellow-500 text-white text-sm font-bold py-1.5 px-4 rounded-full shadow-md animate-pulse">
+                                 點我抽貼紙
+                             </button>
+                         </div>
+                         <div id="gachaOpen" class="flex flex-col items-center hidden">
+                             <p class="text-[10px] text-gray-500 mb-0">恭喜獲得！</p>
+                             <div id="newStickerDisplay" class="text-5xl mb-0 animate-pop drop-shadow-md"></div>
+                             <p id="newStickerName" class="font-bold text-yellow-700 text-xs">神秘貼紙</p>
+                         </div>
+                    </div>
+
+                    <div id="feedbackMessage" class="bg-emerald-50 p-2 sm:p-3 rounded-xl text-xs sm:text-sm text-emerald-800 mb-3 w-full text-left border border-emerald-100">
+                        <!-- Feedback -->
+                    </div>
+
+                    <!-- 錯題挑戰按鈕 -->
+                    <button id="btnMistakeChallenge" onclick="startMistakeChallenge()" class="hidden w-full max-w-xs mb-2 game-btn bg-red-500 hover:bg-red-600 text-white text-base font-bold py-2 px-8 rounded-full shadow-md animate-pulse">
+                        🔥 挑戰錯題 (<span id="mistakeCount">0</span>)
+                    </button>
+
+                    <div class="flex gap-2 w-full max-w-xs mt-1">
+                        <button onclick="showCategorySelection()" class="flex-1 game-btn bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm sm:text-base font-bold py-2 sm:py-3 rounded-full shadow-md">
+                            回首頁
+                        </button>
+                        <button onclick="startGame()" class="flex-1 game-btn bg-emerald-500 hover:bg-emerald-600 text-white text-sm sm:text-base font-bold py-2 sm:py-3 rounded-full shadow-md">
+                            再玩一次
+                        </button>
+                    </div>
+                </div>
+
+                <!-- High Score Input View (Initially hidden) -->
+                <div id="highScoreView" class="hidden w-full flex flex-col items-center animate-pop">
+                    <div class="text-5xl sm:text-6xl mb-3">👑</div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-yellow-600 mb-1">打破紀錄！</h2>
+                    <p class="text-gray-600 mb-3 text-xs sm:text-sm">太厲害了！你進入了前 5 名！</p>
+                    <div class="text-4xl sm:text-5xl font-black text-emerald-600 mb-4" id="highScoreValue">0</div>
+                    
+                    <input type="text" id="playerNameInput" placeholder="請輸入你的名字" maxlength="8" class="w-full max-w-xs p-2 border-2 border-emerald-300 rounded-xl text-center text-base mb-3 focus:outline-none focus:border-emerald-500">
+                    
+                    <button onclick="submitHighScore()" class="w-full max-w-xs game-btn bg-emerald-600 hover:bg-emerald-700 text-white text-base font-bold py-2 sm:py-3 rounded-full shadow-md mb-2">
+                        登錄排行榜
+                    </button>
+                    <button onclick="skipHighScore()" class="w-full max-w-xs text-gray-400 text-xs sm:text-sm hover:text-gray-600 underline">
+                        跳過並回首頁
+                    </button>
+                </div>
+
+            </div>
+
+            <!-- Game Area: 填空題顯示區 -->
+            <div class="flex flex-col items-center justify-center flex-grow w-full py-1 sm:py-2 relative z-10">
+                <div id="questionCard" class="bg-gradient-to-br from-gray-50 to-white border-2 border-gray-100 rounded-2xl sm:rounded-3xl p-4 w-full text-center shadow-sm relative overflow-hidden flex items-center justify-center h-32 sm:h-40">
+                    <div class="text-[10px] text-gray-300 absolute top-2 right-3 font-mono"><span id="qCountLabel">Q.</span><span id="qCount">0</span></div>
+                    <div id="questionText" class="text-3xl sm:text-4xl font-black text-gray-800 tracking-wider break-words leading-tight">準備</div>
+                </div>
+                <div id="resultFeedback" class="h-6 sm:h-8 mt-2 font-bold text-base sm:text-lg transition-opacity opacity-0 flex items-center justify-center">...</div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="grid grid-cols-2 gap-3 w-full mt-1 sm:mt-2 relative z-10 shrink-0">
+                <button id="btnOption1" onclick="checkAnswer(currentCategoryConfig.list1Key)" class="game-btn group bg-white border-2 border-pink-100 hover:border-pink-300 hover:bg-pink-50 text-pink-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center shadow-sm relative overflow-hidden">
+                    <div class="absolute inset-0 bg-pink-100 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                    <span id="btnText1" class="text-3xl sm:text-4xl font-black mb-0.5 sm:mb-1">-</span>
+                    <span id="btnDesc1" class="text-[10px] sm:text-xs font-bold opacity-70">-</span>
+                </button>
+                <button id="btnOption2" onclick="checkAnswer(currentCategoryConfig.list2Key)" class="game-btn group bg-white border-2 border-purple-100 hover:border-purple-300 hover:bg-purple-50 text-purple-600 rounded-xl sm:rounded-2xl p-3 sm:p-4 flex flex-col items-center shadow-sm relative overflow-hidden">
+                    <div class="absolute inset-0 bg-purple-100 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                    <span id="btnText2" class="text-3xl sm:text-4xl font-black mb-0.5 sm:mb-1">-</span>
+                    <span id="btnDesc2" class="text-[10px] sm:text-xs font-bold opacity-70">-</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Footer / Copyright Info (Updated strictly to requirement) -->
+        <div class="bg-gray-50 p-2 text-center text-[10px] text-gray-500 leading-tight border-t border-gray-100 shrink-0">
+            <div class="font-bold text-gray-700 mb-0.5">屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣</div>
+            <div class="text-red-500 font-bold mb-1">嚴禁商用與任何侵權、不尊重著作權的行為。</div>
+            <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="inline-block bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full hover:bg-emerald-200 hover:text-emerald-800 transition-colors font-bold no-underline text-xs">
+                更多 Puti-AI 教學工具 點此前往
+            </a>
+        </div>
+    </div>
+
+    <script>
+        /* -------------------------------------------------------------------------- */
+        /* Data Sets - 易混淆字題庫                                   */
+        /* -------------------------------------------------------------------------- */
+
+        // 1. 的 vs 得
+        const words_de1 = [
+            "我「的」書包", "可愛「的」小貓", "藍藍「的」天空", "媽媽「的」愛", "昨天買「的」", 
+            "用跑「的」", "真「的」嗎", "是誰「的」", "「的」確如此", "達到目「的」", 
+            "開心「的」笑", "傷心「的」哭", "高高「的」樹", "大大「的」眼睛", "舊「的」衣服", 
+            "新「的」鞋子", "壞「的」玩具", "紅綠燈「的」燈", "寫字「的」筆", "喝水「的」杯子"
+        ];
+        const words_de2 = [
+            "跑「得」很快", "覺「得」高興", "獲「得」冠軍", "捨不「得」吃", "笑「得」肚子痛", 
+            "氣「得」大叫", "難「得」一見", "免「得」忘記", "懶「得」出門", "巴不「得」", 
+            "做「得」很好", "拿「得」動", "聽「得」懂", "看「得」見", "寫「得」漂亮", 
+            "睡「得」很香", "吃「得」太飽", "嚇「得」發抖", "贏「得」比賽", "取「得」好成績"
+        ];
+
+        // 2. 在 vs 再
+        const words_zai1 = [
+            "現「在」幾點", "「在」家休息", "存「在」感", "實「在」好吃", "很「在」乎", 
+            "「在」哪裡", "坐「在」地上", "放「在」書包", "躲「在」樹後", "自由自「在」", 
+            "「在」學校", "「在」意別人", "留「在」原位", "記「在」心裡", "掛「在」牆上", 
+            "躺「在」床上", "站「在」門口", "寫「在」紙上", "畫「在」黑板", "健「在」"
+        ];
+        const words_zai2 = [
+            "「再」見", "「再」次感謝", "「再」來一碗", "以後「再」說", "一「再」提醒", 
+            "「再」接再厲", "「再」三考慮", "「再」做一次", "「再」買一件", "青春不「再」", 
+            "「再」去玩", "「再」吃一口", "「再」聽一遍", "「再」想一想", "「再」試一下", 
+            "「再」等五分鐘", "「再」找找看", "「再」問老師", "「再」生紙", "「再」版書"
+        ];
+
+        // 3. 做 vs 作
+        const words_zuo1 = [
+            "「做」家事", "「做」功課", "「做」朋友", "「做」壞事", "當「做」沒事", 
+            "叫「做」小黑", "「做」鬼臉", "「做」夢", "「做」生意", "「做」錯事", 
+            "「做」早操", "「做」運動", "「做」客", "「做」伴", "「做」人", 
+            "看「做」英雄", "算「做」一次", "假裝「做」", "「做」飯", "「做」菜"
+        ];
+        const words_zuo2 = [
+            "寫「作」業", "努力工「作」", "分工合「作」", "美術「作」品", "著名「作」家", 
+            "發明創「作」", "裝模「作」樣", "振「作」起來", "優秀傑「作」", "脾氣發「作」", 
+            "「作」文比賽", "「作」者是誰", "「作」曲家", "「作」畫", "「作」詩", 
+            "並肩「作」戰", "考試「作」弊", "胡「作」非為", "興風「作」浪", "「作」廢"
+        ];
+
+        // 4. 候 vs 後
+        const words_hou1 = [
+            "什麼時「候」", "氣「候」溫和", "「候」鳥遷徙", "等「候」多時", "問「候」長輩", 
+            "伺「候」病人", "「候」車亭", "「候」選人", "默默守「候」", "症「候」群", 
+            "時「候」到了", "惡劣氣「候」", "「候」補名單", "「候」診室", "季「候」風", 
+            "測「候」所", "恭「候」大駕", "問「候」語", "全天「候」", "「候」教"
+        ];
+        const words_hou2 = [
+            "以「後」", "「後」面", "最「後」一名", "然「後」呢", "飯「後」水果", 
+            "落「後」別人", "「後」悔莫及", "背「後」", "放學「後」", "「後」果嚴重", 
+            "「後」退一步", "課「後」輔導", "幕「後」花絮", "隨「後」就到", "稍「後」回覆", 
+            "災「後」重建", "戰「後」和平", "「後」代子孫", "「後」人乘涼", "酒的「後」勁"
+        ];
+
+        // 5. 汽 vs 氣
+        const words_qi1 = [
+            "開「汽」車", "喝「汽」水", "「汽」油桶", "「汽」缸", "「汽」笛聲", 
+            "蒸「汽」火車", "「汽」船", "引擎「汽」門", "「汽」化", "「汽」機車", 
+            "「汽」艇", "蒸「汽」浴", "「汽」修科", "「汽」車駕照", "加滿「汽」油", 
+            "「汽」水瓶", "「汽」車修理", "蒸「汽」熨斗", "「汽」泡水", "「汽」缸體"
+        ];
+        const words_qi2 = [
+            "生「氣」", "天「氣」好", "空「氣」清新", "吹「氣」球", "「氣」氛熱鬧", 
+            "脾「氣」壞", "語「氣」溫柔", "力「氣」大", "運「氣」好", "客「氣」", 
+            "「氣」息", "「氣」味", "「氣」質", "「氣」勢", "「氣」派", 
+            "「氣」量大", "「氣」色好", "香「氣」", "臭「氣」", "毒「氣」"
+        ];
+
+        // 6. 因 vs 應
+        const words_yin1 = [
+            "「因」為", "原「因」", "「因」此", "起「因」", "主「因」", 
+            "「因」小失大", "基「因」", "「因」果報應", "事出有「因」", "導「因」於", 
+            "次「因」", "肇「因」", "內「因」", "外「因」", "「因」素", 
+            "「因」材施教", "「因」禍得福", "「因」陋就簡", "陳陳相「因」", "前「因」後果"
+        ];
+        const words_ying2 = [
+            "答「應」", "「應」該", "適「應」環境", "反「應」快", "「應」付考試", 
+            "呼「應」", "感「應」器", "供「應」商", "「應」有盡有", "隨機「應」變", 
+            "回「應」", "效「應」", "「應」用程式", "「應」徵工作", "「應」考", 
+            "「應」許", "「應」酬", "「應」戰", "「應」急", "有求必「應」"
+        ];
+
+        /* -------------------------------------------------------------------------- */
+        /* Game Config                                  */
+        /* -------------------------------------------------------------------------- */
+
+        const categories = {
+            'de_de': { name: '的 vs 得', emoji: '🎯', btn1: { label: '的', desc: '搭配名詞/形容詞' }, btn2: { label: '得', desc: '搭配動詞/程度' }, list1: words_de1, list2: words_de2, list1Key: 'k1', list2Key: 'k2' },
+            'zai_zai': { name: '在 vs 再', emoji: '🔄', btn1: { label: '在', desc: '表示位置/時間' }, btn2: { label: '再', desc: '表示第二次/繼續' }, list1: words_zai1, list2: words_zai2, list1Key: 'k1', list2Key: 'k2' },
+            'zuo_zuo': { name: '做 vs 作', emoji: '✍️', btn1: { label: '做', desc: '具體動作/製造' }, btn2: { label: '作', desc: '抽象活動/名詞' }, list1: words_zuo1, list2: words_zuo2, list1Key: 'k1', list2Key: 'k2' },
+            'hou_hou': { name: '候 vs 後', emoji: '⏳', btn1: { label: '候', desc: '表示時間/等待' }, btn2: { label: '後', desc: '表示方位/順序' }, list1: words_hou1, list2: words_hou2, list1Key: 'k1', list2Key: 'k2' },
+            'qi_qi': { name: '汽 vs 氣', emoji: '💨', btn1: { label: '汽', desc: '液體化為氣體' }, btn2: { label: '氣', desc: '空氣/無形感受' }, list1: words_qi1, list2: words_qi2, list1Key: 'k1', list2Key: 'k2' },
+            'yin_ying': { name: '因 vs 應', emoji: '💡', btn1: { label: '因', desc: '表示緣故/來源' }, btn2: { label: '應', desc: '表示當做/回答' }, list1: words_yin1, list2: words_ying2, list1Key: 'k1', list2Key: 'k2' }
+        };
+        
+        // Sticker Database
+        const STICKER_DB = [
+            { id: 1, char: "🐱", name: "普通貓貓", rare: "普通" },
+            { id: 2, char: "🐶", name: "汪汪隊", rare: "普通" },
+            { id: 3, char: "🐰", name: "跳跳兔", rare: "普通" },
+            { id: 4, char: "🐻", name: "大熊熊", rare: "普通" },
+            { id: 5, char: "🐼", name: "胖達", rare: "普通" },
+            { id: 6, char: "🐨", name: "無尾熊", rare: "普通" },
+            { id: 7, char: "🦁", name: "獅子王", rare: "稀有" },
+            { id: 8, char: "🐯", name: "老虎斑", rare: "稀有" },
+            { id: 9, char: "🦄", name: "獨角獸", rare: "傳說" },
+            { id: 10, char: "🐲", name: "神龍", rare: "傳說" },
+            { id: 11, char: "🤖", name: "Puti機器人", rare: "傳說" },
+            { id: 12, char: "👽", name: "外星人", rare: "稀有" },
+            { id: 13, char: "👻", name: "小鬼頭", rare: "普通" },
+            { id: 14, char: "👾", name: "像素怪", rare: "稀有" },
+            { id: 15, char: "💩", name: "黃金便便", rare: "普通" },
+            { id: 16, char: "🌟", name: "幸運星", rare: "稀有" },
+            { id: 17, char: "🍕", name: "披薩", rare: "普通" },
+            { id: 18, char: "🍔", name: "漢堡", rare: "普通" },
+            { id: 19, char: "🍩", name: "甜甜圈", rare: "普通" },
+            { id: 20, char: "🏆", name: "冠軍盃", rare: "傳說" }
+        ];
+
+        let currentCategoryKey = 'de_de';
+        let currentCategoryConfig = categories['de_de'];
+        let fullQuestionBank = [];
+        let mistakeBank = [];
+        
+        let currentScore = 0;
+        let currentTime = 60;
+        let timerInterval;
+        let currentQuestionIndex = 0;
+        let isGameActive = false;
+        let answeredCount = 0; 
+        let correctCount = 0; 
+        let isMistakeMode = false;
+        
+        let comboCount = 0;
+        let maxCombo = 0;
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if (type === 'correct') {
+                let pitch = 600 + (Math.min(comboCount, 10) * 50);
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(pitch, now);
+                oscillator.frequency.exponentialRampToValueAtTime(pitch * 2, now + 0.1);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                oscillator.start(now);
+                oscillator.stop(now + 0.1);
+            } else if (type === 'unlock') {
+                // Unlock sound
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(400, now);
+                oscillator.frequency.linearRampToValueAtTime(800, now + 0.5);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+                oscillator.start(now);
+                oscillator.stop(now + 0.5);
+            } else {
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(150, now);
+                oscillator.frequency.linearRampToValueAtTime(100, now + 0.2);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                oscillator.start(now);
+                oscillator.stop(now + 0.2);
+            }
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* Confetti Logic                                                             */
+        /* -------------------------------------------------------------------------- */
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let animationId = null;
+        
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function createParticles(x, y, count) {
+            for (let i = 0; i < count; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 1) * 10,
+                    size: Math.random() * 8 + 4,
+                    color: `hsl(${Math.random() * 360}, 100%, 50%)`,
+                    life: 100
+                });
+            }
+        }
+
+        function updateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            
+            for (let i = 0; i < particles.length; i++) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.2; // gravity
+                p.life--;
+                
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = Math.max(0, p.life / 30); 
+                ctx.fillRect(p.x, p.y, p.size, p.size);
+            }
+            
+            particles = particles.filter(p => p.life > 0);
+            
+            if (particles.length > 0) {
+                animationId = requestAnimationFrame(updateParticles);
+            } else {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+
+        function triggerConfetti() {
+            if (animationId) cancelAnimationFrame(animationId);
+            createParticles(canvas.width / 2, canvas.height / 2, 50);
+            updateParticles();
+        }
+
+        /* -------------------------------------------------------------------------- */
+        /* Sticker & Data Logic                                                       */
+        /* -------------------------------------------------------------------------- */
+        
+        const LB_KEY_PREFIX = 'puti_ai_homophone_lb_';
+        const STICKER_KEY = 'puti_ai_homophone_stickers';
+        const MAX_LB_ENTRIES = 5;
+
+        function getStickers() {
+            const data = localStorage.getItem(STICKER_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveSticker(id) {
+            let list = getStickers();
+            if (!list.includes(id)) {
+                list.push(id);
+                localStorage.setItem(STICKER_KEY, JSON.stringify(list));
+                return true; 
+            }
+            return false;
+        }
+        
+        function openStickerAlbum() {
+            const list = getStickers();
+            const grid = document.getElementById('stickerGrid');
+            const progress = document.getElementById('stickerProgress');
+            
+            grid.innerHTML = '';
+            progress.innerText = `${list.length}/${STICKER_DB.length}`;
+            
+            STICKER_DB.forEach(s => {
+                const hasIt = list.includes(s.id);
+                const el = document.createElement('div');
+                el.className = `flex flex-col items-center justify-center p-2 rounded-lg ${hasIt ? 'bg-white border-2 border-yellow-300 sticker-slot' : 'bg-gray-100 border border-gray-200 opacity-50'}`;
+                el.innerHTML = `
+                    <div class="text-3xl mb-1 filter ${hasIt ? '' : 'grayscale blur-[2px]'}">${s.char}</div>
+                    <div class="text-[10px] text-center w-full truncate ${hasIt ? 'text-gray-700 font-bold' : 'text-gray-400'}">${hasIt ? s.name : '???'}</div>
+                `;
+                grid.appendChild(el);
+            });
+            
+            document.getElementById('stickerScreen').classList.remove('hidden');
+            document.getElementById('newStickerBadge').classList.add('hidden');
+        }
+        
+        function closeStickerAlbum() {
+            document.getElementById('stickerScreen').classList.add('hidden');
+        }
+
+        function playGacha() {
+            document.getElementById('gachaClosed').classList.add('hidden');
+            document.getElementById('gachaOpen').classList.remove('hidden');
+            
+            const randIndex = Math.floor(Math.random() * STICKER_DB.length);
+            const sticker = STICKER_DB[randIndex];
+            const isNew = saveSticker(sticker.id);
+            
+            const disp = document.getElementById('newStickerDisplay');
+            const name = document.getElementById('newStickerName');
+            
+            disp.innerText = sticker.char;
+            name.innerText = (isNew ? "✨ NEW! " : "") + sticker.name + " (" + sticker.rare + ")";
+            
+            playSound('unlock');
+            triggerConfetti();
+        }
+
+        function getLeaderboard(catKey) {
+            const data = localStorage.getItem(LB_KEY_PREFIX + catKey);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveScoreToLB(catKey, name, score) {
+            let lb = getLeaderboard(catKey);
+            lb.push({ name, score, date: new Date().toISOString() });
+            lb.sort((a, b) => b.score - a.score);
+            lb = lb.slice(0, MAX_LB_ENTRIES);
+            localStorage.setItem(LB_KEY_PREFIX + catKey, JSON.stringify(lb));
+        }
+
+        function isHighScore(catKey, score) {
+            if (score <= 0) return false;
+            let lb = getLeaderboard(catKey);
+            if (lb.length < MAX_LB_ENTRIES) return true;
+            return score > lb[lb.length - 1].score;
+        }
+
+        function openLeaderboard() {
+            const lb = getLeaderboard(currentCategoryKey);
+            const listEl = document.getElementById('leaderboardList');
+            const noDataMsg = document.getElementById('noDataMsg');
+            const titleEl = document.getElementById('lbCategoryTitle');
+
+            titleEl.innerText = `${currentCategoryConfig.name} 排行榜`;
+            listEl.innerHTML = '';
+
+            if (lb.length === 0) {
+                noDataMsg.classList.remove('hidden');
+            } else {
+                noDataMsg.classList.add('hidden');
+                lb.forEach((entry, index) => {
+                    const row = document.createElement('tr');
+                    row.className = 'rank-row border-b border-gray-100 last:border-0';
+                    row.innerHTML = `
+                        <td class="py-2 pl-2 font-black rank-num text-lg w-12 text-center">#${index + 1}</td>
+                        <td class="py-2 font-bold text-gray-700">${entry.name}</td>
+                        <td class="py-2 text-right pr-2 font-mono font-bold text-emerald-600">${entry.score}</td>
+                    `;
+                    listEl.appendChild(row);
+                });
+            }
+
+            document.getElementById('leaderboardScreen').classList.remove('hidden');
+        }
+
+        function closeLeaderboard() {
+            document.getElementById('leaderboardScreen').classList.add('hidden');
+        }
+
+        function submitHighScore() {
+            const nameInput = document.getElementById('playerNameInput');
+            let name = nameInput.value.trim();
+            if (!name) name = "無名英雄";
+            
+            saveScoreToLB(currentCategoryKey, name, currentScore);
+            
+            document.getElementById('highScoreView').classList.add('hidden');
+            document.getElementById('normalEndView').classList.remove('hidden');
+            openLeaderboard();
+        }
+
+        function skipHighScore() {
+            document.getElementById('highScoreView').classList.add('hidden');
+            document.getElementById('normalEndView').classList.remove('hidden');
+            showCategorySelection();
+        }
+
+        function forceQuitGame() {
+            isGameActive = false;
+            clearInterval(timerInterval);
+            document.getElementById('comboContainer').classList.add('hidden');
+            showCategorySelection();
+        }
+
+        function forceRestartGame() {
+            startGame(isMistakeMode);
+        }
+
+        // --- UI Navigation ---
+
+        function showCategorySelection() {
+            document.getElementById('categoryScreen').classList.remove('hidden');
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('leaderboardScreen').classList.add('hidden');
+            document.getElementById('stickerScreen').classList.add('hidden');
+            document.getElementById('headerSubtitle').innerText = "擊破同音錯別字！";
+            isGameActive = false;
+            clearInterval(timerInterval);
+        }
+
+        function selectCategory(key) {
+            currentCategoryKey = key;
+            currentCategoryConfig = categories[key];
+            
+            document.getElementById('btnText1').innerText = currentCategoryConfig.btn1.label;
+            document.getElementById('btnDesc1').innerText = currentCategoryConfig.btn1.desc;
+            document.getElementById('btnText2').innerText = currentCategoryConfig.btn2.label;
+            document.getElementById('btnDesc2').innerText = currentCategoryConfig.btn2.desc;
+            
+            document.getElementById('categoryEmoji').innerText = currentCategoryConfig.emoji;
+            document.getElementById('demoChar1').innerText = currentCategoryConfig.btn1.label;
+            document.getElementById('demoDesc1').innerText = currentCategoryConfig.btn1.desc;
+            document.getElementById('demoChar2').innerText = currentCategoryConfig.btn2.label;
+            document.getElementById('demoDesc2').innerText = currentCategoryConfig.btn2.desc;
+
+            document.getElementById('categoryScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('headerSubtitle').innerText = currentCategoryConfig.name + " 挑戰";
+            
+            mistakeBank = [];
+        }
+
+        // --- Game Flow ---
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function initQuestions() {
+            fullQuestionBank = [];
+            currentCategoryConfig.list1.forEach(w => fullQuestionBank.push({ word: w, answer: 'k1', label: currentCategoryConfig.btn1.label }));
+            currentCategoryConfig.list2.forEach(w => fullQuestionBank.push({ word: w, answer: 'k2', label: currentCategoryConfig.btn2.label }));
+            shuffleArray(fullQuestionBank);
+        }
+
+        function startGame(mistakeMode = false) {
+            isMistakeMode = mistakeMode;
+            correctCount = 0;
+            comboCount = 0;
+            maxCombo = 0;
+            
+            if (!isMistakeMode) {
+                initQuestions();
+                mistakeBank = [];
+                currentScore = 0;
+                currentTime = 60;
+                document.getElementById('scoreLabel').innerText = "分數";
+                document.getElementById('timeLabel').innerText = "時間";
+                document.getElementById('headerSubtitle').innerText = currentCategoryConfig.name + " 極限挑戰";
+            } else {
+                fullQuestionBank = [...mistakeBank];
+                shuffleArray(fullQuestionBank);
+                mistakeBank = []; 
+                currentScore = 0; 
+                currentTime = Math.max(20, fullQuestionBank.length * 4); 
+                document.getElementById('scoreLabel').innerText = "完成率";
+                document.getElementById('timeLabel').innerText = "倒數";
+                document.getElementById('headerSubtitle').innerText = "🔥 錯題復仇戰";
+            }
+
+            currentQuestionIndex = 0;
+            answeredCount = 0;
+            isGameActive = true;
+            
+            updateScoreDisplay();
+            document.getElementById('timerDisplay').innerText = currentTime;
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('endScreen').classList.add('hidden');
+            document.getElementById('btnMistakeChallenge').classList.add('hidden');
+            document.getElementById('comboContainer').classList.add('hidden');
+            document.getElementById('highScoreView').classList.add('hidden');
+            document.getElementById('normalEndView').classList.remove('hidden');
+            document.getElementById('gachaSection').classList.add('hidden');
+            
+            renderQuestion();
+            
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                currentTime--;
+                document.getElementById('timerDisplay').innerText = currentTime;
+                
+                if (currentTime <= 10) {
+                    document.getElementById('timerDisplay').classList.add('text-red-600', 'animate-pulse');
+                } else {
+                    document.getElementById('timerDisplay').classList.remove('text-red-600', 'animate-pulse');
+                }
+
+                if (currentTime <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function startMistakeChallenge() {
+            startGame(true);
+        }
+
+        function updateScoreDisplay() {
+            if (isMistakeMode) {
+                const total = fullQuestionBank.length;
+                const pct = total === 0 ? 0 : Math.round((correctCount / total) * 100);
+                document.getElementById('scoreDisplay').innerText = pct + "%";
+            } else {
+                document.getElementById('scoreDisplay').innerText = currentScore;
+            }
+        }
+
+        function renderQuestion() {
+            if (currentQuestionIndex >= fullQuestionBank.length) {
+                if (isMistakeMode) {
+                    endGame();
+                    return;
+                } else {
+                    shuffleArray(fullQuestionBank);
+                    currentQuestionIndex = 0;
+                }
+            }
+
+            const q = fullQuestionBank[currentQuestionIndex];
+            const card = document.getElementById('questionCard');
+            
+            card.classList.remove('animate-pop');
+            void card.offsetWidth;
+            card.classList.add('animate-pop');
+
+            // 遊戲展示時，將答案的字替換成底線問號框，產生「填空題」效果
+            let displayText = q.word.replace(/「.*?」/g, '<span class="text-emerald-500 font-black px-1 border-b-[3px] border-emerald-500 mx-1 inline-block min-w-[2.5rem] text-center pb-0.5 opacity-60"> ? </span>');
+            document.getElementById('questionText').innerHTML = displayText;
+            
+            document.getElementById('qCount').innerText = answeredCount + 1;
+            
+            const feedback = document.getElementById('resultFeedback');
+            feedback.style.opacity = '0';
+        }
+
+        function triggerComboEffect() {
+            const container = document.getElementById('comboContainer');
+            const display = document.getElementById('comboCountDisplay');
+            
+            if (comboCount >= 2) {
+                display.innerText = "x" + comboCount;
+                container.classList.remove('hidden');
+                
+                container.classList.remove('animate-combo');
+                void container.offsetWidth;
+                container.classList.add('animate-combo');
+                
+                if (comboCount % 5 === 0) triggerConfetti();
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        function checkAnswer(userAnswerKey) {
+            if (!isGameActive) return;
+
+            const q = fullQuestionBank[currentQuestionIndex];
+            const feedback = document.getElementById('resultFeedback');
+            const card = document.getElementById('questionCard');
+
+            // 解答時，顯示帶有括號的原始字詞
+            const displayWord = q.word.replace(/「(.*?)」/g, '<span class="font-black">「$1」</span>');
+
+            if (userAnswerKey === q.answer) {
+                // Correct
+                comboCount++;
+                if (comboCount > maxCombo) maxCombo = comboCount;
+                
+                if (!isMistakeMode) {
+                    let bonus = Math.min(comboCount, 5); 
+                    currentScore += (10 + bonus);
+                }
+                correctCount++;
+                answeredCount++;
+                updateScoreDisplay();
+                playSound('correct');
+                triggerComboEffect();
+                
+                feedback.innerHTML = `<span class="text-green-500">⭕ ${displayWord}</span>`;
+                feedback.style.opacity = '1';
+                
+                card.classList.add('border-green-400');
+                setTimeout(() => card.classList.remove('border-green-400'), 200);
+
+            } else {
+                // Wrong
+                comboCount = 0; 
+                document.getElementById('comboContainer').classList.add('hidden'); 
+                
+                if (!isMistakeMode) {
+                    currentScore = Math.max(0, currentScore - 5);
+                }
+                answeredCount++; 
+                updateScoreDisplay();
+                playSound('wrong');
+                
+                if (!mistakeBank.some(item => item.word === q.word)) {
+                    mistakeBank.push(q);
+                }
+
+                feedback.innerHTML = `<span class="text-red-500 text-sm sm:text-base">❌ 應該選【${q.label}】！ (${displayWord})</span>`;
+                feedback.style.opacity = '1';
+                
+                card.classList.add('animate-shake', 'border-red-400');
+                setTimeout(() => card.classList.remove('animate-shake', 'border-red-400'), 400);
+            }
+
+            currentQuestionIndex++;
+            setTimeout(() => {
+                if (isGameActive) renderQuestion();
+            }, 600); // 稍微延長一點時間讓學生看清楚正確答案
+        }
+
+        function endGame() {
+            isGameActive = false;
+            clearInterval(timerInterval);
+            document.getElementById('comboContainer').classList.add('hidden');
+            
+            document.getElementById('endScreen').classList.remove('hidden');
+            
+            const feedbackMsg = document.getElementById('feedbackMessage');
+            const endEmoji = document.getElementById('endEmoji');
+            const endTitle = document.getElementById('endTitle');
+            const btnMistake = document.getElementById('btnMistakeChallenge');
+            const mistakeCountSpan = document.getElementById('mistakeCount');
+            const finalScoreEl = document.getElementById('finalScore');
+            const maxComboValueEnd = document.getElementById('maxComboValueEnd');
+            const highScoreView = document.getElementById('highScoreView');
+            const normalEndView = document.getElementById('normalEndView');
+            const gachaSection = document.getElementById('gachaSection');
+            const rankBadge = document.getElementById('rankBadge');
+
+            highScoreView.classList.add('hidden');
+            normalEndView.classList.remove('hidden');
+            gachaSection.classList.add('hidden');
+
+            // Determine Rank
+            let rankText = "字彙練習生";
+            if (!isMistakeMode) {
+                if (currentScore > 600) { rankText = "👑 國語小天才"; endEmoji.innerText="🤩"; }
+                else if (currentScore > 400) { rankText = "🔥 選字高手"; endEmoji.innerText="😎"; }
+                else if (currentScore > 200) { rankText = "🐣 練習小達人"; endEmoji.innerText="😄"; }
+                else { rankText = "🌱 國語小學徒"; endEmoji.innerText="😐"; }
+            } else {
+                rankText = "復仇者";
+            }
+            rankBadge.innerText = rankText;
+
+            if (maxComboValueEnd) maxComboValueEnd.innerText = maxCombo;
+
+            if (isMistakeMode) {
+                const total = fullQuestionBank.length;
+                const pct = total === 0 ? 0 : Math.round((correctCount / total) * 100);
+                finalScoreEl.innerText = pct + "%";
+                endTitle.innerText = "復仇戰結束！";
+
+                if (mistakeBank.length === 0) {
+                     feedbackMsg.innerHTML = "<strong>太完美了！</strong><br>所有容易搞混的字都已經被你消滅了！恭喜！";
+                     triggerConfetti();
+                } else {
+                     feedbackMsg.innerHTML = `<strong>別氣餒！</strong><br>還有 ${mistakeBank.length} 題比較頑強，要不要再挑戰一次？`;
+                }
+                
+                if (mistakeBank.length > 0) {
+                    btnMistake.classList.remove('hidden');
+                    mistakeCountSpan.innerText = mistakeBank.length;
+                } else {
+                    btnMistake.classList.add('hidden');
+                }
+
+            } else {
+                finalScoreEl.innerText = currentScore;
+                
+                if (currentScore >= 200) {
+                    gachaSection.classList.remove('hidden');
+                    document.getElementById('gachaClosed').classList.remove('hidden');
+                    document.getElementById('gachaOpen').classList.add('hidden');
+                }
+
+                if (isHighScore(currentCategoryKey, currentScore)) {
+                    normalEndView.classList.add('hidden');
+                    highScoreView.classList.remove('hidden');
+                    document.getElementById('highScoreValue').innerText = currentScore;
+                    document.getElementById('playerNameInput').value = ''; 
+                    playSound('correct');
+                    triggerConfetti();
+                } else {
+                    endTitle.innerText = "時間到！";
+                    if (mistakeBank.length === 0 && currentScore > 0) {
+                        feedbackMsg.innerHTML = "<strong>神級表現！</strong><br>完全沒有失誤，你的同音字辨識能力無懈可擊！";
+                    } else if (mistakeBank.length > 0) {
+                        feedbackMsg.innerHTML = `<strong>發現弱點！</strong><br>雖然分數不錯，但有 ${mistakeBank.length} 個詞彙容易選錯。<br>快點擊下方紅色按鈕進行特訓！`;
+                    } else {
+                        feedbackMsg.innerHTML = "<strong>熱身結束？</strong><br>分數有點低喔，是不是還沒抓到訣竅？";
+                    }
+
+                    if (mistakeBank.length > 0) {
+                        btnMistake.classList.remove('hidden');
+                        mistakeCountSpan.innerText = mistakeBank.length;
+                    } else {
+                        btnMistake.classList.add('hidden');
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
