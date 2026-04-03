@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 語音伴讀小幫手</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons for clean UI -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #fdf8f5; /* 溫和的背景色，減少視覺疲勞 */
+        }
+        .highlight {
+            background-color: #fde047; /* 鮮明但不刺眼的黃色高亮 */
+            color: #1e3a8a;
+            border-radius: 4px;
+            padding: 0 4px;
+            transition: all 0.1s ease;
+        }
+        /* 隱藏預設捲軸，讓介面更乾淨 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col">
+
+    <!-- 頂部導覽列 -->
+    <header class="bg-blue-600 text-white shadow-md p-4 sticky top-0 z-20">
+        <div class="container mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <i data-lucide="book-open-check" class="w-8 h-8"></i>
+                <h1 class="text-2xl font-bold tracking-wider">Puti-AI 語音伴讀小幫手</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 flex-grow flex flex-col gap-6 max-w-5xl">
+        
+        <!-- ================= 老師設定區 ================= -->
+        <section id="teacher-panel" class="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 transition-all duration-300">
+            <div class="flex justify-between items-center mb-4 cursor-pointer" onclick="toggleTeacherPanel()">
+                <h2 class="text-xl font-bold text-blue-800 flex items-center gap-2">
+                    <i data-lucide="settings-2" class="w-6 h-6"></i> 老師備課區 (建立閱讀書櫃)
+                </h2>
+                <i data-lucide="chevron-up" id="teacher-toggle-icon" class="w-6 h-6 text-gray-400"></i>
+            </div>
+            
+            <div id="teacher-content" class="space-y-6">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 左側：單篇貼上 -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <label class="font-bold text-gray-700 flex items-center gap-2">
+                                <i data-lucide="pen-tool" class="w-5 h-5 text-blue-500"></i> 方法一：直接貼上文章內容
+                            </label>
+                            <div class="flex gap-2">
+                                <button onclick="copyGeneratePrompt()" class="text-xs bg-purple-100 hover:bg-purple-200 text-purple-700 py-1 px-2 rounded-lg flex items-center gap-1 transition shadow-sm" title="複製給 AI 生成新文章的提示詞"><i data-lucide="sparkles" class="w-3 h-3"></i> 複製 AI 生文指令</button>
+                                <button onclick="loadExample()" class="text-xs bg-blue-100 hover:bg-blue-200 text-blue-700 py-1 px-2 rounded-lg flex items-center gap-1 transition shadow-sm" title="一鍵載入50篇範例文章"><i data-lucide="file-text" class="w-3 h-3"></i> 載入50篇範例</button>
+                            </div>
+                        </div>
+                        <textarea id="text-input" 
+                            class="w-full h-40 p-4 border-2 border-blue-200 rounded-xl focus:outline-none focus:border-blue-500 text-base resize-none transition-colors"
+                            placeholder="請在此貼上文章內容...&#10;&#10;支援單篇文章，也支援貼上多篇文章（每篇請用 # 開頭當作標題）。"></textarea>
+                    </div>
+
+                    <!-- 右側：批次上傳 txt -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center justify-between">
+                            <label class="font-bold text-gray-700 flex items-center gap-2">
+                                <i data-lucide="folder-up" class="w-5 h-5 text-green-500"></i> 方法二：上傳題庫文字檔 (.txt)
+                            </label>
+                            <button onclick="downloadExampleFile()" class="text-xs bg-green-100 hover:bg-green-200 text-green-700 py-1 px-2 rounded-lg flex items-center gap-1 transition shadow-sm" title="下載包含50篇文章的範例txt檔"><i data-lucide="download" class="w-3 h-3"></i> 下載50篇題庫</button>
+                        </div>
+                        <div class="border-2 border-dashed border-green-300 bg-green-50 rounded-xl p-4 flex flex-col items-center justify-center h-40 text-center relative hover:bg-green-100 transition-colors">
+                            <i data-lucide="file-text" class="w-10 h-10 text-green-500 mb-2"></i>
+                            <p class="text-sm text-green-800 font-medium mb-1">點擊選擇或拖曳 .txt 檔案至此</p>
+                            <p class="text-xs text-green-600">一個檔案可包含多篇文章，每篇請用 <strong>#</strong> 開頭當作標題</p>
+                            <input type="file" id="file-upload" multiple accept=".txt" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 已上傳檔案預覽區 (改為本機書櫃預覽區) -->
+                <div id="uploaded-files-container" class="bg-gray-50 border border-gray-200 rounded-xl p-4 transition-all">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                            <i data-lucide="library" class="w-4 h-4"></i> 本機書櫃預覽 (共 <span id="file-count">0</span>/50 篇)
+                        </h3>
+                        <button onclick="clearLibrary()" class="text-xs bg-red-100 hover:bg-red-200 text-red-700 py-1 px-2 rounded-lg flex items-center gap-1 transition shadow-sm" title="清空本機儲存的所有文章"><i data-lucide="trash-2" class="w-3 h-3"></i> 全部清空</button>
+                    </div>
+                    <div id="uploaded-files-list" class="flex flex-wrap gap-2">
+                        <!-- 標籤動態生成區 -->
+                    </div>
+                    <p id="empty-library-msg" class="text-sm text-gray-400 mt-2 hidden">目前書櫃是空的，請從上方貼上文章或上傳檔案。</p>
+                </div>
+
+                <div class="flex justify-center pt-4">
+                    <button onclick="startStudentMode()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-12 rounded-full shadow-lg transition-transform transform hover:scale-105 flex items-center gap-3 text-xl">
+                        <i data-lucide="play-circle" class="w-8 h-8"></i> 進入學生書櫃模式
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= 學生專區 (圖書館/選單) ================= -->
+        <section id="student-library" class="hidden flex-col gap-6 h-full animate-fade-in">
+            <div class="flex justify-between items-center bg-white rounded-2xl shadow-sm border border-yellow-200 p-6">
+                <div class="flex items-center gap-4">
+                    <div class="bg-yellow-100 p-3 rounded-full text-yellow-600">
+                        <i data-lucide="library-big" class="w-8 h-8"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800">小書櫃</h2>
+                        <p class="text-lg text-gray-500 mt-1">請選擇一篇你想讀的文章：</p>
+                    </div>
+                </div>
+                <button onclick="backToTeacherMode()" class="text-blue-500 hover:text-blue-700 font-bold underline px-4 py-2 rounded-lg hover:bg-blue-50 transition">
+                    老師專用：返回設定
+                </button>
+            </div>
+
+            <!-- 文章卡片清單 -->
+            <div id="library-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 動態生成卡片 -->
+            </div>
+        </section>
+
+        <!-- ================= 學生專區 (閱讀與錄音) ================= -->
+        <section id="student-reading" class="hidden flex-col gap-6 h-full">
+            
+            <!-- 控制面板 (語音 + 錄音 + 返回) -->
+            <div class="bg-white rounded-2xl shadow-md border-b-4 border-blue-500 p-4 sticky top-[72px] z-10 flex flex-wrap justify-between items-center gap-4">
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="backToLibrary()" class="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl transition">
+                        <i data-lucide="arrow-left" class="w-6 h-6"></i> <span class="hidden sm:inline">回書櫃</span>
+                    </button>
+                    <div class="h-10 w-px bg-gray-300 mx-2"></div> <!-- 分隔線 -->
+                    
+                    <!-- 報讀控制 -->
+                    <div class="flex items-center gap-2 bg-blue-50 p-1.5 rounded-xl border border-blue-100">
+                        <button id="btn-play" onclick="playText()" class="flex flex-col items-center justify-center w-16 h-16 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow transition-colors" title="聽朗讀">
+                            <i data-lucide="play" class="w-8 h-8 fill-current"></i>
+                            <span class="text-xs mt-1 font-bold">聽老師念</span>
+                        </button>
+                        <button id="btn-pause" onclick="pauseText()" class="hidden flex-col items-center justify-center w-16 h-16 bg-yellow-500 hover:bg-yellow-400 text-white rounded-xl shadow transition-colors" title="暫停">
+                            <i data-lucide="pause" class="w-8 h-8 fill-current"></i>
+                            <span class="text-xs mt-1 font-bold">暫停</span>
+                        </button>
+                        <button onclick="stopText()" class="flex flex-col items-center justify-center w-16 h-16 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-xl shadow transition-colors" title="重頭開始">
+                            <i data-lucide="square" class="w-6 h-6 fill-current"></i>
+                            <span class="text-xs mt-1 font-bold">重來</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 錄音控制 -->
+                <div class="flex items-center gap-3 bg-red-50 p-1.5 rounded-xl border border-red-100">
+                    <button id="btn-record" onclick="toggleRecording()" class="flex flex-col items-center justify-center px-4 h-16 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow transition-colors" title="錄音給老師聽">
+                        <div id="record-icon-wrapper" class="flex items-center gap-2">
+                            <i data-lucide="mic" class="w-7 h-7"></i>
+                            <span id="record-text" class="font-bold text-lg">自己念念看</span>
+                        </div>
+                    </button>
+                    
+                    <!-- 錄音結果播放與下載 -->
+                    <div id="audio-result" class="hidden items-center gap-2 pl-2">
+                        <audio id="audio-playback" controls class="h-12 w-40"></audio>
+                        <a id="download-link" class="flex items-center justify-center w-12 h-12 bg-green-500 hover:bg-green-600 text-white rounded-xl shadow transition-colors" title="下載傳給老師">
+                            <i data-lucide="download" class="w-6 h-6"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- 新增：待查字庫按鈕 -->
+                <div class="flex items-center ml-auto">
+                    <button onclick="toggleWordBankModal()" class="flex flex-col items-center justify-center h-16 px-4 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl shadow border border-purple-200 transition-colors relative" title="查看不懂的字">
+                        <div id="word-bank-count" class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center border-2 border-white shadow transition-transform">0</div>
+                        <i data-lucide="book-marked" class="w-7 h-7"></i>
+                        <span class="font-bold text-sm mt-1">待查區</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 個人化設定 (語速與字體) - 移至學生區 -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50 p-4 rounded-xl border border-blue-100">
+                <div class="flex flex-col gap-2">
+                    <label class="font-semibold text-gray-700 flex justify-between">
+                        <span>報讀語速調整</span>
+                        <span id="rate-value" class="text-blue-600">0.8x</span>
+                    </label>
+                    <input type="range" id="voice-rate" min="0.3" max="1.5" step="0.1" value="0.8" class="w-full accent-blue-600">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>極慢</span><span>正常</span><span>稍快</span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <label class="font-semibold text-gray-700 flex justify-between">
+                        <span>閱讀區字體大小</span>
+                        <span id="font-value" class="text-blue-600">特大 (48px)</span>
+                    </label>
+                    <input type="range" id="font-size" min="24" max="72" step="4" value="48" class="w-full accent-blue-600">
+                    <div class="flex justify-between text-xs text-gray-500">
+                        <span>小</span><span>適中</span><span>極大</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文章顯示區 (大字體、高亮) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 flex-grow mb-8 relative">
+                <h3 id="reading-title" class="text-2xl font-bold text-center text-blue-800 mb-8 border-b-2 border-blue-100 pb-4">文章標題</h3>
+                <div id="text-display" class="text-[48px] leading-[2.5] tracking-wide text-gray-800 font-medium whitespace-pre-wrap break-words selection:bg-purple-200 selection:text-purple-900">
+                    <!-- 文章內容將在此動態生成 -->
+                </div>
+                
+                <!-- 浮動的加入待查按鈕 -->
+                <div id="floating-add-btn" class="fixed hidden z-50 transform -translate-x-1/2 -translate-y-full pb-2 transition-opacity">
+                    <button onclick="addSelectedToWordBank()" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-xl shadow-xl border-2 border-white flex items-center gap-2 animate-bounce">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> 加入待查
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ================= 待查字庫 Modal ================= -->
+        <div id="word-bank-modal" class="fixed inset-0 bg-black/50 hidden z-[100] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform scale-95 transition-transform duration-300" id="word-bank-content">
+                <div class="bg-purple-600 p-4 flex justify-between items-center text-white">
+                    <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="book-marked"></i> 我的待查字詞區</h3>
+                    <button onclick="toggleWordBankModal()" class="text-purple-200 hover:text-white transition-colors"><i data-lucide="x" class="w-8 h-8"></i></button>
+                </div>
+                <div class="p-6">
+                    <p class="text-gray-600 font-medium mb-4">不懂的字詞會收集在這裡喔！(自動儲存於本機)</p>
+                    <div id="word-bank-list" class="flex flex-wrap gap-2 mb-6 min-h-[100px] max-h-[40vh] overflow-y-auto p-4 bg-purple-50 rounded-xl border border-purple-100">
+                        <!-- 待查字詞動態產生在這裡 -->
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <button onclick="copyWordBankToAI()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-md transition-colors">
+                            <i data-lucide="bot" class="w-6 h-6"></i> 一鍵複製給 AI 解答
+                        </button>
+                        <button onclick="clearWordBank()" class="sm:w-auto bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                            <i data-lucide="trash-2" class="w-5 h-5"></i> 清空
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= 自訂對話框 (Custom Modal) ================= -->
+        <div id="custom-modal" class="fixed inset-0 bg-black/60 hidden z-[200] flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-transform duration-300" id="custom-modal-content">
+                <div id="custom-modal-header" class="bg-blue-600 p-4 text-white font-bold flex items-center gap-2">
+                    <i id="custom-modal-icon" data-lucide="info" class="w-6 h-6"></i> 
+                    <span id="custom-modal-title" class="text-lg">提示</span>
+                </div>
+                <div class="p-6">
+                    <p id="custom-modal-message" class="text-gray-700 font-medium mb-6 whitespace-pre-wrap leading-relaxed text-lg">訊息內容</p>
+                    <div class="flex justify-end gap-3" id="custom-modal-buttons">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 頁尾版權宣告 -->
+    <footer class="bg-gray-800 text-gray-300 text-center py-6 mt-auto">
+        <div class="container mx-auto px-4 text-sm leading-loose">
+            <p class="font-semibold text-white mb-2">Puti-AI 語音伴讀小幫手</p>
+            <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣。</p>
+            <p>嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+            <p class="mt-2 text-blue-400 hover:text-blue-300">
+                <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="flex items-center justify-center gap-1">
+                    <i data-lucide="external-link" class="w-4 h-4"></i> 更多 Puti-AI 教學工具 點此前往
+                </a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        // --- 新增：自訂 Modal 系統 ---
+        function showCustomAlert(message, title = '提示', icon = 'info', headerColor = 'bg-blue-600') {
+            return new Promise((resolve) => {
+                openModal(message, title, icon, headerColor, [
+                    { text: '確定', class: 'bg-blue-600 hover:bg-blue-700 text-white', onClick: resolve }
+                ]);
+            });
+        }
+
+        function showCustomConfirm(message, title = '請確認', icon = 'help-circle', headerColor = 'bg-red-600') {
+            return new Promise((resolve) => {
+                openModal(message, title, icon, headerColor, [
+                    { text: '取消', class: 'bg-gray-200 hover:bg-gray-300 text-gray-800', onClick: () => resolve(false) },
+                    { text: '確定', class: 'bg-red-600 hover:bg-red-700 text-white', onClick: () => resolve(true) }
+                ]);
+            });
+        }
+
+        function openModal(message, title, icon, headerColor, buttons) {
+            const modal = document.getElementById('custom-modal');
+            const content = document.getElementById('custom-modal-content');
+            const header = document.getElementById('custom-modal-header');
+            const titleEl = document.getElementById('custom-modal-title');
+            const messageEl = document.getElementById('custom-modal-message');
+            const iconEl = document.getElementById('custom-modal-icon');
+            const btnContainer = document.getElementById('custom-modal-buttons');
+
+            header.className = `${headerColor} p-4 text-white font-bold flex items-center gap-2`;
+            iconEl.setAttribute('data-lucide', icon);
+            titleEl.textContent = title;
+            messageEl.innerHTML = message; // 支援簡單 HTML 如 <br>
+
+            btnContainer.innerHTML = '';
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.textContent = btn.text;
+                button.className = `font-bold py-2 px-6 rounded-xl transition shadow-sm ${btn.class}`;
+                button.onclick = () => {
+                    closeModal();
+                    if (btn.onClick) btn.onClick();
+                };
+                btnContainer.appendChild(button);
+            });
+
+            lucide.createIcons();
+            modal.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+            });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('custom-modal');
+            const content = document.getElementById('custom-modal-content');
+            modal.classList.add('opacity-0');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // --- 全域變數 ---
+        const MAX_ARTICLES = 50; // 本機記憶體最多儲存 50 篇
+        let savedLibrary = JSON.parse(localStorage.getItem('puti_article_library')) || []; // 從本機讀取儲存的文章
+        let libraryData = [];       // 最終合併要呈現給學生的書櫃陣列
+        let currentText = "";
+        let currentTitle = "";
+        
+        // 內建範例文章
+        const builtInExampleText = `# 第1篇 快樂的下課時間
+鐘聲一響，安靜的校園立刻變得熱鬧起來。同學們有的跑到操場踢球，有的在走廊上玩跳格子。我最喜歡和好朋友到大樹下聊天，分享今天早餐吃了什麼。這十分鐘雖然很短，卻能讓我們放鬆心情，準備好力氣迎接下一堂課。下課時間真是校園裡最快樂的時光！
+
+# 第2篇 溫暖的早安
+每天早上走進教室，我都會大聲對老師和同學說聲「早安」。看見大家帶著微笑回應我，心裡就會覺得暖洋洋的。老師說，禮貌就像是一盞燈，可以照亮別人的心情。一個簡單的問候，就能讓大家的一天有一個美好的開始。讓我們一起當個有禮貌的小隊長，傳遞溫暖的能量。
+
+# 第3篇 神奇的畫筆
+我有一組五顏六色的彩色筆。當我心情好的時候，我會畫出紅紅的太陽和綠綠的山；當我想要冒險時，我會畫出一艘太空船，載著我飛向亮晶晶的星星。畫畫的時候，我的世界變得無限大。雖然我還不是大畫家，但這支神奇的畫筆，紀錄了我腦袋裡所有奇妙的幻想，是我最心愛的寶貝。
+
+# 第4篇 掃地時間
+掃地時間到了，我們這組負責打掃操場的落葉。小華拿著掃把，把枯葉堆成一座小山；小明拿著畚箕，把垃圾收集起來。雖然流了很多汗，但是看著原本亂糟糟的地面變得乾乾淨淨，我們心裡都覺得很有成就感。愛護校園環境是每個人的責任，乾淨的校園讓我們讀書的心情也跟著變好了。
+
+# 第5篇 我的小鬧鐘
+桌上有一個黃色的小鬧鐘，每天準時「鈴——鈴——」地叫我起床。雖然有時候我還想再多睡一會兒，但想到要和同學一起讀書，我就會勇敢地跳下床。小鬧鐘教我要守時，不可以賴床。因為有它的陪伴，我從來不遲到，每天都能精神飽滿地準時到學校，迎接新的一天。
+
+# 第6篇 第一次騎腳踏車
+我還記得第一次學騎腳踏車的情景。爸爸在後面扶著車，我緊張得手心出汗。雖然跌倒了兩次，膝蓋有點紅腫，但我還是拍拍灰塵站起來。爸爸鼓勵我說：「加油，你一定可以的！」慢慢地，我掌握了平衡，終於可以自己往前騎了。那股迎風飛翔的感覺，讓我學會了只要不放棄，就一定能學會新事物。
+
+# 第7篇 下雨天
+滴答滴答，天空下起雨來了。我撐著彩色的小雨傘，走在回家的路上。看見路邊的小草正開心地張大嘴巴喝水，花朵也洗了一個乾淨的澡。雨水落在小水窪裡，泛起一圈一圈的漣漪，漂亮極了。雖然下雨不能去操場玩，但空氣變得很清新，這份涼爽的感覺，也是大自然送給我們的禮物。
+
+# 第8篇 小貓咪咪
+我家門口有一隻流浪貓叫咪咪，它有著灰白相間的毛，還有一對靈活的耳朵。咪咪很乖，看到我放學回家，總會對我「喵喵」叫。媽媽說動物也是有感情的，我們要愛護生命。我會用省下的零用錢買一點貓罐頭餵它。看著咪咪吃飽後滿足地洗臉，我學會了照顧弱小，心靈也變得更柔軟了。
+
+# 第9篇 整理書包
+睡覺前，我一定會檢查明天的課表，把需要的書本和文具放進書包。我會把課本疊整齊，鉛筆盒裡的鉛筆也削得尖尖的。老師說，良好的習慣是成功的開始。每天整理書包，讓我隔天去學校時不會慌慌張張，也能保護好心愛的課本。看著整齊的書包，我覺得自己變成了一個負責任的小大人。
+
+# 第10篇 珍貴的水資源
+洗手的時候，我看著清澈的水流出來。老師說，水是地球最珍貴的寶藏，沒有水，植物會枯萎，人類也會生病。所以我每次洗完手，一定會把水龍頭關緊。刷牙的時候，我也會用杯子裝水，不讓水一直流掉。節約用水雖然只是小小的一個動作，但只要大家一起努力，就能讓我們的地球永遠充滿生機。
+
+# 第11篇 操場上的接力賽
+運動會那天，最刺激的就是接力賽。全班同學都在場邊大聲加油，喊得喉嚨都啞了。當接力棒傳到我手上時，我閉上眼睛，拼命向前衝。雖然我們最後沒有拿到第一名，但大家互相擁抱，安慰努力的跑者。這場比賽讓我明白，名次不是最重要的，大家團結一心、為了目標共同努力的過程，才是最珍貴的回憶。
+
+# 第12篇 奶奶的手
+奶奶的手皺皺的，上面有很多青筋，那是辛苦工作的痕跡。奶奶的手很靈巧，會包好吃的粽子，還會縫補我弄破的衣袖。當我不開心的時候，奶奶會用這雙溫暖的手輕輕摸摸我的頭，讓我的心情平靜下來。我最喜歡牽著奶奶的手去散步，那是一雙充滿愛與智慧的手，是我心中最溫暖的守護。
+
+# 第13篇 星空下的願望
+夏天的夜晚，我和家人坐在院子裡看星星。夜空像一塊黑色的絲絨布，上面灑滿了亮晶晶的小鑽石。爸爸教我辨認北斗七星，告訴我星座的故事。我看著那顆最亮的星星，在心裡許下了一個願望：希望全家人都能平安健康。雖然星星離我們很遠，但它們的亮光卻給了我力量，讓我對未來充滿期待。
+
+# 第14篇 午餐時間
+中午的營養午餐是我最期待的時間。廚房阿姨每天都辛苦地為我們準備美味的飯菜，有青菜、肉片還有好喝的熱湯。老師提醒我們不可以挑食，每一種食物都有不同的營養，才能讓我們長得高又壯。吃飯的時候，我會乖乖把飯菜吃乾淨，不浪費任何一粒米，這就是對廚房阿姨最好的感謝。
+
+# 第15篇 我的家鄉
+我的家鄉是一個美麗的小鎮。這裡有清澈的小溪，還有綠油油的稻田。春天的時候，田野間開滿了黃色的小花；秋天的時候，稻子彎下腰，變成了一片金色的海洋。這裡的人們都很親切，見面時總會熱情地打招呼。我愛我的家鄉，這裡的一草一木都陪伴著我長大，是我心中永遠最溫暖的地方。
+
+# 第16篇 奇妙的影子
+陽光照在背後，地面上出現了一個黑色的影子。我跑，他也跟著跑；我跳，他也跟著跳。影子有時候變得很長，有時候又縮得很短，真像一個愛玩捉迷藏的小夥伴。爸爸說，影子是因為光被擋住了才產生的。這個奇妙的自然現象，讓我覺得世界處處都有驚喜，只要我們觀察，就能發現很多有趣的科學。
+
+# 第17篇 牙齒的健康
+牙齒是我們的好幫手，幫我們磨碎食物，讓我們能好好吸收營養。如果不認真刷牙，蛀牙蟲就會悄悄住進去，讓牙齒變黑、變痛。所以我每天早晚都會拿著牙刷，上下左右仔細地刷乾淨。刷牙雖然需要花一點時間，但能換來健康的牙齒和燦爛的笑容，我覺得非常值得，我一定要好好保護它們。
+
+# 第18篇 借東西的禮貌
+有一天，我的橡皮擦不見了，心裡很著急。我轉頭小聲地問同學：「可以借我橡皮擦嗎？」同學大方地遞給我。用完之後，我輕輕地歸還，並誠懇地說聲「謝謝」。老師說，借別人的東西要先問過，而且要愛惜使用。這小小的舉動，代表了尊重與信用。因為有禮貌，我和同學之間的感情變得越來越好了。
+
+# 第19篇 公車上的愛心
+今天搭公車時，車上人很多。我看見一位老奶奶扶著手把，站得不太穩。我趕快站起來，輕輕對奶奶說：「奶奶，這個位置給您坐。」奶奶露出慈祥的笑容，直誇我是個好孩子。雖然到站前我都必須站著，但心裡卻覺得比坐著還要舒服。這份助人的快樂，是任何獎品都換不到的，我以後還要多幫忙別人。
+
+# 第20篇 我想長大
+我看著身高表，發現自己又長高了兩公分。我好想快點長大，像爸爸一樣高大強壯，可以幫媽媽搬重物；我也想快點長大，學會更多知識，去探索這個大世界。不過老師告訴我，長大不只是身高變高，更要學習懂事與負責。我會一步一個腳印，認真學習、好好吃飯，讓自己成為一個身心都健康長大的好孩子。
+
+# 第21篇 森林音樂會
+走進森林，你會聽到一場奇妙的音樂會。風吹過樹梢，傳來「沙沙」的響聲；小鳥躲在葉子後面，唱著清脆的歌；小溪流過石頭，發出「叮咚叮咚」的聲音。這些都是大自然最美妙的音符。只要我們靜下心來聆聽，就會發現森林裡充滿了生命力。我們應該保護這些樹木，讓這場美麗的音樂會可以永遠演奏下去。
+
+# 第22篇 第一次自己睡覺
+以前睡覺都要媽媽陪，今天我決定要挑戰「自己睡覺」。關上燈後，房間黑漆漆的，一開始我有點害怕，覺得影子變成了小怪獸。但我抱緊心愛的小熊，心裡默默想著勇敢的故事。沒過多久，我就進入了甜美的夢鄉。隔天早上醒來，媽媽稱讚我長大了。這場小小的冒險讓我明白，恐懼並不可怕，只要有信心就能克服。
+
+# 第23篇 糖果的滋味
+五顏六色的糖果看起來好誘人，吃進嘴裡甜甜的，讓人心情變好。但是媽媽說，糖果吃太多對身體不好，不但會讓牙齒壞掉，還可能讓我們變胖或不愛吃飯。所以我和媽媽約定好，只有在週末表現好的時候才能吃一顆。這顆珍貴的糖果吃起來特別美味，也讓我學會了克制慾望，健康才是最重要的寶物。
+
+# 第24篇 洗澡真舒服
+放學回家後，身上滿是汗水和灰塵。跳進溫暖的浴缸，抹上香噴噴的肥皂，泡泡在身上跳舞，感覺真放鬆。水龍頭噴出來的水像是在幫我按摩，帶走了整天的疲勞。洗完澡後，換上乾淨的衣服，我覺得整個人變得好清爽。洗澡不但能保持衛生，還能讓心情變好，是我每天最放鬆的時刻。
+
+# 第25篇 蝴蝶的變化
+我在公園看到一隻漂亮的蝴蝶，牠正拍動彩色翅膀飛舞。老師說，蝴蝶小時候是毛毛蟲，要經過長時間的努力，在蛹裡面慢慢成長，最後才能破繭而出。這讓我想起，我們學習知識也像毛毛蟲一樣，需要不斷地看書、練習。雖然過程有時候很辛苦，但只要堅持下去，有一天我們也能像蝴蝶一樣，在廣大的天空自由飛翔。
+
+# 第26篇 交通安全
+過馬路的時候，一定要記住「紅燈停，綠燈行」。我會先在路邊停下來，左看看、右看看，確定沒有車子開過來，再快步走過斑馬線。馬路上的車子很快，我們絕對不能在路邊追逐玩耍。安全是回家唯一的路，隨時保持警覺、遵守交通規則，不但能保護自己，也能讓家人放心，讓我們一起當個守法的小行人。
+
+# 第27篇 電影院的魔力
+週末爸爸帶我去電影院看動畫片。電影院裡的螢幕好大，音響的聲音也好震撼。當燈光熄滅，我就像進入了另一個世界，跟著主角一起去冒險。雖然這只是電影，但故事裡的道理卻讓我印象深刻。看電影的時候，我們要保持安靜，不打擾別人。這場視覺饗宴讓我學到了勇敢和友愛，真的非常有意義。
+
+# 第28篇 小種子的夢想
+有一顆小種子掉進了石縫裡，那裡沒有肥沃的泥土，只有少少的陽光。但小種子不放棄，它用力地向下扎根，努力地向上生長。終於，它開出了一朵淡紫色的小花，裝點了原本荒涼的石牆。小種子告訴我們，就算環境不好，只要肯努力向上，每個人都能開出屬於自己的花朵，實現心中的夢想。
+
+# 第29篇 我的收藏品
+我有一個小盒子，裡面裝滿了我的「寶藏」。有在海邊撿到的彩色貝殼，有同學送我的亮亮貼紙，還有一片形狀像愛心的楓葉。每一件收藏品都有一個小故事。每當我打開盒子，那些美好的回憶就會像電影一樣在腦海播放。這些東西雖然不值錢，但在我心裡，它們都是最珍貴、最無可取代的記憶。
+
+# 第30篇 太陽公公的禮物
+太陽公公每天早早就起床，把溫暖的陽光灑滿大地。它讓植物長大，讓洗好的衣服變乾，還讓我們覺得身體暖暖的。陽光裡有豐富的能量，能幫我們製造維生素，讓骨頭變強壯。雖然陽光很棒，但太陽太大的時候也要記得防曬、多喝水。陽光是地球上最無私的禮物，照亮了世界的每一個角落。
+
+# 第31篇 做家事
+今天我幫媽媽摺衣服。我把長褲對摺，把上衣整齊地疊好。雖然動作還不夠快，但看著衣櫃變得整整齊齊，媽媽開心地親了我的臉頰。老師說，我們是家裡的一分子，應該主動分擔家事。做家事不僅能減輕爸媽的負擔，還能訓練我的生活能力。以後我要挑戰洗碗和掃地，成為家裡的超級小幫手。
+
+# 第32篇 誠實的價值
+有一次，我不小心打破了花瓶。當時家裡沒人，我心裡很害怕，想偷偷把碎片藏起來。但是想起老師教過的「誠實」，我決定等媽媽回來後告訴她真相。媽媽雖然心疼花瓶，卻溫柔地抱著我說：「沒關係，誠實的孩子最勇敢。」那一刻，我心裡的石頭終於落地了。原來誠實帶來的安心感，比逃避還要好。
+
+# 第33篇 冬天的圍巾
+冬天到了，冷風吹在脖子上好冷。奶奶親手幫我織了一條紅色的圍巾，摸起來軟軟的、暖暖的。戴上這條圍巾，就像奶奶一直陪在我身邊一樣。即使外面下著小雨，我走在路上也不覺得寒冷。這條圍巾不僅擋住了風寒，更裝滿了奶奶對我的愛。我會好好珍惜它，這是我收到過最溫暖的冬天禮物。
+
+# 第34篇 螞蟻與蟬
+夏天時，蟬在樹上吱吱喳喳地唱歌，覺得生活很愜意。螞蟻則流著汗，忙著搬運食物回洞穴。蟬笑螞蟻太辛苦，不懂得享受生活。但是冬天到了，大地覆蓋著白雪，蟬找不到東西吃，又冷又餓。這故事教導我們，不能只顧著眼前的玩樂，要學會未雨綢繆、努力工作，才能為未來的幸福打好基礎。
+
+# 第35篇 神奇的電腦
+電腦是一個非常神奇的發明。它像一本百科全書，只要輸入關鍵字，就能查到很多有趣的知識；它也像一個通訊站，讓我可以和遠方的親戚視訊聊天。但是老師提醒我們，使用電腦要有限制，不能沉迷於遊戲，也要注意保護眼睛。正確地使用科技，電腦就是我們學習的好夥伴，讓我們能與世界接軌。
+
+# 第36篇 小樹苗長大了
+去年我們在校園種下了一棵小樹苗。那時候，它細細小小的，好像風一吹就會倒。我們每天輪流給它澆水、拔草，保護它不被踩到。經過一年的時間，小樹苗長高了，葉子也變密了。看著它一天天變壯，我覺得很感動。植物和我們一樣工作需要愛與關懷，只要用心照顧，小小的生命也能長成遮蔭的大樹。
+
+# 第37篇 我愛看書
+書本像是一個不需要插電的電視機，只要翻開它，精彩的畫面就會出現在腦海中。我看過關於外星人的冒險，也看過小動物如何交朋友。每看一本書，我就像多活了一次不同的人生。閱讀能增加我的詞彙，也能讓我的想像力變豐富。如果你覺得無聊，不妨拿出一本書，它會帶你去一個想像不到的新世界。
+
+# 第38篇 愛笑的同學
+我們班有一位同學，每天臉上都掛著燦爛的笑容。不管遇到什麼困難，他總是大聲說：「沒關係，再試一次就好！」他的笑聲很有感染力，只要他在的地方，大家的心情都會跟著變好。老師說，微笑是世界上最美的語言，可以縮短人與人之間的距離。我也想學習這位同學，用樂觀的態度面對生活，讓身邊充滿快樂。
+
+# 第39篇 靜悄悄的夜晚
+當太陽下山，月亮升起，世界就變得靜悄悄的。街道上的車聲少了，鄰居家的燈光也漸漸熄滅。夜晚是大地休息的時間，也是我們充電的時刻。躺在柔軟的床上，聽著窗外偶爾傳來的風聲，感覺特別平靜。好好的睡一覺，身體裡的細胞就會努力工作，讓我們長高、變聰明。大家晚安，明天又是美好的一天。
+
+# 第40篇 珍惜每一天
+時間像是一條流動的小河，走過去了就不會再回頭。老師教我們，每一天都是全新的開始，也是唯一的。我們應該珍惜早上的讀書時光，珍惜下課與朋友的相處，也珍惜放學後與家人的晚餐。不要把今天該做的事留到明天。學會管理時間、熱愛生活，我們的人生就會像五彩繽紛的花園，充滿了美麗與芬芳。
+
+# 第41篇 彩虹的秘密
+大雨過後，天空有時會出現一道漂亮的彩虹。彩虹有紅、橙、黃、綠、藍、靛、紫七種顏色，像一座橫跨天空的七彩橋。爸爸說，彩虹是陽光穿過空氣中的小水滴，經過反射後形成的。這個大自然的魔術雖然短暫，卻帶給我們無限的驚喜。看著彩虹，我學到了美麗的事物往往需要陽光和雨水的共同努力才能創造。
+
+# 第42篇 學會分享食物
+我有兩顆紅紅的蘋果，看見同學沒有帶點心，我主動分給他一顆。同學驚訝地看著我，然後開心地說聲謝謝。我們坐在一起吃著脆脆的蘋果，我覺得那顆蘋果好像比平常更甜了。媽媽說，把好東西分給別人，快樂會變成兩倍。雖然我的蘋果少了一顆，但我獲得了一份珍貴的友誼。分享，真的讓心靈變得很豐富。
+
+# 第43篇 我的運動服
+我最喜歡穿學校的運動服，因為它穿起來很舒服，讓我伸展身體很方便。穿上運動服，我就感覺自己充滿了活力，可以在操場上盡情奔跑、跳躍。老師說，運動可以讓身體健康、心情愉快。雖然運動完會流汗，但洗個澡後會覺得更有精神。我決定以後要天天運動，穿著這套運動服，鍛鍊出強壯的身體。
+
+# 第44篇 保護地球
+地球是我們唯一的家。可是現在大海裡有很多塑膠袋，天空也有黑黑的煙。老師發起「環保小尖兵」活動，教我們要做資源回收，還要隨手關燈。出門時，我會自己帶水壺和餐具，減少垃圾的產生。雖然我們年紀小，但只要每個人都做一點點好事，這股力量合起來就會很大，一定能讓地球恢復原本美麗的模樣。
+
+# 第45篇 風的故事
+風雖然看不見，但我們隨時都能感覺到它。夏天時，微風吹過，帶來涼爽的感覺；秋天時，強風吹過，落葉在空中跳舞。風還能幫我們發電，也能帶動帆船前進。有時候風很大，會把雨傘吹歪，這是在提醒我們要對大自然心存敬畏。風就像一位頑皮的小精靈，在大地間穿梭，訴說著世界各地的故事。
+
+# 第46篇 第一次上台講故事
+今天輪到我上台講故事。還沒上台前，我的心跳得好快，手也在發抖。但當我看到老師鼓勵的眼神，我深呼吸一口氣，開始說起「小紅帽」的故事。慢慢地，我不再緊張，聲音也變大了。講完時，全班同學都給我熱烈的掌聲。這次的經驗讓我發現，只要跨出第一步，我就能變得比想像中還要勇敢。
+
+# 第47篇 清潔的雙手
+我們的手每天都會摸到很多東西，像是門把、課桌椅或是球。這些東西上面藏著我們看不見的小細菌。如果沒洗手就拿東西吃，細菌就會跑進肚子裡，讓我們生病。所以吃飯前、上完廁所後，我一定會用肥皂把手心、手背和手指縫都搓乾淨。保持手部衛生是保護健康的秘訣，簡單卻非常重要。
+
+# 第48篇 禮讓的小故事
+在捷運站坐電梯時，大家都在排隊。我讓一位推著嬰兒車的媽媽先走，她對我點點頭說謝謝。後來進了電梯，我也幫後面的小朋友擋住門，不讓門夾到他。老師說，禮讓是文明的表現，能讓社會變得更和諧。雖然這只是小小的舉動，但看到別人的不便被解決，我心裡也感到很滿足，這就是禮讓的魅力。
+
+# 第49篇 我愛我的老師
+老師像是一座燈塔，在知識的大海裡指引我們前進。當我遇到不會算的數學題，老師會耐心地教我好幾遍；當我心情低落時，老師會溫柔地安慰我。老師不僅教我們讀書，也教我們做人的道理。老師辛苦地批改作業，還要照顧全班同學。我想對老師說聲「謝謝您」，我會努力讀書，不辜負老師對我們的期望。
+
+# 第50篇 夢想的翅膀
+每個人心裡都有一對夢想的翅膀。有的人想當太空人，探索月球；有的人想當醫生，救助病人。我的夢想是當一名發明家，創造能清潔海洋的機器人。雖然夢想現在看起來還很遙遠，但只要我每天認真學習、勇於挑戰，這對翅膀就會越來越強壯。總有一天，我會帶著我的夢想，在廣闊的天空中高高飛翔。`;
+
+        // 語音與錄音
+        let synth = window.speechSynthesis;
+        let utterance = null;
+        let isPaused = false;
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // --- DOM 元素 ---
+        const teacherPanel = document.getElementById('teacher-panel');
+        const teacherContent = document.getElementById('teacher-content');
+        const teacherToggleIcon = document.getElementById('teacher-toggle-icon');
+        
+        const studentLibrary = document.getElementById('student-library');
+        const libraryCards = document.getElementById('library-cards');
+        const studentReading = document.getElementById('student-reading');
+        
+        const textInput = document.getElementById('text-input');
+        const uploadedFilesContainer = document.getElementById('uploaded-files-container');
+        const uploadedFilesList = document.getElementById('uploaded-files-list');
+        const fileCountSpan = document.getElementById('file-count');
+        
+        const textDisplay = document.getElementById('text-display');
+        const readingTitle = document.getElementById('reading-title');
+        
+        const rateSlider = document.getElementById('voice-rate');
+        const rateValue = document.getElementById('rate-value');
+        const fontSlider = document.getElementById('font-size');
+        const fontValue = document.getElementById('font-value');
+        
+        const btnPlay = document.getElementById('btn-play');
+        const btnPause = document.getElementById('btn-pause');
+
+        // --- 老師設定區互動 ---
+        rateSlider.addEventListener('input', (e) => {
+            rateValue.textContent = e.target.value + 'x';
+            if (utterance) utterance.rate = parseFloat(e.target.value);
+        });
+
+        fontSlider.addEventListener('input', (e) => {
+            fontValue.textContent = e.target.value + 'px';
+            textDisplay.style.fontSize = e.target.value + 'px';
+        });
+
+        function toggleTeacherPanel() {
+            teacherContent.classList.toggle('hidden');
+            teacherToggleIcon.setAttribute('data-lucide', teacherContent.classList.contains('hidden') ? 'chevron-down' : 'chevron-up');
+            lucide.createIcons();
+        }
+
+        // --- 載入與下載範例、複製提示詞 ---
+        function copyGeneratePrompt() {
+            const prompt = `請幫我生成 10 篇適合國小生（或識字困難學生）閱讀的小短文。
+要求如下：
+1. 每一篇文章字數約在 100~150 字之間。
+2. 用字遣詞簡單易懂、語句通順，內容溫馨或具備教育意義。
+3. 格式嚴格要求：請務必將每一篇文章以「#」加上標題作為第一行開頭，例如：
+# 第一篇 快樂的下課時間
+（文章內容...）
+4. 【重要必做】請務必將所有生成的文章放在同一個「程式碼區塊 (Code block)」中輸出（即上下用 \`\`\` 包起來），這樣「#」才不會被轉換成大字體標題，方便我直接一鍵複製純文字貼上使用。`;
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = prompt;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCustomAlert('✨ 已複製「AI 生文指令」！<br><br>您可以直接去貼給小吉 (GiGi)、Gemini 或是 ChatGPT，讓 AI 幫您自動生成符合本系統格式的小短文喔！', '複製成功', 'check-circle', 'bg-green-600');
+            } catch (err) {
+                showCustomAlert('複製失敗，請手動選取複製', '錯誤', 'alert-circle', 'bg-red-600');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function loadExample() {
+            textInput.value = builtInExampleText;
+            textInput.classList.add('bg-blue-50'); // 閃動回饋
+            setTimeout(() => textInput.classList.remove('bg-blue-50'), 500);
+        }
+
+        function downloadExampleFile() {
+            const blob = new Blob([builtInExampleText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Puti-AI_範例文章題庫_50篇.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // --- 處理本機儲存與檔案上傳 ---
+        function addArticlesToLibrary(newArticles) {
+            if (newArticles.length === 0) return;
+            
+            savedLibrary = savedLibrary.concat(newArticles);
+            
+            // 防呆機制：超乎記憶體(50篇)，自動從舊的文章刪除
+            if (savedLibrary.length > MAX_ARTICLES) {
+                showCustomAlert(`本機書櫃最多保留 ${MAX_ARTICLES} 篇文章，已自動為您刪除最舊的文章以釋放空間喔！`, '容量提示', 'info', 'bg-blue-600');
+                savedLibrary = savedLibrary.slice(savedLibrary.length - MAX_ARTICLES);
+            }
+            
+            localStorage.setItem('puti_article_library', JSON.stringify(savedLibrary));
+            renderUploadedFilesPreview();
+        }
+
+        function handleFileUpload(event) {
+            const files = Array.from(event.target.files);
+            let newArticles = [];
+
+            files.forEach(file => {
+                if (file.name.endsWith('.txt')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const rawContent = e.target.result;
+                        
+                        // 判斷是否為「多篇文章合併」的格式 (以 # 開頭)
+                        if (rawContent.includes('#')) {
+                            const parts = rawContent.split('#').map(p => p.trim()).filter(p => p.length > 0);
+                            parts.forEach((part, index) => {
+                                const lines = part.split('\n');
+                                const title = lines[0].trim() || `未命名文章 ${index + 1}`;
+                                const content = lines.slice(1).join('\n').trim();
+
+                                if (content) {
+                                    newArticles.push({
+                                        id: 'file_' + Date.now() + Math.floor(Math.random() * 1000) + index,
+                                        title: title,
+                                        content: content,
+                                        wordCount: content.length
+                                    });
+                                }
+                            });
+                        } else {
+                            // 相容單一檔案一篇文章的舊格式
+                            const content = rawContent.trim();
+                            if (content) {
+                                newArticles.push({
+                                    id: 'file_' + Date.now() + Math.floor(Math.random() * 1000),
+                                    title: file.name.replace('.txt', ''),
+                                    content: content,
+                                    wordCount: content.length
+                                });
+                            }
+                        }
+
+                        addArticlesToLibrary(newArticles);
+                        newArticles = []; // 重置以防後續錯誤
+                    };
+                    reader.readAsText(file);
+                } else {
+                    showCustomAlert(`檔案 ${file.name} 不是 txt 格式，已忽略。`, '格式錯誤', 'alert-triangle', 'bg-yellow-600');
+                }
+            });
+            // 清空 input 讓同一個檔案可以重複選
+            event.target.value = '';
+        }
+
+        function removeUploadedFile(id) {
+            savedLibrary = savedLibrary.filter(item => item.id !== id);
+            localStorage.setItem('puti_article_library', JSON.stringify(savedLibrary));
+            renderUploadedFilesPreview();
+        }
+        
+        function clearLibrary() {
+            // 檢查是否書櫃和文字框都已經是空的
+            if (savedLibrary.length === 0 && textInput.value.trim() === '') {
+                showCustomAlert('目前書櫃和文字框都已經是空的囉！', '提示', 'info', 'bg-blue-600');
+                return;
+            }
+            
+            // 一併清空書櫃記憶與文字框內容
+            showCustomConfirm('確定要清空書櫃裡所有的文章，以及左側文字框的內容嗎？', '確認清空', 'trash-2', 'bg-red-600')
+            .then(isConfirmed => {
+                if (isConfirmed) {
+                    savedLibrary = [];
+                    localStorage.removeItem('puti_article_library');
+                    textInput.value = ''; // 清空文字框，避免殘留又被自動加入
+                    renderUploadedFilesPreview();
+                }
+            });
+        }
+
+        function renderUploadedFilesPreview() {
+            uploadedFilesList.innerHTML = '';
+            fileCountSpan.textContent = savedLibrary.length;
+            const emptyMsg = document.getElementById('empty-library-msg');
+            
+            if (savedLibrary.length > 0) {
+                emptyMsg.classList.add('hidden');
+                savedLibrary.forEach(item => {
+                    const tag = document.createElement('div');
+                    tag.className = 'flex items-center gap-2 bg-white border border-green-200 text-green-800 px-3 py-1.5 rounded-lg text-sm shadow-sm';
+                    tag.innerHTML = `
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        <span class="font-bold truncate max-w-[150px]" title="${item.title}">${item.title}</span>
+                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">${item.wordCount}字</span>
+                        <button onclick="removeUploadedFile('${item.id}')" class="text-red-400 hover:text-red-600 ml-1" title="移除">
+                            <i data-lucide="x-circle" class="w-4 h-4"></i>
+                        </button>
+                    `;
+                    uploadedFilesList.appendChild(tag);
+                });
+                lucide.createIcons();
+            } else {
+                emptyMsg.classList.remove('hidden');
+            }
+        }
+
+        // --- 進入/退出 學生模式 ---
+        function startStudentMode() {
+            // 1. 抓取手動貼上的文章，並自動加入本機記憶庫
+            const manualText = textInput.value.trim();
+            if (manualText) {
+                let newArticles = [];
+                if (manualText.includes('#')) {
+                    const parts = manualText.split('#').map(p => p.trim()).filter(p => p.length > 0);
+                    parts.forEach((part, index) => {
+                        const lines = part.split('\n');
+                        const title = lines[0].trim() || `貼上文章 ${index + 1}`;
+                        const content = lines.slice(1).join('\n').trim();
+
+                        if (content) {
+                            newArticles.push({
+                                id: 'manual_' + Date.now() + index,
+                                title: title,
+                                content: content,
+                                wordCount: content.length
+                            });
+                        }
+                    });
+                } else {
+                    newArticles.push({
+                        id: 'manual_' + Date.now(),
+                        title: '老師指定文章',
+                        content: manualText,
+                        wordCount: manualText.length
+                    });
+                }
+                
+                if(newArticles.length > 0) {
+                    addArticlesToLibrary(newArticles);
+                    textInput.value = ''; // 貼上並存檔後，自動清空輸入框保持整潔
+                }
+            }
+
+            // 2. 將本機書櫃指派給學生顯示
+            libraryData = [...savedLibrary];
+
+            // 3. 防呆檢查
+            if (libraryData.length === 0) {
+                showCustomAlert("老師，書櫃目前是空的喔！請先貼上文章內容或上傳檔案。", '提示', 'alert-circle', 'bg-yellow-600');
+                return;
+            }
+            
+            // 隱藏老師區
+            teacherContent.classList.add('hidden');
+            teacherToggleIcon.setAttribute('data-lucide', 'chevron-down');
+            
+            // 如果只有一篇，直接進入閱讀區；如果多篇，進入書櫃區
+            if (libraryData.length === 1) {
+                openArticle(libraryData[0].id);
+            } else {
+                renderLibraryCards();
+                studentLibrary.classList.remove('hidden');
+                studentLibrary.classList.add('flex');
+            }
+            
+            lucide.createIcons();
+        }
+
+        function renderLibraryCards() {
+            libraryCards.innerHTML = '';
+            
+            libraryData.forEach((item, index) => {
+                const colors = ['bg-blue-50 border-blue-200', 'bg-green-50 border-green-200', 'bg-pink-50 border-pink-200', 'bg-purple-50 border-purple-200', 'bg-orange-50 border-orange-200'];
+                const theme = colors[index % colors.length];
+                const iconColor = theme.split('-')[1]; // 取出顏色名稱 e.g. blue
+
+                const card = document.createElement('div');
+                card.className = `${theme} border-2 rounded-2xl p-6 cursor-pointer card-hover transition-all flex flex-col justify-between h-48 relative overflow-hidden`;
+                card.onclick = () => openArticle(item.id);
+                
+                // 裝飾用的大圖示背景
+                const bgIcon = `<i data-lucide="book" class="absolute -bottom-6 -right-6 w-32 h-32 text-${iconColor}-500 opacity-10"></i>`;
+
+                card.innerHTML = `
+                    ${bgIcon}
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-2">
+                            <i data-lucide="book-open" class="w-8 h-8 text-${iconColor}-600"></i>
+                            <span class="bg-white text-gray-600 text-xs font-bold px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center gap-1">
+                                <i data-lucide="type" class="w-3 h-3"></i> ${item.wordCount} 字
+                            </span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mt-2 line-clamp-2">${item.title}</h3>
+                    </div>
+                    <div class="relative z-10 mt-auto text-right text-${iconColor}-700 font-bold text-sm flex items-center justify-end gap-1">
+                        點擊閱讀 <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+                    </div>
+                `;
+                libraryCards.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        function openArticle(id) {
+            const article = libraryData.find(a => a.id === id);
+            if (!article) return;
+
+            currentText = article.content;
+            currentTitle = article.title;
+            
+            // 設定標題與內容
+            readingTitle.textContent = currentTitle;
+            renderTextDisplay(currentText);
+
+            // 切換畫面
+            studentLibrary.classList.add('hidden');
+            studentLibrary.classList.remove('flex');
+            studentReading.classList.remove('hidden');
+            studentReading.classList.add('flex');
+            
+            stopText(); // 確保停止之前的語音
+            studentReading.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function backToLibrary() {
+            stopText();
+            // 如果只有一篇文章，按返回應該回到老師設定區
+            if (libraryData.length <= 1) {
+                backToTeacherMode();
+                return;
+            }
+            studentReading.classList.add('hidden');
+            studentReading.classList.remove('flex');
+            studentLibrary.classList.remove('hidden');
+            studentLibrary.classList.add('flex');
+            studentLibrary.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function backToTeacherMode() {
+            stopText();
+            studentLibrary.classList.add('hidden');
+            studentLibrary.classList.remove('flex');
+            studentReading.classList.add('hidden');
+            studentReading.classList.remove('flex');
+            
+            teacherContent.classList.remove('hidden');
+            teacherToggleIcon.setAttribute('data-lucide', 'chevron-up');
+            lucide.createIcons();
+            teacherPanel.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // --- 語音報讀功能 (Text-to-Speech) ---
+        function renderTextDisplay(text) {
+            textDisplay.innerHTML = text.replace(/\n/g, '<br>');
+        }
+
+        function playText() {
+            if (synth.paused && isPaused) {
+                synth.resume();
+                isPaused = false;
+                togglePlayPauseButtons(true);
+                return;
+            }
+
+            if (synth.speaking) return;
+            if (!currentText) return;
+
+            utterance = new SpeechSynthesisUtterance(currentText);
+            utterance.lang = 'zh-TW'; 
+            utterance.rate = parseFloat(rateSlider.value); 
+            utterance.pitch = 1.0;
+
+            const voices = synth.getVoices();
+            const zhVoice = voices.find(voice => voice.lang.includes('zh') || voice.name.includes('Chinese') || voice.name.includes('Taiwan'));
+            if (zhVoice) utterance.voice = zhVoice;
+
+            utterance.onboundary = (event) => {
+                const charIndex = event.charIndex;
+                const charLength = event.charLength || 1; 
+                
+                const before = currentText.substring(0, charIndex);
+                const match = currentText.substring(charIndex, charIndex + charLength);
+                const after = currentText.substring(charIndex + charLength);
+
+                const highlightedText = 
+                    before.replace(/\n/g, '<br>') + 
+                    `<mark class="highlight">` + match.replace(/\n/g, '<br>') + `</mark>` + 
+                    after.replace(/\n/g, '<br>');
+
+                textDisplay.innerHTML = highlightedText;
+            };
+
+            utterance.onend = () => {
+                renderTextDisplay(currentText); 
+                togglePlayPauseButtons(false);
+                isPaused = false;
+            };
+
+            utterance.onerror = () => {
+                renderTextDisplay(currentText);
+                togglePlayPauseButtons(false);
+                isPaused = false;
+            };
+
+            synth.speak(utterance);
+            togglePlayPauseButtons(true);
+            isPaused = false;
+        }
+
+        function pauseText() {
+            if (synth.speaking && !synth.paused) {
+                synth.pause();
+                isPaused = true;
+                togglePlayPauseButtons(false);
+            }
+        }
+
+        function stopText() {
+            synth.cancel();
+            renderTextDisplay(currentText);
+            togglePlayPauseButtons(false);
+            isPaused = false;
+        }
+
+        function togglePlayPauseButtons(isPlaying) {
+            if (isPlaying) {
+                btnPlay.classList.add('hidden');
+                btnPlay.classList.remove('flex');
+                btnPause.classList.remove('hidden');
+                btnPause.classList.add('flex');
+            } else {
+                btnPlay.classList.remove('hidden');
+                btnPlay.classList.add('flex');
+                btnPause.classList.add('hidden');
+                btnPause.classList.remove('flex');
+            }
+        }
+
+        // --- 錄音功能 ---
+        async function toggleRecording() {
+            const btnRecord = document.getElementById('btn-record');
+            const iconWrapper = document.getElementById('record-icon-wrapper');
+            const audioResult = document.getElementById('audio-result');
+
+            if (!isRecording) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+
+                    mediaRecorder.ondataavailable = (event) => {
+                        if (event.data.size > 0) {
+                            audioChunks.push(event.data);
+                        }
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        
+                        document.getElementById('audio-playback').src = audioUrl;
+                        
+                        const downloadLink = document.getElementById('download-link');
+                        downloadLink.href = audioUrl;
+                        const dateStr = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
+                        downloadLink.download = `朗讀_${currentTitle}_${dateStr}.webm`;
+                        
+                        audioResult.classList.remove('hidden');
+                        audioResult.classList.add('flex');
+
+                        stream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    
+                    btnRecord.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    btnRecord.classList.add('bg-red-700', 'animate-pulse');
+                    iconWrapper.innerHTML = '<i data-lucide="square" class="w-6 h-6 fill-current"></i><span class="font-bold text-lg">停止錄音</span>';
+                    audioResult.classList.add('hidden');
+                    audioResult.classList.remove('flex');
+                    lucide.createIcons();
+
+                } catch (err) {
+                    showCustomAlert('無法存取麥克風，請確定您已允許瀏覽器使用麥克風權限。', '麥克風錯誤', 'mic-off', 'bg-red-600');
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                
+                btnRecord.classList.add('bg-red-500', 'hover:bg-red-600');
+                btnRecord.classList.remove('bg-red-700', 'animate-pulse');
+                iconWrapper.innerHTML = '<i data-lucide="mic" class="w-7 h-7"></i><span class="font-bold text-lg">重新錄製</span>';
+                lucide.createIcons();
+            }
+        }
+
+        window.speechSynthesis.onvoiceschanged = function() {};
+
+        // --- 待查區 (Word Bank) 功能 ---
+        let wordBank = JSON.parse(localStorage.getItem('puti_word_bank')) || [];
+        const floatingBtn = document.getElementById('floating-add-btn');
+        let currentSelectedText = "";
+
+        // 更新待查區 UI
+        function updateWordBankUI() {
+            const countEl = document.getElementById('word-bank-count');
+            if (countEl) countEl.textContent = wordBank.length;
+            
+            const listEl = document.getElementById('word-bank-list');
+            if (listEl) {
+                if (wordBank.length === 0) {
+                    listEl.innerHTML = '<div class="text-gray-400 text-center w-full py-6 flex flex-col items-center gap-2"><i data-lucide="search-x" class="w-8 h-8"></i><span>目前沒有待查字詞喔！<br>閱讀時把不懂的字「反白」，就會出現加入按鈕。</span></div>';
+                } else {
+                    listEl.innerHTML = wordBank.map((word, index) => `
+                        <div class="bg-white border-2 border-purple-200 text-purple-800 px-3 py-2 rounded-xl flex items-center gap-2 shadow-sm">
+                            <span class="font-bold text-xl tracking-wider">${word}</span>
+                            <button onclick="removeWord(${index})" class="text-purple-300 hover:text-red-500 transition-colors ml-1" title="移除"><i data-lucide="x-circle" class="w-6 h-6"></i></button>
+                        </div>
+                    `).join('');
+                }
+                lucide.createIcons();
+            }
+        }
+
+        // 監聽文字選取
+        document.addEventListener('selectionchange', () => {
+            if (studentReading.classList.contains('hidden')) return;
+            const selection = window.getSelection();
+            const text = selection.toString().trim();
+            // 限制長度，避免不小心全選 (通常字詞不會超過15個字)
+            if (text.length > 0 && text.length <= 15) {
+                currentSelectedText = text.replace(/[\r\n]/g, '').trim();
+            } else {
+                currentSelectedText = "";
+                floatingBtn.classList.add('hidden');
+            }
+        });
+
+        textDisplay.addEventListener('mouseup', showFloatingButton);
+        textDisplay.addEventListener('touchend', showFloatingButton);
+
+        function showFloatingButton(e) {
+            setTimeout(() => {
+                if (currentSelectedText && !synth.speaking) { // 朗讀時避免干擾
+                    const selection = window.getSelection();
+                    if (selection.rangeCount > 0) {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+                        
+                        // 計算按鈕位置 (顯示在選取文字的正上方)
+                        floatingBtn.style.left = `${rect.left + rect.width / 2}px`;
+                        floatingBtn.style.top = `${rect.top - 5}px`;
+                        floatingBtn.classList.remove('hidden');
+                    }
+                } else {
+                    floatingBtn.classList.add('hidden');
+                }
+            }, 50);
+        }
+
+        // 點擊其他空白處隱藏按鈕
+        document.addEventListener('mousedown', (e) => {
+            if (floatingBtn && !floatingBtn.contains(e.target) && e.target !== textDisplay && !textDisplay.contains(e.target)) {
+                floatingBtn.classList.add('hidden');
+            }
+        });
+
+        function addSelectedToWordBank() {
+            if (currentSelectedText && !wordBank.includes(currentSelectedText)) {
+                wordBank.push(currentSelectedText);
+                localStorage.setItem('puti_word_bank', JSON.stringify(wordBank));
+                updateWordBankUI();
+                
+                const countBadge = document.getElementById('word-bank-count');
+                if(countBadge) {
+                    countBadge.classList.add('scale-150', 'bg-yellow-400');
+                    setTimeout(() => countBadge.classList.remove('scale-150', 'bg-yellow-400'), 300);
+                }
+            }
+            floatingBtn.classList.add('hidden');
+            window.getSelection().removeAllRanges();
+        }
+
+        function removeWord(index) {
+            wordBank.splice(index, 1);
+            localStorage.setItem('puti_word_bank', JSON.stringify(wordBank));
+            updateWordBankUI();
+        }
+
+        function toggleWordBankModal() {
+            const modal = document.getElementById('word-bank-modal');
+            const content = document.getElementById('word-bank-content');
+            if (modal.classList.contains('hidden')) {
+                updateWordBankUI();
+                modal.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    modal.classList.remove('opacity-0');
+                    content.classList.remove('scale-95');
+                });
+            } else {
+                modal.classList.add('opacity-0');
+                content.classList.add('scale-95');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        function clearWordBank() {
+            showCustomConfirm('確定要清空所有的待查字詞嗎？', '確認清空待查區', 'trash-2', 'bg-red-600')
+            .then(isConfirmed => {
+                if(isConfirmed) {
+                    wordBank = [];
+                    localStorage.removeItem('puti_word_bank');
+                    updateWordBankUI();
+                }
+            });
+        }
+
+        function copyWordBankToAI() {
+            if (wordBank.length === 0) {
+                showCustomAlert('待查區目前沒有字詞喔！', '提示', 'info', 'bg-blue-600');
+                return;
+            }
+            // 幫老師準備好的完美 Prompt
+            const prompt = `請幫我用國小學生的程度，加上注音，解釋以下字詞的意思，並各造一個簡單的句子：\n\n` + wordBank.map((w, i) => `${i+1}. ${w}`).join('\n');
+            
+            const textArea = document.createElement("textarea");
+            textArea.value = prompt;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showCustomAlert('✅ 複製成功！<br><br>您可以直接去貼給 AI (例如小吉) 幫您解答囉！<br>(已自動幫您加上適合國小程度的查詢指令)', '複製成功', 'check-circle', 'bg-green-600');
+            } catch (err) {
+                showCustomAlert('複製失敗，請手動選取複製', '錯誤', 'alert-circle', 'bg-red-600');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        // 初始化時更新一次 UI (待查區與本機書櫃)
+        updateWordBankUI();
+        renderUploadedFilesPreview();
+    </script>
+</body>
+</html>
