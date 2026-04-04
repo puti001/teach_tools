@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-AI 快捷音樂提示詞產生器</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React & ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  
+  <!-- Babel (for JSX) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Lucide Icons (Browser version) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* 自定義字體與基礎樣式 */
+    body {
+      font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+    }
+    
+    /* 自訂捲軸 */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9; 
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1; 
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8; 
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- React 應用程式代碼 -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // 自定義 Icon 元件 (包裝 Lucide)
+    const Icon = ({ name, size = 24, className = '', ...props }) => {
+      const iconRef = React.useRef(null);
+      
+      useEffect(() => {
+        if (iconRef.current) {
+          iconRef.current.innerHTML = '';
+          // lucide object 提供了 createElement
+          const iconElement = lucide.createElement(lucide.icons[name]);
+          if(iconElement){
+            // 設置屬性
+            iconElement.setAttribute('width', size);
+            iconElement.setAttribute('height', size);
+            if (props.strokeWidth) iconElement.setAttribute('stroke-width', props.strokeWidth);
+            if (props.fill) iconElement.setAttribute('fill', props.fill);
+            
+            iconRef.current.appendChild(iconElement);
+          }
+        }
+      }, [name, size, props]);
+
+      return <span ref={iconRef} className={`inline-flex items-center justify-center ${className}`} />;
+    };
+
+    function App() {
+      const [historyList, setHistoryList] = useState([]);
+      const [isSaving, setIsSaving] = useState(false);
+      const [soundEnabled, setSoundEnabled] = useState(true);
+      const [copiedSection, setCopiedSection] = useState(null);
+
+      // --- 狀態：核心設定 ---
+      const [customTitle, setCustomTitle] = useState(''); 
+      const [titleError, setTitleError] = useState(false);
+      const [customGenres, setCustomGenres] = useState([]);
+      const [customVocals, setCustomVocals] = useState([]);
+      const [customMoods, setCustomMoods] = useState([]);
+      const [customInstruments, setCustomInstruments] = useState([]);
+      const [customTempos, setCustomTempos] = useState([]);
+
+      const STORAGE_KEY = 'puti_ai_music_history_v3';
+
+      // --- 音效生成器 (使用 Web Audio API) ---
+      const playClickSound = () => {
+        if (!soundEnabled) return;
+        try {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+          oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+          
+          gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          
+          oscillator.start();
+          oscillator.stop(audioCtx.currentTime + 0.05);
+        } catch (e) {
+          console.warn("無法播放音效", e);
+        }
+      };
+
+      // --- 震動回饋 ---
+      const triggerHaptic = () => {
+        if (navigator.vibrate) {
+          navigator.vibrate(15);
+        }
+      };
+
+      // --- 整合點擊回饋 ---
+      const triggerFeedback = () => {
+        playClickSound();
+        triggerHaptic();
+      };
+
+      // --- 初始化：讀取本機歷史紀錄 ---
+      useEffect(() => {
+        try {
+          const savedHistory = localStorage.getItem(STORAGE_KEY);
+          if (savedHistory) {
+            setHistoryList(JSON.parse(savedHistory));
+          }
+        } catch (e) {
+          console.warn("無法讀取本機記憶", e);
+        }
+      }, []);
+
+      // --- 儲存至本機歷史紀錄 ---
+      const saveToHistory = () => {
+        if (!customTitle.trim()) {
+          setTitleError(true);
+          triggerHaptic(); 
+          return;
+        }
+
+        setIsSaving(true);
+        triggerFeedback();
+
+        setTimeout(() => {
+          const currentTopic = customTitle.trim(); 
+          const now = new Date();
+          const dateStr = `${(now.getMonth()+1).toString().padStart(2, '0')}/${now.getDate().toString().padStart(2, '0')} ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+          const title = `${currentTopic} - ${dateStr}`;
+
+          const newRecord = {
+            id: Date.now().toString(),
+            title,
+            timestamp: Date.now(),
+            customData: { customTitle, customGenres, customVocals, customMoods, customInstruments, customTempos }
+          };
+
+          const updatedList = [newRecord, ...historyList].slice(0, 50);
+          setHistoryList(updatedList);
+          
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
+          } catch (e) {
+            console.warn("儲存至本機記憶失敗", e);
+          }
+          
+          setIsSaving(false);
+        }, 400);
+      };
+
+      // --- 載入歷史紀錄 ---
+      const loadHistoryItem = (item) => {
+        triggerFeedback();
+        setCustomTitle(item.customData.customTitle || ''); 
+        setTitleError(false); 
+        setCustomGenres(item.customData.customGenres || []);
+        setCustomVocals(item.customData.customVocals || []);
+        setCustomMoods(item.customData.customMoods || []);
+        setCustomInstruments(item.customData.customInstruments || []);
+        setCustomTempos(item.customData.customTempos || []);
+      };
+
+      // --- 刪除歷史紀錄 ---
+      const deleteHistoryItem = (id) => {
+        triggerFeedback();
+        const updatedList = historyList.filter(item => item.id !== id);
+        setHistoryList(updatedList);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedList));
+        } catch (e) {
+          console.warn("刪除本機記憶失敗", e);
+        }
+      };
+
+      // --- 選項資料庫 ---
+      const options = {
+        genres: [
+          '兒歌/童謠 (Nursery Rhyme)', '校園民歌 (Campus Folk)', '畢業頌歌 (Graduation Anthem)', '早操/帶動唱 (Workout Music)', '輕快進行曲 (March)', 
+          '流行樂 (Pop)', '搖滾 (Rock)', '電子舞曲 (EDM)', '爵士 (Jazz)', '嘻哈 (Hip Hop)', '民謠 (Folk)', 'R&B', '古典 (Classical)', '動漫風 (J-Pop)', 'Lo-Fi 輕音樂'
+        ],
+        vocals: [
+          '幼兒稚音 (Toddler Voice)', '小學生合唱 (Kids Chorus)', '全班大合唱 (Class Sing-along)', '溫柔說故事 (Storytelling Voice)', 
+          '男聲 (Male Vocal)', '女聲 (Female Vocal)', '男女對唱 (Duet)', '童聲 (Child Vocal)', '虛擬歌手 (Vocaloid)', '純音樂 (Instrumental)'
+        ],
+        moods: [
+          '活潑可愛 (Playful)', '溫馨感恩 (Warm & Grateful)', '勵志熱血 (Inspirational)', '專注寧靜 (Focus & Calm)', 
+          '歡樂輕快 (Upbeat)', '悲傷催淚 (Sad)', '史詩磅礴 (Epic)', '浪漫抒情 (Romantic)', '熱血燃向 (Energetic)', '放鬆慵懶 (Chill)'
+        ],
+        instruments: [
+          '烏克麗麗 (Ukulele)', '直笛合奏 (Recorder Ensemble)', '木琴/奧爾夫 (Orff Instruments)', '輕快鋼琴 (Light Piano)', 
+          '原聲吉他 (Acoustic Guitar)', '電吉他 (Electric Guitar)', '鋼琴 (Piano)', '合成器 (Synthesizer)', '弦樂 (Strings)', '強烈貝斯 (Heavy Bass)', '行進管樂隊 (Brass Band)'
+        ],
+        tempos: [
+          '午睡舒緩 (Nap Time)', '帶動唱節奏 (Dance Tempo)', '進場步伐 (Marching Tempo)', 
+          '極慢 (Very Slow)', '舒緩 (Slow Tempo)', '中速 (Mid-Tempo)', '輕快 (Upbeat)', '極快 (Fast Tempo)'
+        ]
+      };
+
+      // --- 產生提示詞邏輯 ---
+      const styleTags = [...customGenres, ...customMoods, ...customVocals, ...customInstruments, ...customTempos]
+        .map(i => i.split(' ')[0]);
+        
+      const generatedCustomStyle = [customTitle.trim(), ...styleTags]
+        .filter(Boolean) 
+        .join(', ');
+
+      // --- 處理按鈕多選 ---
+      const toggleSelection = (state, setState, item) => {
+        triggerFeedback();
+        if (state.includes(item)) {
+          setState(state.filter(i => i !== item));
+        } else {
+          setState([...state, item]);
+        }
+      };
+
+      // --- 複製功能 ---
+      const copyToClipboard = (text, sectionId) => {
+        triggerFeedback();
+        try {
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          textArea.style.top = "0";
+          textArea.style.left = "0";
+          textArea.style.position = "fixed";
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          const successful = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          if (successful) {
+            setCopiedSection(sectionId);
+            setTimeout(() => setCopiedSection(null), 2000);
+          }
+        } catch (err) {
+          console.error('無法複製', err);
+        }
+      };
+
+      // --- 共用按鈕樣式 ---
+      const getCustomBtnClass = (isSelected, colorScheme) => {
+        const baseClass = "px-3 py-1.5 rounded-md text-sm font-bold transition-all border-2 active:scale-95";
+        if (isSelected) {
+          return `${baseClass} ${colorScheme.activeBg} ${colorScheme.activeText} ${colorScheme.activeBorder} shadow-sm transform -translate-y-0.5`;
+        }
+        return `${baseClass} bg-slate-100 text-slate-700 border-transparent hover:bg-slate-200 hover:border-slate-300`;
+      };
+
+      return (
+        <div className="min-h-screen bg-slate-100 text-slate-900 font-sans selection:bg-blue-300 pb-12">
+          <header className="bg-slate-900 text-white py-6 shadow-xl relative overflow-hidden border-b-4 border-blue-500">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+               <Icon name="Music" size={120} />
+            </div>
+            <div className="max-w-6xl mx-auto px-4 flex items-center justify-between relative z-10">
+              <div className="flex items-center gap-4">
+                <div className="bg-blue-600 p-3 rounded-xl shadow-lg text-white">
+                  <Icon name="Music" size={32} strokeWidth="2.5" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+                    Puti-AI 快捷音樂提示詞產生器
+                  </h1>
+                  <p className="text-slate-300 text-sm mt-1 flex items-center gap-2 font-medium">
+                    音樂小白也能一鍵組合出大師級風格！
+                    <span className="bg-slate-800 px-2 py-0.5 rounded-md text-xs flex items-center gap-1 border border-slate-700 text-green-400">
+                      <Icon name="HardDrive" size={12} /> 本機記憶
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => { triggerHaptic(); setSoundEnabled(!soundEnabled); }}
+                className={`p-2 rounded-full transition-colors ${soundEnabled ? 'bg-blue-600 text-white hover:bg-blue-500' : 'bg-slate-700 text-slate-400 hover:bg-slate-600'}`}
+                title="開關音效與震動"
+              >
+                {soundEnabled ? <Icon name="Volume2" size={20} /> : <Icon name="VolumeX" size={20} />}
+              </button>
+            </div>
+          </header>
+
+          <main className="max-w-6xl mx-auto px-4 py-8 mt-4">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              {/* 左側：控制面板 */}
+              <div className="lg:col-span-7 bg-white rounded-3xl shadow-lg border border-slate-200 p-8 space-y-8 h-fit">
+                
+                <div className="space-y-8 animate-in fade-in duration-300">
+                  <div className="bg-indigo-50 border-l-4 border-indigo-500 text-indigo-900 p-4 rounded-r-xl flex gap-3 text-sm font-medium">
+                    <Icon name="Settings2" size={20} className="shrink-0 text-indigo-600 mt-0.5" />
+                    <p>請依序挑選您想要的屬性，生成的<b className="text-indigo-700">「音樂風格」</b>請直接貼入 Suno / Lyria 3 的 Style 欄位中。</p>
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-slate-800 text-lg mb-3">
+                      1. 歌曲名稱 / 主題 <span className="text-red-500 ml-1">*</span> <span className="text-slate-400 text-sm font-normal">(必填，用於存檔命名)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customTitle}
+                      onChange={(e) => {
+                        setCustomTitle(e.target.value);
+                        if (titleError) setTitleError(false);
+                      }}
+                      placeholder="例如：大班畢業頌歌、圖書館專注輕音樂..."
+                      className={`w-full px-4 py-3 bg-slate-50 border-2 rounded-xl focus:bg-white focus:ring-4 outline-none transition-all font-bold text-slate-800 mb-1 ${
+                        titleError 
+                          ? 'border-red-400 focus:border-red-500 focus:ring-red-100' 
+                          : 'border-slate-300 focus:border-indigo-500 focus:ring-indigo-100'
+                      }`}
+                    />
+                    {titleError && (
+                      <p className="text-red-500 text-sm font-bold mt-2 animate-in slide-in-from-top-1">
+                        ⚠️ 請填寫歌曲名稱或主題，才能存入歷史紀錄喔！
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-slate-800 mb-3 flex items-center justify-between">
+                      <span>2. 曲風類型</span> <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded">可複選</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {options.genres.map(genre => (
+                        <button
+                          key={genre}
+                          onClick={() => toggleSelection(customGenres, setCustomGenres, genre)}
+                          className={getCustomBtnClass(customGenres.includes(genre), { activeBg: 'bg-indigo-600', activeText: 'text-white', activeBorder: 'border-indigo-800' })}
+                        >
+                          {genre}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-slate-800 mb-3 flex items-center justify-between">
+                       <span>3. 情緒氛圍</span> <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded">可複選</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {options.moods.map(mood => (
+                        <button
+                          key={mood}
+                          onClick={() => toggleSelection(customMoods, setCustomMoods, mood)}
+                          className={getCustomBtnClass(customMoods.includes(mood), { activeBg: 'bg-cyan-600', activeText: 'text-white', activeBorder: 'border-cyan-800' })}
+                        >
+                          {mood}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-slate-800 mb-3 flex items-center justify-between">
+                       <span>4. 特色樂器</span> <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded">可複選</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {options.instruments.map(inst => (
+                        <button
+                          key={inst}
+                          onClick={() => toggleSelection(customInstruments, setCustomInstruments, inst)}
+                          className={getCustomBtnClass(customInstruments.includes(inst), { activeBg: 'bg-amber-600', activeText: 'text-white', activeBorder: 'border-amber-800' })}
+                        >
+                          {inst}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-slate-800 mb-3 flex items-center justify-between">
+                       <span>5. 演唱人聲</span> <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded">可複選</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {options.vocals.map(vocal => (
+                        <button
+                          key={vocal}
+                          onClick={() => toggleSelection(customVocals, setCustomVocals, vocal)}
+                          className={getCustomBtnClass(customVocals.includes(vocal), { activeBg: 'bg-purple-600', activeText: 'text-white', activeBorder: 'border-purple-800' })}
+                        >
+                          {vocal}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block font-black text-slate-800 mb-3 flex items-center justify-between">
+                       <span>6. 節奏速度</span> <span className="text-xs font-normal text-slate-500 bg-slate-100 px-2 py-1 rounded">可複選</span>
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {options.tempos.map(tempo => (
+                        <button
+                          key={tempo}
+                          onClick={() => toggleSelection(customTempos, setCustomTempos, tempo)}
+                          className={getCustomBtnClass(customTempos.includes(tempo), { activeBg: 'bg-emerald-600', activeText: 'text-white', activeBorder: 'border-emerald-800' })}
+                        >
+                          {tempo}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              {/* 右側：咒語區與歷史紀錄 */}
+              <div className="lg:col-span-5 space-y-8">
+                
+                {/* 結果與複製面板 */}
+                <div className="bg-slate-900 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-fit border border-slate-800 relative">
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-8 bg-blue-500/20 blur-2xl rounded-full"></div>
+                  
+                  <div className="bg-slate-800/80 px-6 py-5 border-b border-slate-700/50 flex justify-between items-center backdrop-blur-sm z-10">
+                    <h2 className="text-white font-black flex items-center gap-2 text-lg">
+                      <Icon name="Sparkles" size={20} fill="currentColor" className="text-yellow-400" />
+                      咒語生成區
+                    </h2>
+                    <button 
+                      onClick={saveToHistory}
+                      disabled={isSaving}
+                      className="text-sm bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition-all active:scale-95 disabled:opacity-50 shadow-[0_4px_0_rgb(30,58,138)] hover:shadow-[0_2px_0_rgb(30,58,138)] hover:translate-y-[2px]"
+                    >
+                      {isSaving ? <Icon name="Clock" size={16} className="animate-spin" /> : <Icon name="Save" size={16} />}
+                      {isSaving ? '儲存中...' : '存入歷史'}
+                    </button>
+                  </div>
+                  
+                  <div className="p-6 space-y-6 relative z-10">
+                    <div className="group">
+                      <div className="flex justify-between items-center mb-3">
+                        <label className="text-slate-300 text-sm font-bold bg-slate-800 px-3 py-1 rounded-md border border-slate-700">
+                          音樂風格 (Style of Music)
+                        </label>
+                        <button
+                          onClick={() => copyToClipboard(generatedCustomStyle, 'style')}
+                          className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all active:scale-95 border-2 ${
+                            copiedSection === 'style' 
+                              ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50' 
+                              : 'bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border-slate-700'
+                          }`}
+                        >
+                          {copiedSection === 'style' ? <Icon name="Check" size={16} className="text-yellow-400"/> : <Icon name="Copy" size={16} />}
+                          {copiedSection === 'style' ? '複製成功!' : '複製風格'}
+                        </button>
+                      </div>
+                      <div className="bg-black/40 p-5 rounded-2xl text-yellow-400 font-mono text-lg font-bold min-h-[120px] border-2 border-slate-700/50 group-hover:border-yellow-500/50 transition-colors shadow-inner break-words leading-relaxed">
+                        {generatedCustomStyle || '請由左側點選標籤...'}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 歷史紀錄面板 */}
+                <div className="bg-white rounded-3xl shadow-lg border border-slate-200 overflow-hidden flex flex-col h-fit max-h-[500px]">
+                  <div className="bg-slate-100 px-6 py-4 border-b-2 border-slate-200 flex justify-between items-center sticky top-0 z-10">
+                    <h2 className="text-slate-800 font-black flex items-center gap-2 text-lg">
+                      <Icon name="History" size={20} strokeWidth="2.5" className="text-slate-600" />
+                      本機歷史紀錄 
+                      <span className="text-xs font-bold bg-slate-300 text-slate-700 px-2 py-0.5 rounded-md">{historyList.length}</span>
+                    </h2>
+                  </div>
+                  <div className="overflow-y-auto p-4 space-y-3 flex-1 bg-slate-50">
+                    {historyList.length === 0 ? (
+                      <div className="text-center py-10 text-slate-400 font-bold flex flex-col items-center gap-3">
+                        <Icon name="History" size={48} className="text-slate-300 opacity-50" />
+                        <div>
+                          目前沒有歷史紀錄。<br/>請先填寫「主題名稱」後點擊「存入歷史」！
+                        </div>
+                      </div>
+                    ) : (
+                      historyList.map(record => (
+                        <div key={record.id} className="bg-white border-2 border-slate-100 p-4 rounded-2xl hover:border-blue-400 hover:shadow-md transition-all group flex flex-col gap-3">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1 pr-2">
+                              <h3 className="font-black text-slate-800 text-base line-clamp-1 group-hover:text-blue-700 transition-colors">{record.title}</h3>
+                            </div>
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => loadHistoryItem(record)}
+                                className="p-2 bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-xl transition-colors font-bold shadow-sm"
+                                title="載入此設定"
+                              >
+                                <Icon name="Copy" size={16} strokeWidth="2.5" />
+                              </button>
+                              <button 
+                                onClick={() => deleteHistoryItem(record.id)}
+                                className="p-2 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-colors font-bold shadow-sm"
+                                title="刪除紀錄"
+                              >
+                                <Icon name="Trash2" size={16} strokeWidth="2.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  
+                  <div className="mt-auto bg-slate-800 p-3 text-center border-t-4 border-slate-900">
+                    <p className="text-slate-300 text-sm font-bold">
+                      🤖 <span className="text-cyan-400">GiGi 提示：</span> 老師們，用「全班大合唱」加「烏克麗麗」，能做出超讚的班級專屬歌曲喔！
+                    </p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </main>
+
+          <footer className="bg-slate-800 text-slate-400 py-10 mt-12 border-t-4 border-slate-700">
+            <div className="max-w-4xl mx-auto px-4 text-center space-y-3 font-medium">
+              <p className="font-black text-white text-lg tracking-wide">©Puti-AI快捷音樂提示詞產生器</p>
+              <p className="text-sm">屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣。</p>
+              <p className="text-sm text-red-400 font-bold">嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+              <a 
+                href="https://padlet.com/clongwh/puti_ai_tools" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-block mt-4 px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-full font-bold transition-colors border border-slate-600 hover:border-slate-500 shadow-sm"
+              >
+                更多 Puti-AI 教學工具 點此前往
+              </a>
+            </div>
+          </footer>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
