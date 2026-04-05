@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI批次音樂接合器</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SortableJS for Drag and Drop list -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- LameJS for MP3 Encoding -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+        }
+        .drag-over {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+        }
+        .file-item {
+            cursor: grab;
+            transition: all 0.2s ease;
+        }
+        .file-item:active {
+            cursor: grabbing;
+        }
+        .file-item.sortable-ghost {
+            opacity: 0.4;
+            background-color: #f3f4f6;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center py-10 px-4 text-gray-800">
+
+    <div class="max-w-3xl w-full bg-white rounded-2xl shadow-xl overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="bg-blue-600 text-white py-6 px-8 flex items-center gap-4">
+            <i class="fa-solid fa-music text-3xl"></i>
+            <div>
+                <h1 class="text-2xl font-bold tracking-wide">Puti-AI批次音樂接合器</h1>
+                <p class="text-blue-100 text-sm mt-1">批次上傳、自由排序、統一品質與音量、合併輸出</p>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="p-8 flex-grow">
+            <!-- Upload Area -->
+            <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center transition-colors hover:border-blue-500 hover:bg-blue-50 cursor-pointer mb-6" onclick="document.getElementById('file-input').click()">
+                <i class="fa-solid fa-cloud-arrow-up text-5xl text-blue-400 mb-3"></i>
+                <h3 class="text-lg font-semibold text-gray-700">點擊或拖曳音樂檔案至此</h3>
+                <p class="text-gray-500 text-sm mt-1">支援格式：.mp3, .wav, .m4a 等 (輸出統一為 MP3)</p>
+                <input type="file" id="file-input" multiple accept="audio/*" class="hidden" onchange="handleFiles(this.files)">
+            </div>
+
+            <!-- Settings Area -->
+            <div class="bg-gray-50 rounded-xl p-5 mb-6 border border-gray-200">
+                <h4 class="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-blue-500"></i> 輸出設定 (統一品質與音量)
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center mb-4">
+                    <div class="flex items-center gap-3">
+                        <label class="text-sm font-medium text-gray-600 whitespace-nowrap">輸出音質:</label>
+                        <select id="bitrate" class="border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-blue-500 outline-none w-full">
+                            <option value="128">128 kbps (標準)</option>
+                            <option value="192" selected>192 kbps (高音質)</option>
+                            <option value="256">256 kbps (極高)</option>
+                            <option value="320">320 kbps (無損)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="normalize" class="sr-only peer" checked>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                            <span class="ml-3 text-sm font-medium text-gray-600">音量標準化</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                    <label class="text-sm font-medium text-gray-600 whitespace-nowrap">音量調整:</label>
+                    <i class="fa-solid fa-volume-low text-gray-400 text-sm"></i>
+                    <input type="range" id="volume-slider" min="50" max="200" value="100" class="w-full h-3 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600" oninput="document.getElementById('volume-display').innerText = this.value + '%'">
+                    <i class="fa-solid fa-volume-high text-gray-400 text-sm"></i>
+                    <span id="volume-display" class="text-sm font-bold text-blue-600 w-12 text-right">100%</span>
+                </div>
+            </div>
+
+            <!-- File List -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h4 class="font-semibold text-gray-700 flex items-center gap-2">
+                        <i class="fa-solid fa-list-ol text-blue-500"></i> 接合順序清單 <span class="text-xs font-normal text-gray-500">(上下拖曳可改變順序)</span>
+                    </h4>
+                    <span id="file-count" class="text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded-md">共 0 首音樂</span>
+                </div>
+                <ul id="sortable-list" class="bg-white border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-60 overflow-y-auto">
+                    <!-- List items will be injected here -->
+                    <li class="p-4 text-center text-gray-400 text-sm italic" id="empty-msg">尚未上傳任何音樂檔案</li>
+                </ul>
+            </div>
+
+            <!-- Action Button & Progress -->
+            <div class="flex flex-col items-center gap-4">
+                <button id="process-btn" onclick="startProcessing()" disabled class="w-full sm:w-auto px-8 py-3 bg-blue-600 text-white font-bold rounded-full shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-bolt"></i> 開始接合與下載
+                </button>
+                
+                <!-- Progress Area -->
+                <div id="progress-container" class="w-full hidden">
+                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                        <span id="status-text">處理中...</span>
+                        <span id="progress-text">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer (Required Template) -->
+        <div class="bg-gray-100 p-4 text-center text-xs text-gray-500 border-t border-gray-200">
+            屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為，更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-500 hover:underline">點此前往</a>
+        </div>
+    </div>
+
+    <!-- Audio Context & Processing Logic -->
+    <script>
+        let filesData = []; // Array to hold file objects {id, file}
+        let listIdCounter = 0;
+        // 建立共用的 AudioContext 避免資源超載
+        const sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Initialize SortableJS
+        const sortableList = document.getElementById('sortable-list');
+        new Sortable(sortableList, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: function (evt) {
+                // Reorder filesData array based on DOM changes
+                const newOrderIds = Array.from(sortableList.children).map(li => li.dataset.id);
+                if (newOrderIds.includes(undefined)) return; // Empty message is present
+                
+                filesData = newOrderIds.map(id => filesData.find(f => f.id == id));
+            }
+        });
+
+        // Drag and Drop Events
+        const dropZone = document.getElementById('drop-zone');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            handleFiles(files);
+        });
+
+        async function handleFiles(files) {
+            if (!files.length) return;
+            
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].type.startsWith('audio/')) {
+                    const id = listIdCounter++;
+                    filesData.push({ 
+                        id: id, 
+                        file: files[i],
+                        audioBuffer: null // 暫存解碼後的音檔，讓後續合併瞬間完成
+                    });
+                    analyzeAudio(id, files[i]); // 背景非同步處理
+                } else {
+                    alert(`檔案 ${files[i].name} 不是支援的音訊格式。`);
+                }
+            }
+            renderList();
+        }
+
+        async function analyzeAudio(id, file) {
+            try {
+                // 完整解碼取得精確音訊資料 (保留預先解碼的優勢，提升合併速度，移除不準確的kbps猜測)
+                const arrayBuffer = await file.arrayBuffer();
+                const audioBuffer = await sharedAudioCtx.decodeAudioData(arrayBuffer);
+
+                // 更新檔案資訊並暫存解碼資料，觸發重新渲染
+                const fileData = filesData.find(f => f.id === id);
+                if (fileData) {
+                    fileData.audioBuffer = audioBuffer;
+                    renderList();
+                }
+            } catch (error) {
+                console.error("音訊解析失敗", error);
+                const fileData = filesData.find(f => f.id === id);
+                if (fileData) {
+                    renderList();
+                }
+            }
+        }
+
+        function removeFile(id) {
+            filesData = filesData.filter(f => f.id != id);
+            renderList();
+        }
+
+        function renderList() {
+            sortableList.innerHTML = '';
+            document.getElementById('file-count').innerText = `共 ${filesData.length} 首音樂`;
+            
+            const processBtn = document.getElementById('process-btn');
+            const isAnalyzing = filesData.some(f => f.audioBuffer === null);
+
+            if (filesData.length === 0) {
+                processBtn.disabled = true;
+                processBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> 開始接合與下載';
+                sortableList.innerHTML = '<li class="p-4 text-center text-gray-400 text-sm italic" id="empty-msg">尚未上傳任何音樂檔案</li>';
+                return;
+            }
+
+            if (isAnalyzing) {
+                processBtn.disabled = true;
+                processBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 正在分析解碼中...';
+            } else {
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> 開始接合與下載';
+            }
+
+            filesData.forEach((f, index) => {
+                const li = document.createElement('li');
+                li.className = 'file-item p-3 flex justify-between items-center bg-white hover:bg-gray-50';
+                li.dataset.id = f.id;
+                
+                const sizeMB = (f.file.size / (1024 * 1024)).toFixed(2);
+
+                li.innerHTML = `
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <i class="fa-solid fa-grip-vertical text-gray-400 cursor-grab px-2"></i>
+                        <div class="flex flex-col truncate">
+                            <span class="text-sm font-medium text-gray-700 truncate" title="${f.file.name}">${f.file.name}</span>
+                            <span class="text-xs text-gray-400 mt-0.5">${sizeMB} MB</span>
+                        </div>
+                    </div>
+                    <button onclick="removeFile(${f.id})" class="text-red-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                `;
+                sortableList.appendChild(li);
+            });
+        }
+
+        // Helper to yield to main thread to prevent UI freezing
+        const yieldToMain = () => new Promise(resolve => setTimeout(resolve, 0));
+
+        async function updateStatus(text, progress) {
+            document.getElementById('status-text').innerText = text;
+            document.getElementById('progress-text').innerText = `${progress}%`;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            await yieldToMain();
+        }
+
+        async function startProcessing() {
+            if (filesData.length === 0) return;
+
+            const processBtn = document.getElementById('process-btn');
+            const progressContainer = document.getElementById('progress-container');
+            const shouldNormalize = document.getElementById('normalize').checked;
+            const targetKbps = parseInt(document.getElementById('bitrate').value);
+            const volumeSliderValue = parseInt(document.getElementById('volume-slider').value) / 100;
+
+            processBtn.disabled = true;
+            processBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 處理中...';
+            progressContainer.classList.remove('hidden');
+
+            try {
+                const targetSampleRate = 44100; // Standard CD quality
+
+                // 2. Read and Decode all audio files (現在已經在分析階段解碼完成了，直接取用)
+                let decodedBuffers = [];
+                let totalDuration = 0;
+
+                for (let i = 0; i < filesData.length; i++) {
+                    const audioBuffer = filesData[i].audioBuffer;
+                    if (audioBuffer) {
+                        decodedBuffers.push(audioBuffer);
+                        totalDuration += audioBuffer.duration;
+                    }
+                }
+
+                await updateStatus(`準備合併音樂...`, 10);
+
+                // 3. Create OfflineAudioContext to render the merged audio
+                // 2 channels (Stereo), length = duration * sample rate
+                const offlineCtx = new OfflineAudioContext(2, Math.ceil(totalDuration * targetSampleRate), targetSampleRate);
+                
+                let offset = 0;
+                for (let i = 0; i < decodedBuffers.length; i++) {
+                    const source = offlineCtx.createBufferSource();
+                    source.buffer = decodedBuffers[i];
+                    source.connect(offlineCtx.destination);
+                    source.start(offset);
+                    offset += decodedBuffers[i].duration;
+                }
+
+                await updateStatus(`正在合成音軌...`, 40);
+                const renderedBuffer = await offlineCtx.startRendering();
+
+                // 4. 分析音量峰值 (改為精準掃描，不再跳略取樣點)
+                await updateStatus(`分析與調整音量...`, 50);
+                const channels = renderedBuffer.numberOfChannels;
+                const length = renderedBuffer.length;
+                let maxPeak = 0;
+
+                if (shouldNormalize) {
+                    for (let c = 0; c < channels; c++) {
+                        const data = renderedBuffer.getChannelData(c);
+                        for (let i = 0; i < length; i++) { // 精準掃描每一個取樣點
+                            const absVal = Math.abs(data[i]);
+                            if (absVal > maxPeak) maxPeak = absVal;
+                        }
+                    }
+                }
+
+                let multiplier = volumeSliderValue;
+
+                if (shouldNormalize && maxPeak > 0) {
+                    // 先將基準拉到 0.95，再乘上拉桿的倍率
+                    multiplier = (0.95 / maxPeak) * volumeSliderValue;
+                }
+
+                // 5. Encode to MP3 using lamejs (把音量放大縮小直接寫入編碼引擎，保證100%生效)
+                await updateStatus(`開始編碼為 MP3 (${targetKbps}kbps)...`, 60);
+                
+                const mp3encoder = new lamejs.Mp3Encoder(2, targetSampleRate, targetKbps);
+                const mp3Data = [];
+                
+                const leftChannel = renderedBuffer.getChannelData(0);
+                const rightChannel = renderedBuffer.numberOfChannels > 1 ? renderedBuffer.getChannelData(1) : leftChannel;
+                const sampleBlockSize = 1152; // multiple of 576
+                
+                for (let i = 0; i < length; i += sampleBlockSize) {
+                    const leftChunk = new Int16Array(sampleBlockSize);
+                    const rightChunk = new Int16Array(sampleBlockSize);
+                    
+                    for (let j = 0; j < sampleBlockSize; j++) {
+                        if (i + j < length) {
+                            // 直接在轉換成 MP3 的這一刻，強迫套用音量倍率！
+                            let lSample = leftChannel[i + j] * multiplier;
+                            let rSample = rightChannel[i + j] * multiplier;
+
+                            // 防破音保護 (截斷超載波形，防止爆音)
+                            if (lSample > 1.0) lSample = 1.0;
+                            if (lSample < -1.0) lSample = -1.0;
+                            if (rSample > 1.0) rSample = 1.0;
+                            if (rSample < -1.0) rSample = -1.0;
+
+                            // Convert Float32 [-1.0, 1.0] to Int16 [-32768, 32767]
+                            leftChunk[j] = lSample < 0 ? lSample * 32768 : lSample * 32767;
+                            rightChunk[j] = rSample < 0 ? rSample * 32768 : rSample * 32767;
+                        }
+                    }
+                    
+                    const mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+                    if (mp3buf.length > 0) {
+                        mp3Data.push(mp3buf);
+                    }
+
+                    // Update UI and prevent freezing every 100 blocks
+                    if ((i / sampleBlockSize) % 100 === 0) {
+                        const encodeProgress = 60 + Math.round((i / length) * 35);
+                        await updateStatus(`正在編碼為 MP3...`, encodeProgress);
+                    }
+                }
+                
+                const mp3buf = mp3encoder.flush();
+                if (mp3buf.length > 0) {
+                    mp3Data.push(mp3buf);
+                }
+
+                await updateStatus(`準備下載...`, 100);
+
+                // 6. Download the generated Blob
+                const blob = new Blob(mp3Data, { type: 'audio/mp3' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                
+                // 組合新檔名：擷取每首歌去掉副檔名後的前2個字，並以底線連接，最後加上專屬印記
+                const nameParts = filesData.map(f => {
+                    const baseName = f.file.name.replace(/\.[^/.]+$/, ""); // 去除副檔名
+                    return baseName.substring(0, 2); // 取前2個字
+                });
+                a.download = `${nameParts.join('_')}_Puti-AI.mp3`;
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                // Cleanup
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
+
+                // Reset UI
+                processBtn.innerHTML = '<i class="fa-solid fa-check"></i> 完成！';
+                processBtn.classList.replace('bg-blue-600', 'bg-green-500');
+                processBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-600');
+                
+                setTimeout(() => {
+                    processBtn.disabled = false;
+                    processBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> 開始接合與下載';
+                    processBtn.classList.replace('bg-green-500', 'bg-blue-600');
+                    processBtn.classList.replace('hover:bg-green-600', 'hover:bg-blue-700');
+                    progressContainer.classList.add('hidden');
+                    updateStatus('處理中...', 0);
+                }, 3000);
+
+            } catch (error) {
+                console.error(error);
+                alert("處理過程中發生錯誤：" + error.message);
+                processBtn.disabled = false;
+                processBtn.innerHTML = '<i class="fa-solid fa-bolt"></i> 開始接合與下載';
+                progressContainer.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
