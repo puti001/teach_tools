@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 智慧批次拉圖進文教學</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #f8fafc;
+            color: #334155;
+        }
+        .step-card {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #3b82f6;
+        }
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #2563eb;
+        }
+        .highlight {
+            color: #ef4444;
+            font-weight: bold;
+        }
+        .footer {
+            background-color: #e2e8f0;
+            padding: 1rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: #64748b;
+            border-radius: 0.5rem;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-blue-600 mb-2">Puti-AI 智慧批次拉圖進文教學</h1>
+            <p class="text-lg text-slate-600">百頁成果報告書排版救星！Google 文件全自動精準置圖法</p>
+        </header>
+
+        <!-- Intro -->
+        <div class="bg-white rounded-xl shadow-md p-6 mb-8 border border-slate-200">
+            <h2 class="text-xl font-bold text-slate-800 mb-3 flex items-center gap-2">
+                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                為什麼需要這個方法？
+            </h2>
+            <p class="mb-2">製作百頁報告時，若手動將一百多張圖片拖入文件中，會遇到以下噩夢：</p>
+            <ul class="list-disc list-inside space-y-1 ml-4 mb-4">
+                <li>圖片太大撐破版面，導致軟體嚴重卡頓。</li>
+                <li>排版全亂，圖片不知道飛到哪一頁。</li>
+                <li>手動調整尺寸與對齊，耗費數小時。</li>
+            </ul>
+            <p class="font-semibold text-blue-600">這套「標籤預留位法 + GAS 自動化」，能讓圖片精準降落到您指定的位置，並且自動縮放、整齊劃一！</p>
+        </div>
+
+        <!-- Step 1 -->
+        <div class="step-card">
+            <h3 class="text-xl font-bold text-blue-600 mb-3">步驟一：圖片預處理（統一寬度與命名）</h3>
+            <p class="mb-2"><strong>保命符！千萬不要把原始大圖直接丟進去。</strong></p>
+            <ol class="list-decimal list-inside space-y-2 ml-2">
+                <li><strong>統一縮小：</strong> 強烈推薦使用專屬線上工具 <a href="https://sites.google.com/view/puti-ai/img2s-pdf" target="_blank" class="text-blue-600 font-bold hover:underline inline-flex items-center gap-1">Puti-AI 圖片瘦身/轉PDF機 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg></a>，免安裝直接線上批次處理。
+                    <ul class="list-disc list-inside ml-6 text-slate-600">
+                        <li>建議：寬度統一設定為 <span class="highlight">800px</span>（半頁圖文並茂最舒適），品質設定 80%。</li>
+                        <li>目的：確保排版符合 Z 字型視覺穩定感，並大幅降低文件體積防止卡頓。</li>
+                        <li>備案：您也可以使用單機批次縮圖軟體（如 Caesium 或 FastStone）。</li>
+                    </ul>
+                </li>
+                <li><strong>規律命名：</strong> 請用流水號命名圖片，例如：<code class="bg-slate-100 px-1 rounded">001.jpg</code>、<code class="bg-slate-100 px-1 rounded">002.png</code>、<code class="bg-slate-100 px-1 rounded">003.jpg</code>。</li>
+                <li><strong>上傳雲端：</strong> 將處理好的圖片，放進 Google 雲端硬碟的一個「專屬資料夾」。</li>
+            </ol>
+            <div class="bg-yellow-50 p-3 mt-3 rounded border border-yellow-200 text-sm">
+                💡 <strong>取得資料夾 ID：</strong> 開啟該資料夾，網址列 `folders/` 後面那串亂碼就是 ID，先複製備用。
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="step-card">
+            <h3 class="text-xl font-bold text-blue-600 mb-3">步驟二：在文件中植入「標籤預留位」</h3>
+            <p class="mb-2">在撰寫報告時，只要遇到需要放圖的地方，直接輸入獨一無二的標籤。</p>
+            <div class="bg-slate-50 p-4 rounded border border-slate-200 font-serif text-lg my-3">
+                <p>...這裡是一段關於活動成效的描述，參與者反應熱烈...</p>
+                <p class="font-bold text-red-600 my-2">{{IMG_001}}</p>
+                <p>如上圖所示，滿意度高達九成。接下來我們看看細部數據...</p>
+                <p class="font-bold text-red-600 my-2">{{IMG_002}}</p>
+            </div>
+            <p><strong>規則：</strong> 標籤格式必須為 <code class="bg-slate-100 px-1 rounded">{{IMG_檔名}}</code>。例如檔名是 001.jpg，標籤就是 {{IMG_001}}。</p>
+            <p class="text-sm text-slate-500 mt-1">這樣做能保證文字在哪，圖片就精準卡在哪，絕不跑位。</p>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="step-card">
+            <h3 class="text-xl font-bold text-blue-600 mb-3">步驟三：執行 GAS 自動化腳本</h3>
+            <p class="mb-3">文字與標籤都完成後，讓自動化腳本幫您一鍵置圖！</p>
+            <ol class="list-decimal list-inside space-y-2 ml-2 mb-4">
+                <li>在 Google 文件上方選單點選 <strong>「延伸功能」 > 「Apps Script」</strong>。</li>
+                <li>刪除原本的程式碼，將下方代碼複製貼上。</li>
+                <li>將程式碼第二行的 <code class="bg-slate-100 px-1 rounded">您的雲端硬碟資料夾ID</code> 替換為步驟一取得的 ID。</li>
+                <li>按下上方的 <strong>「執行 (Run)」</strong>，並同意授權。</li>
+            </ol>
+            
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode()">複製代碼</button>
+                <pre><code id="scriptCode">function replaceTagsWithImages() {
+  // 1. 請將下方單引號內的文字替換為您的資料夾 ID
+  var folderId = '您的雲端硬碟資料夾ID'; 
+  
+  var doc = DocumentApp.getActiveDocument();
+  var body = doc.getBody();
+  var folder = DriveApp.getFolderById(folderId);
+  var files = folder.getFiles();
+  
+  // 建立圖片索引
+  var imageMap = {};
+  while (files.hasNext()) {
+    var file = files.next();
+    var fileName = file.getName().split('.')[0]; 
+    imageMap[fileName] = file;
+  }
+
+  // 搜尋標籤並替換
+  for (var imgKey in imageMap) {
+    var tag = '{{IMG_' + imgKey + '}}';
+    var found = body.findText(tag);
+    
+    while (found) {
+      var element = found.getElement();
+      var text = element.asText();
+      var start = found.getStartOffset();
+      var end = found.getEndOffsetInclusive();
+      
+      var imageBlob = imageMap[imgKey].getBlob();
+      var parent = element.getParent();
+      var index = parent.getChildIndex(element);
+      
+      // 插入圖片
+      var newImage = parent.insertImage(index + 1, imageBlob);
+      
+      // 自動縮放 (此處設定顯示寬度為 450px)
+      var width = newImage.getWidth();
+      var height = newImage.getHeight();
+      var newWidth = 450; 
+      newImage.setWidth(newWidth);
+      newImage.setHeight(height * (newWidth / width));
+      
+      // 刪除標籤
+      text.deleteText(start, end);
+      
+      found = body.findText(tag, found);
+    }
+  }
+}</code></pre>
+            </div>
+        </div>
+
+        <!-- Finish -->
+        <div class="bg-green-50 rounded-xl shadow-md p-6 border border-green-200">
+            <h3 class="text-xl font-bold text-green-700 mb-2 flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                完成與最後微調
+            </h3>
+            <p>回到 Google 文件，您會發現所有標籤都已經變成排列整齊的圖片了！最後您可以做快速檢查：</p>
+            <ul class="list-disc list-inside ml-4 text-slate-700">
+                <li>若圖片卡在頁尾，按 <kbd class="bg-slate-200 px-1 rounded text-xs">Ctrl + Enter</kbd> 強制換頁。</li>
+                <li>若要設定圖說，請善用「樣式」功能統一格式，方便後續自動產生圖表目錄。</li>
+            </ul>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為。<br>
+            更多 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-500 hover:underline font-bold">Puti-AI 教學工具</a> 點此前往。
+        </div>
+    </div>
+
+    <script>
+        function copyCode() {
+            var codeText = document.getElementById("scriptCode").innerText;
+            
+            // 建立一個隱藏的 textarea 來實作相容性較高的複製功能
+            var textArea = document.createElement("textarea");
+            textArea.value = codeText;
+            
+            // 避免畫面因 focus 而滾動
+            textArea.style.position = "fixed";
+            textArea.style.left = "-9999px";
+            textArea.style.top = "0";
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                var successful = document.execCommand('copy');
+                if (successful) {
+                    var btn = document.querySelector('.copy-btn');
+                    var originalText = btn.innerText;
+                    btn.innerText = '已複製！';
+                    btn.style.backgroundColor = '#10b981';
+                    setTimeout(function() {
+                        btn.innerText = originalText;
+                        btn.style.backgroundColor = '#3b82f6';
+                    }, 2000);
+                } else {
+                    console.error('複製指令執行失敗');
+                }
+            } catch (err) {
+                console.error('瀏覽器不支援此複製方法:', err);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+    </script>
+</body>
+</html>
