@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 簡報自動化產線教學</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+            background-color: #f1f5f9; /* slate-100 */
+            color: #334155; /* slate-700 */
+            line-height: 1.6;
+        }
+        .container {
+            max-w-screen-lg mx-auto p-6 md:p-10;
+        }
+        h1, h2, h3 {
+            font-weight: 700;
+        }
+        .step-container {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid #e2e8f0; /* slate-200 */
+        }
+        .step-header {
+            background-color: #3b82f6; /* blue-500 */
+            color: #ffffff;
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .step-number {
+            background-color: #ffffff;
+            color: #3b82f6;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+        .step-content {
+            padding: 1.5rem;
+        }
+        .code-wrapper {
+            background-color: #1e293b; /* slate-800 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+        }
+        pre {
+            margin: 0;
+            color: #e2e8f0; /* slate-200 */
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.875rem;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #475569; /* slate-600 */
+            color: white;
+            border: none;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #3b82f6; /* blue-500 */
+        }
+        .highlight-box {
+            background-color: #eff6ff; /* blue-50 */
+            border-left: 4px solid #3b82f6;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            font-size: 0.875rem;
+            color: #64748b; /* slate-500 */
+            margin-top: 3rem;
+            border-top: 1px solid #cbd5e1; /* slate-300 */
+        }
+    </style>
+</head>
+<body>
+
+<div class="max-w-4xl mx-auto p-4 md:p-8">
+    
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+        <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-4">Puti-AI 簡報自動化產線教學</h1>
+        <p class="text-lg text-slate-600 max-w-2xl mx-auto">
+            150 頁簡報噩夢終結者！結合 Gemini 結構化產出與 Google Apps Script (GAS)，半小時內完成原本需要三天的「大綱轉投影片 + 自動置圖」體力活。
+        </p>
+    </div>
+
+    <!-- Step 1: Gemini -->
+    <div class="step-container">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <h2 class="text-xl">請 Gemini 產出「結構化大綱」</h2>
+        </div>
+        <div class="step-content">
+            <p class="mb-4">不要只讓 AI 產出純文字。利用精確的提示詞，要求 Gemini 將簡報內容格式化為表格，這是自動化的基石。</p>
+            <div class="highlight-box">
+                <p class="font-bold mb-2">💡 提示詞範例 (請複製並依需求修改)：</p>
+                <p class="text-slate-700 italic">「請幫我將這 150 頁的成果報告大綱整理成『表格』格式。欄位必須包含：[投影片編號]、[標題]、[內文摘要]、[對應圖檔編號]。請以 Markdown 表格呈現。注意：標題字數請控制在 10 字以內，內文請多用明確主詞與條列式。」</p>
+            </div>
+            <p class="text-sm text-slate-500">※ 確保圖檔編號（如 001, 002）與您準備好的圖片檔名完全一致。</p>
+        </div>
+    </div>
+
+    <!-- Step 2: Sheets -->
+    <div class="step-container">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <h2 class="text-xl">貼入 Google 試算表 (Sheets) 作為中轉</h2>
+        </div>
+        <div class="step-content">
+            <p class="mb-4">將 Gemini 產出的表格內容直接複製，然後開啟一份全新的 <strong>Google 試算表</strong> 並貼上。</p>
+            <ul class="list-disc pl-6 mb-4 text-slate-700">
+                <li>第一列 (Row 1) 應為標題列（例如：投影片編號 | 標題 | 內文摘要 | 圖片編號）。</li>
+                <li>確認資料整齊排列，沒有跑位。這份試算表就是我們接下來「噴」出簡報的生產清單。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Step 3: Create Slides -->
+    <div class="step-container">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <h2 class="text-xl">從試算表「一鍵生成」簡報草稿</h2>
+        </div>
+        <div class="step-content">
+            <p class="mb-4">不要傻傻地開新簡報一張張貼。我們要在試算表中執行腳本，讓它自動幫我們生成 150 頁簡報。</p>
+            <ol class="list-decimal pl-6 mb-4 space-y-2">
+                <li>在您剛才的 Google 試算表中，點擊上方選單 <strong>「延伸功能」 > 「Apps Script」</strong>。</li>
+                <li>刪除編輯器中原有的程式碼，貼上以下腳本。</li>
+                <li>按下上方的 <strong>「執行 (Run)」</strong> 按鈕，並完成 Google 帳號授權。</li>
+            </ol>
+            
+            <div class="code-wrapper">
+                <button class="copy-btn" onclick="copyCode('code3')">複製代碼</button>
+                <pre><code id="code3">function createSlidesFromSheet() {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var data = sheet.getDataRange().getValues(); 
+  
+  // 建立一份新的簡報，名稱可自訂
+  var deck = SlidesApp.create('Puti-AI 自動生成簡報草稿'); 
+  
+  // 從第二列開始讀取 (避開標題列)
+  for (var i = 1; i < data.length; i++) { 
+    var slide = deck.appendSlide(SlidesApp.PredefinedLayout.TITLE_AND_BODY);
+    
+    // ⚠️ 請注意陣列索引是從 0 開始算：A欄=0, B欄=1, C欄=2, D欄=3
+    // 假設您的試算表中：B欄是標題，C欄是內文
+    var slideTitle = data[i][1]; 
+    var slideBody = data[i][2];  
+    
+    // 寫入標題與內文
+    if (slideTitle) slide.getPlaceholder(SlidesApp.PlaceholderType.TITLE).asShape().getText().setText(slideTitle); 
+    if (slideBody) slide.getPlaceholder(SlidesApp.PlaceholderType.BODY).asShape().getText().setText(slideBody);  
+    
+    // ⚠️ 寫入圖片標籤到備忘稿
+    // 假設您的試算表中：D欄是對應圖檔編號
+    var imageId = data[i][3]; 
+    if (imageId) {
+       var notesShape = slide.getNotesPage().getSpeakerNotesShape();
+       notesShape.getText().setText("{{IMG_" + imageId + "}}");
+    }
+  }
+  
+  // 在 Apps Script 執行日誌中顯示簡報連結
+  Logger.log('🎉 簡報已生成！請前往您的雲端硬碟查看，或點擊連結：' + deck.getUrl());
+}</code></pre>
+            </div>
+            <p class="text-sm text-green-600 font-bold mt-2">執行完畢後，去您的 Google 雲端硬碟，會看到一份全新生成、包含所有文字大綱的簡報！</p>
+            <div class="bg-yellow-50 p-3 mt-3 rounded border border-yellow-200 text-sm">
+                💡 <strong>除錯小幫手：</strong> 如果發現生成的簡報裡面沒有標籤，或者是標題跑到內文區，請回到程式碼中檢查 `data[i][數字]`。將數字改成您試算表實際對應的欄位索引（A欄為0，B欄為1，以此類推）。
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: Batch Images -->
+    <div class="step-container">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <h2 class="text-xl">圖片預處理與上傳</h2>
+        </div>
+        <div class="step-content">
+            <p class="mb-4">在將圖片塞進簡報前，必須先進行「瘦身」。</p>
+            <ul class="list-disc pl-6 mb-4 space-y-2 text-slate-700">
+                <li><strong>強烈建議：</strong> 使用 <a href="https://sites.google.com/view/puti-ai/img2s-pdf" target="_blank" class="text-blue-600 font-bold hover:underline">Puti-AI 圖片瘦身機</a>，將圖片寬度統一縮放至 <strong>800px</strong> (符合 Google 簡報 16:9 比例且不卡頓)。</li>
+                <li>確認圖片檔名已經按順序編號 (如 001.jpg, 002.png...)，這必須與步驟 1 大綱裡的編號一致。</li>
+                <li>將處理好的圖片上傳至 Google 雲端硬碟的一個<strong>專屬資料夾</strong>，並複製該資料夾的 ID（網址列 `folders/` 後面的字串）。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Step 5: Final GAS -->
+    <div class="step-container">
+        <div class="step-header">
+            <div class="step-number">5</div>
+            <h2 class="text-xl">在簡報中執行 GAS 批次置圖</h2>
+        </div>
+        <div class="step-content">
+            <p class="mb-4">打開步驟 3 生成的簡報，我們要讓程式去讀取備忘稿裡的標籤，自動把雲端資料夾裡的圖片抓進來。</p>
+            
+            <!-- 新增常見錯誤警告區塊 -->
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 text-sm text-red-700">
+                <p class="font-bold flex items-center gap-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    常見防呆警告 (報錯：Cannot read properties of null)
+                </p>
+                <p class="mt-1">請確認您已經「關閉試算表的 Apps Script」，並前往 Google 雲端硬碟 <strong>打開剛剛生成的 Google 簡報</strong>。必須在「簡報的畫面」中點選「延伸功能 > Apps Script」執行此步驟，程式才能抓到投影片喔！</p>
+            </div>
+
+            <ol class="list-decimal pl-6 mb-4 space-y-2">
+                <li>在剛生成的 <strong>Google 簡報</strong> 中，點選 <strong>「延伸功能」 > 「Apps Script」</strong>。</li>
+                <li>貼入下方腳本，並<span class="text-red-500 font-bold">記得替換資料夾 ID</span>。</li>
+                <li>按下 <strong>「執行」</strong>，看著一百多張圖片瞬間就定位！</li>
+            </ol>
+            
+            <div class="code-wrapper">
+                <button class="copy-btn" onclick="copyCode('code5')">複製代碼</button>
+                <pre><code id="code5">function batchInsertImagesByNotesTag() {
+  // 🔴 請替換為您的雲端硬碟圖片資料夾 ID
+  var folderId = '貼上資料夾ID'; 
+  
+  var deck = SlidesApp.getActivePresentation();
+  var slides = deck.getSlides();
+  var folder = DriveApp.getFolderById(folderId);
+  var files = folder.getFiles();
+  
+  // 建立圖片索引地圖 (以檔名為 Key)
+  var imageMap = {};
+  while (files.hasNext()) {
+    var file = files.next();
+    var fileName = file.getName().split('.')[0];
+    imageMap[fileName] = file;
+  }
+
+  // 獲取簡報寬高，用於後續排版
+  var pageWidth = deck.getPageWidth();
+  var pageHeight = deck.getPageHeight();
+
+  // 逐頁檢查備忘稿是否有圖片標籤
+  for (var i = 0; i < slides.length; i++) {
+    var slide = slides[i];
+    var notesText = slide.getNotesPage().getSpeakerNotesShape().getText().asString();
+    
+    // 使用簡單正則表達式尋找 {{IMG_xxx}}
+    var match = notesText.match(/\{\{IMG_(.+?)\}\}/);
+    
+    if (match && match[1]) {
+      var imgKey = match[1].trim();
+      
+      // 🌟 智慧防呆：解決試算表「1」與圖檔「001」不匹配的問題
+      // 自動將數字補滿 3 位數 (1 -> 001)
+      var paddedKey = imgKey.padStart(3, '0');
+      var targetFile = imageMap[paddedKey] || imageMap[imgKey];
+      
+      if (targetFile) {
+        var imageBlob = targetFile.getBlob();
+        
+        // 插入圖片
+        var image = slide.insertImage(imageBlob);
+        
+        // --- 視覺聚焦排版設定 (Z字型) ---
+        // 假設文字預設在左上方，我們將圖片置於右下方
+        var newWidth = 350; // 圖片縮放寬度
+        var ratio = newWidth / image.getWidth();
+        var newHeight = image.getHeight() * ratio;
+        
+        image.setWidth(newWidth);
+        image.setHeight(newHeight);
+        
+        // 定位：靠右 (留 20px 邊距)、靠下 (留 20px 邊距)
+        image.setLeft(pageWidth - newWidth - 20);
+        image.setTop(pageHeight - newHeight - 20);
+      }
+    }
+  }
+}</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Tips -->
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-6">
+        <h3 class="text-xl font-bold text-blue-800 mb-3">💡 Puti 老師的排版叮嚀與下一步</h3>
+        <ul class="list-disc pl-5 space-y-2 text-slate-700">
+            <li><strong>套用母版：</strong> 腳本跑完後，點選簡報上方選單的「投影片」>「變更主題」，一秒鐘就能把 150 頁的背景換成您專屬的風格（建議：淡灰底 + 強調色）。</li>
+            <li><strong>視覺聚焦微調：</strong> 快速捲動檢查一遍。如果圖中人物視線朝左，記得手動將圖片移到右邊（文字放左邊），引導視覺看向重點。一張投影片保持一個重點即可！</li>
+            <li><strong>下一步行動：</strong> 記得在最後一頁加上促發行動的「三種方案」或行動清單！</li>
+        </ul>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+        <p class="mt-2">更多 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-600 font-bold hover:underline">Puti-AI 教學工具</a> 點此前往。</p>
+    </div>
+
+</div>
+
+<script>
+    function copyCode(elementId) {
+        var codeText = document.getElementById(elementId).innerText;
+        
+        var textArea = document.createElement("textarea");
+        textArea.value = codeText;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            var successful = document.execCommand('copy');
+            if (successful) {
+                var btn = event.target;
+                var originalText = btn.innerText;
+                btn.innerText = '已複製！';
+                btn.style.backgroundColor = '#10b981'; // green-500
+                setTimeout(function() {
+                    btn.innerText = originalText;
+                    btn.style.backgroundColor = '#475569'; // slate-600
+                }, 2000);
+            }
+        } catch (err) {
+            console.error('複製失敗:', err);
+        }
+        document.body.removeChild(textArea);
+    }
+</script>
+
+</body>
+</html>
