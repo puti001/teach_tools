@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI PDF拆分器</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PDF-Lib for PDF manipulation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <!-- JSZip for packaging multiple files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        .drag-over {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff !important;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col font-sans text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-center">
+            <h1 class="text-2xl font-bold text-blue-600 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Puti-AI PDF拆分器
+            </h1>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 md:p-10 border border-gray-100">
+            
+            <div class="text-center mb-8">
+                <!-- 放入 GiGi 頭像 -->
+                <gigi-mascot></gigi-mascot>
+                <h2 class="text-xl font-semibold text-gray-700">輕鬆將 PDF 按頁數拆分為多個檔案</h2>
+                <p class="text-sm text-gray-500 mt-2">完全在地端處理，保護您的文件隱私，拆分後將打包為 ZIP 下載</p>
+            </div>
+
+            <!-- File Upload Zone -->
+            <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors duration-200 relative group">
+                <input type="file" id="pdf-file" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                <div id="file-display" class="flex flex-col items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 group-hover:text-blue-500 transition-colors duration-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <p class="text-lg font-medium text-gray-600">點擊或將 PDF 拖曳至此處</p>
+                    <p class="text-sm text-gray-400 mt-1">僅支援 .pdf 格式</p>
+                </div>
+                <!-- Selected File Info -->
+                <div id="selected-file-info" class="hidden flex-col items-center pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p id="file-name" class="text-lg font-medium text-blue-600 break-all"></p>
+                    <p id="file-size" class="text-sm text-gray-500 mt-1"></p>
+                </div>
+            </div>
+
+            <!-- Settings Zone -->
+            <div class="mt-8 flex flex-col md:flex-row gap-4 items-center justify-center">
+                <label for="pages-per-split" class="font-medium text-gray-700 whitespace-nowrap">每</label>
+                <input type="number" id="pages-per-split" min="1" value="1" class="w-24 text-center border-2 border-gray-300 rounded-lg py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-lg font-bold text-blue-600">
+                <label for="pages-per-split" class="font-medium text-gray-700 whitespace-nowrap">張拆成一份</label>
+            </div>
+
+            <!-- Action Button -->
+            <div class="mt-8 text-center">
+                <button id="split-btn" disabled class="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 px-10 rounded-full shadow-lg transform transition-all active:scale-95 flex items-center justify-center mx-auto gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                    開始拆分
+                </button>
+            </div>
+
+            <!-- Status Message -->
+            <div id="status-message" class="mt-6 text-center text-sm font-medium h-6"></div>
+            
+            <!-- Progress Bar -->
+            <div id="progress-container" class="mt-4 hidden w-full bg-gray-200 rounded-full h-2.5">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+        <div class="max-w-4xl mx-auto px-4 py-6 text-center text-sm text-gray-600 leading-relaxed">
+            <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為</p>
+            <p class="mt-1">
+                更多 Puti-AI 教學工具 
+                <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-500 hover:text-blue-700 font-semibold underline decoration-blue-300 hover:decoration-blue-500 transition-colors">
+                    點此前往
+                </a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        /**
+         * Puti-AI 小吉 (GiGi) 專屬 Web Component 模組
+         */
+        class GiGiMascot extends HTMLElement {
+            constructor() {
+                super();
+                
+                // 建立 Shadow DOM，確保 CSS 樣式與外部網頁完全隔離，互不干擾
+                const shadow = this.attachShadow({ mode: 'open' });
+                
+                // 將原本 Tailwind 的樣式轉換為原生 CSS，確保在任何環境下都能正常顯示
+                shadow.innerHTML = `
+                    <style>
+                        .gigi-container {
+                            width: 7rem;
+                            height: 7rem;
+                            margin-left: auto;
+                            margin-right: auto;
+                            margin-bottom: 0.5rem;
+                            position: relative;
+                            cursor: pointer;
+                            filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.04)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
+                        }
+
+                        /* 漂浮動畫 */
+                        @keyframes float-bot { 
+                            0%, 100% { transform: translateY(0px); } 
+                            50% { transform: translateY(-8px); } 
+                        }
+                        .animate-float { 
+                            animation: float-bot 3s ease-in-out infinite; 
+                        }
+                        
+                        /* 眼睛間歇發亮動畫 */
+                        @keyframes intermittent-glow {
+                            0%, 80%, 100% { opacity: 0.8; filter: brightness(1); }
+                            88% { opacity: 1; filter: brightness(1.4) drop-shadow(0 0 5px #22d3ee); }
+                            92% { opacity: 1; filter: brightness(1.8) drop-shadow(0 0 8px #67e8f9); }
+                            96% { opacity: 1; filter: brightness(1.4) drop-shadow(0 0 5px #22d3ee); }
+                        }
+                        .animate-eye-glow { animation: intermittent-glow 4s ease-in-out infinite; }
+
+                        /* 眼睛反光閃爍 */
+                        @keyframes sparkle-eye { 
+                            0%, 100% { opacity: 1; transform: scale(1); } 
+                            50% { opacity: 0.7; transform: scale(1.1); } 
+                        }
+                        .animate-sparkle { animation: sparkle-eye 2s ease-in-out infinite; }
+                        .animate-sparkle-delay { animation: sparkle-eye 2s ease-in-out infinite; animation-delay: 0.5s; }
+
+                        /* 螢幕跑馬燈與眼睛隱藏循環動畫 (4秒眼睛 + 6秒文字 = 總長 10 秒) */
+                        @keyframes eye-visibility {
+                            0%, 40% { opacity: 1; visibility: visible; }
+                            41%, 95% { opacity: 0; visibility: hidden; }
+                            96%, 100% { opacity: 1; visibility: visible; }
+                        }
+                        .animate-eyes-toggle { animation: eye-visibility 10s infinite; }
+
+                        /* 跑馬燈捲動 */
+                        @keyframes marquee-scroll {
+                            0%, 40% { opacity: 0; transform: translateX(0px); }
+                            41% { opacity: 1; transform: translateX(0px); }
+                            95% { opacity: 1; transform: translateX(-100px); }
+                            96%, 100% { opacity: 0; transform: translateX(-100px); }
+                        }
+                        .animate-marquee-text { animation: marquee-scroll 10s linear infinite; }
+                    </style>
+
+                    <div class="gigi-container animate-float" title="我是小吉！有什麼可以為您服務的嗎？">
+                        <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <!-- 定義螢幕的遮罩範圍 -->
+                                <clipPath id="screenClip">
+                                    <rect x="25" y="41" width="50" height="26" rx="10" />
+                                </clipPath>
+                            </defs>
+
+                            <!-- 左耳/右耳 -->
+                            <path d="M 15 40 C 7 40 7 60 15 60 Z" fill="#94a3b8" />
+                            <path d="M 15 44 C 10 44 10 56 15 56 Z" fill="#06b6d4" />
+                            <path d="M 85 40 C 93 40 93 60 85 60 Z" fill="#94a3b8" />
+                            <path d="M 85 44 C 90 44 90 56 85 56 Z" fill="#06b6d4" />
+
+                            <!-- 主頭部 (寬潤扁平) -->
+                            <rect x="15" y="25" width="70" height="50" rx="25" fill="#f59e0b" />
+                            <rect x="17" y="27" width="66" height="46" rx="23" fill="#fbbf24" />
+
+                            <!-- Puti-AI 文字 -->
+                            <text x="50" y="37" font-size="6.5" fill="#78350f" text-anchor="middle" font-weight="900" style="font-family: sans-serif;">Puti-AI</text>
+
+                            <!-- 黑色面罩區域 (螢幕背景) -->
+                            <rect x="25" y="41" width="50" height="26" rx="10" fill="#0f172a" />
+                            
+                            <!-- 簡單電路板裝飾 -->
+                            <path d="M 28 47 L 31 47 L 31 43 M 72 58 L 69 58 L 69 54" stroke="#1e293b" stroke-width="1" fill="none" />
+
+                            <!-- 眼睛群組 (加上隱藏動畫) -->
+                            <g class="animate-eyes-toggle">
+                                <circle cx="36" cy="54" r="8" fill="#0891b2" />
+                                <circle cx="36" cy="54" r="6" fill="#22d3ee" class="animate-eye-glow" />
+                                <circle cx="64" cy="54" r="8" fill="#0891b2" />
+                                <circle cx="64" cy="54" r="6" fill="#22d3ee" class="animate-eye-glow" />
+
+                                <g class="animate-sparkle" style="transform-origin: 36px 54px;">
+                                    <circle cx="33" cy="51" r="2.5" fill="#ffffff" />
+                                    <circle cx="38" cy="56" r="1" fill="#ffffff" />
+                                </g>
+                                <g class="animate-sparkle-delay" style="transform-origin: 64px 54px;">
+                                    <circle cx="61" cy="51" r="2.5" fill="#ffffff" />
+                                    <circle cx="66" cy="56" r="1" fill="#ffffff" />
+                                </g>
+                            </g>
+
+                            <!-- 跑馬燈文字 -->
+                            <g clip-path="url(#screenClip)">
+                                <text 
+                                    x="78" y="58" 
+                                    font-size="7" 
+                                    fill="#22d3ee" 
+                                    font-weight="bold" 
+                                    font-family="sans-serif, Microsoft JhengHei" 
+                                    class="animate-marquee-text"
+                                    style="filter: drop-shadow(0 0 2px #22d3ee);"
+                                >
+                                    我是小吉，歡迎光臨
+                                </text>
+                            </g>
+
+                            <!-- 嘴巴 -->
+                            <path d="M 46 71 Q 50 73 54 71" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                `;
+            }
+        }
+
+        // 註冊自訂元素標籤
+        customElements.define('gigi-mascot', GiGiMascot);
+
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('pdf-file');
+        const fileDisplay = document.getElementById('file-display');
+        const selectedFileInfo = document.getElementById('selected-file-info');
+        const fileNameEl = document.getElementById('file-name');
+        const fileSizeEl = document.getElementById('file-size');
+        const pagesInput = document.getElementById('pages-per-split');
+        const splitBtn = document.getElementById('split-btn');
+        const statusMessage = document.getElementById('status-message');
+        const progressContainer = document.getElementById('progress-container');
+        const progressBar = document.getElementById('progress-bar');
+
+        let currentFile = null;
+
+        // Drag and Drop Events
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('drag-over'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-over'), false);
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        });
+
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type !== 'application/pdf') {
+                    showStatus('請上傳有效的 PDF 檔案！', 'text-red-500');
+                    return;
+                }
+                currentFile = file;
+                
+                // Update UI
+                fileDisplay.classList.add('hidden');
+                selectedFileInfo.classList.remove('hidden');
+                selectedFileInfo.classList.add('flex');
+                fileNameEl.textContent = file.name;
+                fileSizeEl.textContent = formatBytes(file.size);
+                
+                splitBtn.disabled = false;
+                showStatus('', '');
+                progressContainer.classList.add('hidden');
+                progressBar.style.width = '0%';
+            }
+        }
+
+        function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return '0 Bytes';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+
+        function showStatus(text, colorClass) {
+            statusMessage.textContent = text;
+            statusMessage.className = `mt-6 text-center text-sm font-bold ${colorClass} h-6`;
+        }
+
+        function updateProgress(percent) {
+            progressBar.style.width = `${percent}%`;
+        }
+
+        splitBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            const n = parseInt(pagesInput.value);
+            if (isNaN(n) || n <= 0) {
+                showStatus('請輸入大於 0 的拆分頁數！', 'text-red-500');
+                return;
+            }
+
+            splitBtn.disabled = true;
+            fileInput.disabled = true;
+            dropZone.classList.add('pointer-events-none');
+            showStatus('讀取 PDF 中...', 'text-blue-500');
+            progressContainer.classList.remove('hidden');
+            updateProgress(5);
+
+            try {
+                // Read original PDF
+                const arrayBuffer = await currentFile.arrayBuffer();
+                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+                const totalPages = pdfDoc.getPageCount();
+
+                if (totalPages === 0) {
+                    throw new Error("此 PDF 檔案為空。");
+                }
+
+                showStatus(`讀取成功！共 ${totalPages} 頁，開始拆分...`, 'text-blue-500');
+                updateProgress(10);
+
+                const originalName = currentFile.name.replace(/\.pdf$/i, '');
+                const zip = new JSZip();
+                let splitCount = 0;
+                
+                // Calculate total loops for progress bar
+                const totalLoops = Math.ceil(totalPages / n);
+
+                // Split process
+                for (let i = 0; i < totalPages; i += n) {
+                    splitCount++;
+                    
+                    // Create a new empty document
+                    const newPdf = await PDFLib.PDFDocument.create();
+                    
+                    // Determine which pages to copy
+                    const pageIndices = [];
+                    for (let j = 0; j < n && (i + j) < totalPages; j++) {
+                        pageIndices.push(i + j);
+                    }
+                    
+                    // Copy pages
+                    const copiedPages = await newPdf.copyPages(pdfDoc, pageIndices);
+                    copiedPages.forEach((page) => newPdf.addPage(page));
+
+                    // Save new document to bytes
+                    const pdfBytes = await newPdf.save();
+                    
+                    // Format filename with sequence (e.g., 001, 002)
+                    const sequenceNum = String(splitCount).padStart(3, '0');
+                    const newFileName = `${originalName}_${sequenceNum}.pdf`;
+
+                    // Add to ZIP
+                    zip.file(newFileName, pdfBytes);
+
+                    // Update Progress (10% to 80%)
+                    const progress = 10 + Math.floor((splitCount / totalLoops) * 70);
+                    updateProgress(progress);
+                    showStatus(`處理進度：${splitCount} / ${totalLoops} 份`, 'text-blue-500');
+                    
+                    // Small delay to let UI update
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+
+                showStatus('打包下載檔中...', 'text-orange-500');
+                updateProgress(90);
+
+                // Generate ZIP
+                const zipBlob = await zip.generateAsync({ type: 'blob' }, function updateCallback(metadata) {
+                    // Update progress (90% to 100%)
+                    updateProgress(90 + (metadata.percent / 10));
+                });
+
+                // Trigger download
+                const downloadLink = document.createElement('a');
+                downloadLink.href = URL.createObjectURL(zipBlob);
+                downloadLink.download = `${originalName}_拆分檔案.zip`;
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+
+                showStatus(`完成！共拆分成 ${splitCount} 份，已下載 ZIP 檔。`, 'text-green-600');
+                updateProgress(100);
+
+            } catch (error) {
+                console.error(error);
+                showStatus(`拆分失敗：${error.message || '發生未知錯誤'}`, 'text-red-500');
+                progressBar.classList.replace('bg-blue-600', 'bg-red-500');
+            } finally {
+                splitBtn.disabled = false;
+                fileInput.disabled = false;
+                dropZone.classList.remove('pointer-events-none');
+            }
+        });
+    </script>
+</body>
+</html>
