@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 表格轉簡報產生器</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS (讀取 Excel) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- PptxGenJS (生成 PPTX) -->
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/libs/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f4f6; }
+        .drop-zone { transition: all 0.3s ease; }
+        .drop-zone.dragover { background-color: #ebf8ff; border-color: #3182ce; }
+        .loading-spinner { border-top-color: #3b82f6; animation: spinner 1.5s linear infinite; }
+        @keyframes spinner { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <header class="bg-blue-600 text-white shadow-md py-4">
+        <div class="max-w-5xl mx-auto px-4 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i data-lucide="presentation" class="w-8 h-8"></i>
+                <h1 class="text-2xl font-bold tracking-wider">Puti-AI 表格轉簡報產生器</h1>
+            </div>
+            <div class="text-sm opacity-80 flex items-center">
+                <i data-lucide="bot" class="w-5 h-5 mr-1"></i> 小吉 (GiGi) 支援運算
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-8">
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2 flex items-center">
+                <i data-lucide="settings-2" class="w-5 h-5 mr-2 text-blue-500"></i>
+                製作流程設定
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Step 1: Excel Upload -->
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center drop-zone" id="excel-drop-zone">
+                    <div class="flex justify-center mb-3 text-green-600">
+                        <i data-lucide="file-spreadsheet" class="w-12 h-12"></i>
+                    </div>
+                    <h3 class="font-bold text-gray-700 mb-2">1. 上傳試算表 (.xlsx, .csv)</h3>
+                    <p class="text-sm text-gray-500 mb-4">需包含：投影片編號、標題、內文摘要、對應圖檔編號</p>
+                    <input type="file" id="excel-file" accept=".xlsx, .xls, .csv" class="hidden" />
+                    <button onclick="document.getElementById('excel-file').click()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded shadow transition">
+                        選擇檔案
+                    </button>
+                    <div id="excel-status" class="mt-3 text-sm text-gray-600 font-medium"></div>
+                </div>
+
+                <!-- Step 2: Image Folder Upload -->
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center drop-zone" id="img-drop-zone">
+                    <div class="flex justify-center mb-3 text-blue-600">
+                        <i data-lucide="image" class="w-12 h-12"></i>
+                    </div>
+                    <h3 class="font-bold text-gray-700 mb-2">2. 選擇圖檔資料夾</h3>
+                    <p class="text-sm text-gray-500 mb-4">請選取包含編號命名圖片的資料夾 (如: 001.jpg, 002.png)</p>
+                    <input type="file" id="image-folder" webkitdirectory directory multiple class="hidden" />
+                    <button onclick="document.getElementById('image-folder').click()" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow transition">
+                        選擇資料夾
+                    </button>
+                    <div id="img-status" class="mt-3 text-sm text-gray-600 font-medium"></div>
+                </div>
+            </div>
+
+            <!-- Notice about Drive -->
+            <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded text-sm text-yellow-800">
+                <p class="font-bold flex items-center">
+                    <i data-lucide="info" class="w-4 h-4 mr-1"></i> 關於雲端硬碟網址的限制說明
+                </p>
+                <p class="mt-1">為保護您的資訊安全，網頁端工具無法直接獲取 Google 雲端硬碟連結內的圖檔。請先將圖檔下載至電腦，再透過上方的「選擇資料夾」載入。<span class="text-blue-600 font-bold">小吉會自動幫您將過大的圖片壓縮至適合簡報的大小 (1024px)，不用擔心檔案暴增！</span>系統將會以秒速完成媒合與生成。</p>
+            </div>
+        </div>
+
+        <!-- Action Button -->
+        <div class="text-center">
+            <button id="generate-btn" class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-lg font-bold py-3 px-10 rounded-full shadow-lg transform transition hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center mx-auto" disabled>
+                <i data-lucide="zap" class="w-5 h-5 mr-2"></i>
+                開始生成簡報
+            </button>
+            <div id="loading-area" class="hidden mt-4 flex flex-col items-center justify-center text-blue-600">
+                <div class="w-8 h-8 border-4 border-blue-200 rounded-full loading-spinner mb-2"></div>
+                <p class="font-medium animate-pulse">小吉正在為您壓縮圖片與排版中，請稍候...</p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer Copyright -->
+    <footer class="bg-white border-t border-gray-200 mt-auto py-6">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <p class="text-sm text-gray-600 mb-2">
+                屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣。<br>
+                嚴禁商用與任何侵權、不尊重著作權的行為。
+            </p>
+            <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="inline-flex items-center text-blue-600 hover:text-blue-800 hover:underline font-medium transition">
+                <i data-lucide="external-link" class="w-4 h-4 mr-1"></i>
+                更多 Puti-AI 教學工具 點此前往
+            </a>
+            <p class="text-xs text-gray-400 mt-3">&copy; Puti-AI</p>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Icons
+        lucide.createIcons();
+
+        // State variables
+        let excelData = [];
+        let imageFiles = {}; // key: filename without extension (or raw match), value: File object (Data URL)
+
+        // DOM Elements
+        const excelInput = document.getElementById('excel-file');
+        const excelStatus = document.getElementById('excel-status');
+        const imgInput = document.getElementById('image-folder');
+        const imgStatus = document.getElementById('img-status');
+        const generateBtn = document.getElementById('generate-btn');
+        const loadingArea = document.getElementById('loading-area');
+
+        // Check if both files are loaded
+        function checkReady() {
+            if (excelData.length > 0 && Object.keys(imageFiles).length > 0) {
+                generateBtn.disabled = false;
+            } else {
+                generateBtn.disabled = true;
+            }
+        }
+
+        // Handle Excel Upload
+        excelInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    excelData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                    
+                    if(excelData.length > 0) {
+                        excelStatus.innerHTML = `<span class="text-green-600">✓ 成功載入試算表：共 ${excelData.length} 筆資料</span>`;
+                    } else {
+                        excelStatus.innerHTML = `<span class="text-red-500">✗ 試算表格式錯誤或空白</span>`;
+                    }
+                    checkReady();
+                } catch(error) {
+                    excelStatus.innerHTML = `<span class="text-red-500">✗ 讀取失敗，請確認檔案格式</span>`;
+                    console.error(error);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        // Handle Image Folder Upload
+        imgInput.addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length === 0) return;
+
+            imageFiles = {}; // reset
+            let validImagesCount = 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.type.match('image.*')) {
+                    // Extract number or base name (e.g., "001.jpg" -> "001" or "1")
+                    const baseName = file.name.split('.')[0];
+                    const numMatch = baseName.match(/\d+/);
+                    
+                    // Store multiple keys to improve matching chances
+                    if(numMatch) {
+                        const numStr = parseInt(numMatch[0], 10).toString(); // remove leading zeros
+                        imageFiles[numStr] = file;
+                        imageFiles[baseName] = file; // exact name without ext
+                    } else {
+                        imageFiles[baseName] = file;
+                    }
+                    validImagesCount++;
+                }
+            }
+
+            if(validImagesCount > 0) {
+                imgStatus.innerHTML = `<span class="text-blue-600">✓ 成功載入 ${validImagesCount} 張圖片</span>`;
+            } else {
+                imgStatus.innerHTML = `<span class="text-red-500">✗ 資料夾內找不到圖片檔</span>`;
+            }
+            checkReady();
+        });
+
+        // Helper function to compress and read file as Data URL
+        function compressImage(file, maxWidth = 1024, quality = 0.8) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // 等比例縮放
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                        
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // 轉換為 JPEG 以節省空間
+                        resolve(canvas.toDataURL('image/jpeg', quality));
+                    };
+                    img.onerror = reject;
+                    img.src = event.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Generate PPTX
+        generateBtn.addEventListener('click', async function() {
+            generateBtn.disabled = true;
+            generateBtn.classList.add('hidden');
+            loadingArea.classList.remove('hidden');
+
+            try {
+                // Initialize PptxGenJS
+                let pres = new PptxGenJS();
+                pres.layout = 'LAYOUT_16x9'; // 16:9 ratio
+
+                // Define Master Slide for unified style (Z-pattern, Gray bg, Accent color)
+                pres.defineSlideMaster({
+                    title: "MASTER_PUTI",
+                    background: { color: "F3F4F6" }, // 淡灰底色
+                    objects: [
+                        // Decorative accent bar
+                        { rect: { x: 0, y: 0, w: "100%", h: 0.2, fill: { color: "3B82F6" } } },
+                        // Footer layout
+                        { text: { text: "© Puti-AI", options: { x: "90%", y: "95%", w: 1, fontSize: 10, color: "A0AEC0" } } }
+                    ]
+                });
+
+                // Loop through Excel data
+                for (let i = 0; i < excelData.length; i++) {
+                    const row = excelData[i];
+                    
+                    // Normalize Column names (handling potential spaces or variations)
+                    const title = row['標題'] || row['標題 '] || row['Title'] || "";
+                    const content = row['內文摘要'] || row['內文摘要 '] || row['Content'] || "";
+                    const imgRef = row['對應圖檔編號'] || row['對應圖檔編號 '] || row['Image'] || "";
+
+                    let slide = pres.addSlide({ masterName: "MASTER_PUTI" });
+
+                    // Add Title (Top-Left, big font, emphasis)
+                    slide.addText(title, {
+                        x: 0.5, y: 0.5, w: "50%", h: 1,
+                        fontSize: 34,
+                        bold: true,
+                        color: "1F2937", // Dark Gray
+                        valign: "top"
+                    });
+
+                    // Add Content (Middle-Left to Bottom, 21pt, 1.5 line height)
+                    slide.addText(content, {
+                        x: 0.5, y: 1.8, w: "45%", h: "70%",
+                        fontSize: 21,
+                        color: "4B5563",
+                        valign: "top",
+                        lineSpacing: 32, // approximately 1.5 line height for size 21
+                        breakLine: true
+                    });
+
+                    // Match and Add Image (Right side - Z pattern end)
+                    if (imgRef !== "") {
+                        // Attempt to find matching image
+                        const matchKeyStr = imgRef.toString().trim();
+                        const matchKeyNum = parseInt(matchKeyStr, 10).toString();
+                        
+                        let matchedFile = imageFiles[matchKeyStr] || imageFiles[matchKeyNum];
+
+                        if (matchedFile) {
+                            // 使用小吉的自動壓縮技術，寬度限制為 1024px，品質 80%
+                            const dataUrl = await compressImage(matchedFile, 1024, 0.8);
+                            slide.addImage({
+                                data: dataUrl,
+                                x: 5.5, // Start past the halfway mark
+                                y: 1.0,
+                                w: 4.0, // Adjust size
+                                h: 4.0,
+                                sizing: { type: "contain" }
+                            });
+                        } else {
+                            // Placeholder if image not found
+                            slide.addShape(pres.ShapeType.rect, {
+                                x: 5.5, y: 1.0, w: 4.0, h: 4.0,
+                                fill: { color: "E5E7EB" },
+                                line: { color: "9CA3AF", dashType: "dash" }
+                            });
+                            slide.addText("圖檔未找到: " + imgRef, {
+                                x: 5.5, y: 1.0, w: 4.0, h: 4.0,
+                                color: "9CA3AF", fontSize: 14, align: "center", valign: "middle"
+                            });
+                        }
+                    }
+                }
+
+                // Save Presentation
+                await pres.writeFile({ fileName: "Puti-AI_生成簡報.pptx" });
+                
+                // Reset UI
+                alert("簡報生成成功！\n請將下載的 .pptx 拖曳至您的 Google 雲端硬碟即可轉為 Google 簡報。");
+                
+            } catch(error) {
+                console.error("生成錯誤:", error);
+                alert("生成過程發生錯誤，請檢查資料格式。");
+            } finally {
+                loadingArea.classList.add('hidden');
+                generateBtn.classList.remove('hidden');
+                generateBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
