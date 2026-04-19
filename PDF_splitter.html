@@ -33,20 +33,20 @@
 
     <!-- Main Content -->
     <main class="flex-grow flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6 md:p-10 border border-gray-100">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl p-6 md:p-10 border border-gray-100">
             
-            <div class="text-center mb-8">
+            <div class="text-center mb-6">
                 <!-- 放入 GiGi 頭像 -->
                 <gigi-mascot></gigi-mascot>
-                <h2 class="text-xl font-semibold text-gray-700">輕鬆將 PDF 按頁數拆分為多個檔案</h2>
-                <p class="text-sm text-gray-500 mt-2">完全在地端處理，保護您的文件隱私，拆分後將打包為 ZIP 下載</p>
+                <h2 class="text-xl font-semibold text-gray-700">全能 PDF 拆分與提取工具</h2>
+                <p class="text-sm text-gray-500 mt-2">完全在地端處理，保護文件隱私，提供三種彈性拆分模式</p>
             </div>
 
             <!-- File Upload Zone -->
-            <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer hover:bg-gray-50 transition-colors duration-200 relative group">
+            <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:bg-gray-50 transition-colors duration-200 relative group">
                 <input type="file" id="pdf-file" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                 <div id="file-display" class="flex flex-col items-center pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400 group-hover:text-blue-500 transition-colors duration-200 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 group-hover:text-blue-500 transition-colors duration-200 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                     <p class="text-lg font-medium text-gray-600">點擊或將 PDF 拖曳至此處</p>
@@ -54,19 +54,73 @@
                 </div>
                 <!-- Selected File Info -->
                 <div id="selected-file-info" class="hidden flex-col items-center pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-green-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <p id="file-name" class="text-lg font-medium text-blue-600 break-all"></p>
                     <p id="file-size" class="text-sm text-gray-500 mt-1"></p>
+                    <p id="file-pages" class="text-sm font-bold text-gray-700 mt-1 hidden"></p>
                 </div>
             </div>
 
-            <!-- Settings Zone -->
-            <div class="mt-8 flex flex-col md:flex-row gap-4 items-center justify-center">
-                <label for="pages-per-split" class="font-medium text-gray-700 whitespace-nowrap">每</label>
-                <input type="number" id="pages-per-split" min="1" value="1" class="w-24 text-center border-2 border-gray-300 rounded-lg py-2 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-lg font-bold text-blue-600">
-                <label for="pages-per-split" class="font-medium text-gray-700 whitespace-nowrap">張拆成一份</label>
+            <!-- Mode Selection (Hidden until file selected) -->
+            <div id="settings-zone" class="mt-8 hidden opacity-0 transition-opacity duration-500">
+                <h3 class="text-md font-semibold text-gray-700 mb-3">請選擇處理模式：</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Mode 1 -->
+                    <label class="cursor-pointer relative">
+                        <input type="radio" name="split-mode" value="fixed" class="peer sr-only" checked>
+                        <div class="h-full p-4 border-2 rounded-xl border-gray-200 hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all text-center">
+                            <div class="font-bold text-gray-700 peer-checked:text-blue-700">固定頁數拆分</div>
+                            <div class="text-xs text-gray-500 mt-1">每 N 頁拆成一個檔案</div>
+                        </div>
+                    </label>
+                    <!-- Mode 2 -->
+                    <label class="cursor-pointer relative">
+                        <input type="radio" name="split-mode" value="equal" class="peer sr-only">
+                        <div class="h-full p-4 border-2 rounded-xl border-gray-200 hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all text-center">
+                            <div class="font-bold text-gray-700 peer-checked:text-blue-700">均等份數拆分</div>
+                            <div class="text-xs text-gray-500 mt-1">將文件盡量均分 N 份</div>
+                        </div>
+                    </label>
+                    <!-- Mode 3 -->
+                    <label class="cursor-pointer relative">
+                        <input type="radio" name="split-mode" value="custom" class="peer sr-only">
+                        <div class="h-full p-4 border-2 rounded-xl border-gray-200 hover:bg-gray-50 peer-checked:border-blue-500 peer-checked:bg-blue-50 transition-all text-center">
+                            <div class="font-bold text-gray-700 peer-checked:text-blue-700">指定頁數提取</div>
+                            <div class="text-xs text-gray-500 mt-1">僅取出特定頁面成新檔</div>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Mode Specific Inputs -->
+                <div class="mt-6 bg-gray-50 p-6 rounded-xl border border-gray-200 min-h-[100px] flex items-center justify-center">
+                    
+                    <!-- Fixed Mode Input -->
+                    <div id="input-fixed" class="mode-input flex items-center justify-center gap-3">
+                        <span class="font-medium text-gray-700">每</span>
+                        <input type="number" id="val-fixed" min="1" value="1" class="w-20 text-center border-2 border-gray-300 rounded-lg py-2 px-1 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-lg font-bold text-blue-600">
+                        <span class="font-medium text-gray-700">頁拆成一份</span>
+                    </div>
+
+                    <!-- Equal Mode Input -->
+                    <div id="input-equal" class="mode-input hidden items-center justify-center gap-3">
+                        <span class="font-medium text-gray-700">將文件均分成</span>
+                        <input type="number" id="val-equal" min="2" value="2" class="w-20 text-center border-2 border-gray-300 rounded-lg py-2 px-1 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-lg font-bold text-blue-600">
+                        <span class="font-medium text-gray-700">份</span>
+                    </div>
+
+                    <!-- Custom Mode Input -->
+                    <div id="input-custom" class="mode-input hidden w-full flex-col items-center justify-center gap-2">
+                        <div class="w-full max-w-md">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">請輸入欲提取的頁碼：</label>
+                            <input type="text" id="val-custom" placeholder="例如: 2, 4, 7-10" class="w-full border-2 border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 text-lg font-medium text-gray-700">
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">支援使用半形逗號 (,)、頓號 (、) 或連接線 (-) 組合。</p>
+                    </div>
+
+                </div>
             </div>
 
             <!-- Action Button -->
@@ -75,16 +129,16 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
-                    開始拆分
+                    開始處理
                 </button>
             </div>
 
             <!-- Status Message -->
-            <div id="status-message" class="mt-6 text-center text-sm font-medium h-6"></div>
+            <div id="status-message" class="mt-4 text-center text-sm font-medium h-6"></div>
             
             <!-- Progress Bar -->
-            <div id="progress-container" class="mt-4 hidden w-full bg-gray-200 rounded-full h-2.5">
-                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full" style="width: 0%"></div>
+            <div id="progress-container" class="mt-2 hidden w-full bg-gray-200 rounded-full h-2.5">
+                <div id="progress-bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
             </div>
 
         </div>
@@ -110,152 +164,94 @@
         class GiGiMascot extends HTMLElement {
             constructor() {
                 super();
-                
-                // 建立 Shadow DOM，確保 CSS 樣式與外部網頁完全隔離，互不干擾
                 const shadow = this.attachShadow({ mode: 'open' });
-                
-                // 將原本 Tailwind 的樣式轉換為原生 CSS，確保在任何環境下都能正常顯示
                 shadow.innerHTML = `
                     <style>
                         .gigi-container {
-                            width: 7rem;
-                            height: 7rem;
-                            margin-left: auto;
-                            margin-right: auto;
-                            margin-bottom: 0.5rem;
+                            width: 6rem;
+                            height: 6rem;
+                            margin: 0 auto 0.5rem auto;
                             position: relative;
                             cursor: pointer;
                             filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.04)) drop-shadow(0 4px 3px rgba(0, 0, 0, 0.1));
                         }
-
-                        /* 漂浮動畫 */
-                        @keyframes float-bot { 
-                            0%, 100% { transform: translateY(0px); } 
-                            50% { transform: translateY(-8px); } 
-                        }
-                        .animate-float { 
-                            animation: float-bot 3s ease-in-out infinite; 
-                        }
-                        
-                        /* 眼睛間歇發亮動畫 */
-                        @keyframes intermittent-glow {
-                            0%, 80%, 100% { opacity: 0.8; filter: brightness(1); }
-                            88% { opacity: 1; filter: brightness(1.4) drop-shadow(0 0 5px #22d3ee); }
-                            92% { opacity: 1; filter: brightness(1.8) drop-shadow(0 0 8px #67e8f9); }
-                            96% { opacity: 1; filter: brightness(1.4) drop-shadow(0 0 5px #22d3ee); }
-                        }
+                        @keyframes float-bot { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-8px); } }
+                        .animate-float { animation: float-bot 3s ease-in-out infinite; }
+                        @keyframes intermittent-glow { 0%, 80%, 100% { opacity: 0.8; filter: brightness(1); } 88% { opacity: 1; filter: brightness(1.4) drop-shadow(0 0 5px #22d3ee); } 92% { opacity: 1; filter: brightness(1.8) drop-shadow(0 0 8px #67e8f9); } 96% { opacity: 1; filter: brightness(1.4) drop-shadow(0 0 5px #22d3ee); } }
                         .animate-eye-glow { animation: intermittent-glow 4s ease-in-out infinite; }
-
-                        /* 眼睛反光閃爍 */
-                        @keyframes sparkle-eye { 
-                            0%, 100% { opacity: 1; transform: scale(1); } 
-                            50% { opacity: 0.7; transform: scale(1.1); } 
-                        }
+                        @keyframes sparkle-eye { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.1); } }
                         .animate-sparkle { animation: sparkle-eye 2s ease-in-out infinite; }
                         .animate-sparkle-delay { animation: sparkle-eye 2s ease-in-out infinite; animation-delay: 0.5s; }
-
-                        /* 螢幕跑馬燈與眼睛隱藏循環動畫 (4秒眼睛 + 6秒文字 = 總長 10 秒) */
-                        @keyframes eye-visibility {
-                            0%, 40% { opacity: 1; visibility: visible; }
-                            41%, 95% { opacity: 0; visibility: hidden; }
-                            96%, 100% { opacity: 1; visibility: visible; }
-                        }
+                        @keyframes eye-visibility { 0%, 40% { opacity: 1; visibility: visible; } 41%, 95% { opacity: 0; visibility: hidden; } 96%, 100% { opacity: 1; visibility: visible; } }
                         .animate-eyes-toggle { animation: eye-visibility 10s infinite; }
-
-                        /* 跑馬燈捲動 */
-                        @keyframes marquee-scroll {
-                            0%, 40% { opacity: 0; transform: translateX(0px); }
-                            41% { opacity: 1; transform: translateX(0px); }
-                            95% { opacity: 1; transform: translateX(-100px); }
-                            96%, 100% { opacity: 0; transform: translateX(-100px); }
-                        }
+                        @keyframes marquee-scroll { 0%, 40% { opacity: 0; transform: translateX(0px); } 41% { opacity: 1; transform: translateX(0px); } 95% { opacity: 1; transform: translateX(-100px); } 96%, 100% { opacity: 0; transform: translateX(-100px); } }
                         .animate-marquee-text { animation: marquee-scroll 10s linear infinite; }
                     </style>
-
-                    <div class="gigi-container animate-float" title="我是小吉！有什麼可以為您服務的嗎？">
+                    <div class="gigi-container animate-float" title="我是小吉！很高興為您服務！">
                         <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;" xmlns="http://www.w3.org/2000/svg">
-                            <defs>
-                                <!-- 定義螢幕的遮罩範圍 -->
-                                <clipPath id="screenClip">
-                                    <rect x="25" y="41" width="50" height="26" rx="10" />
-                                </clipPath>
-                            </defs>
-
-                            <!-- 左耳/右耳 -->
-                            <path d="M 15 40 C 7 40 7 60 15 60 Z" fill="#94a3b8" />
-                            <path d="M 15 44 C 10 44 10 56 15 56 Z" fill="#06b6d4" />
-                            <path d="M 85 40 C 93 40 93 60 85 60 Z" fill="#94a3b8" />
-                            <path d="M 85 44 C 90 44 90 56 85 56 Z" fill="#06b6d4" />
-
-                            <!-- 主頭部 (寬潤扁平) -->
+                            <defs><clipPath id="screenClip"><rect x="25" y="41" width="50" height="26" rx="10" /></clipPath></defs>
+                            <path d="M 15 40 C 7 40 7 60 15 60 Z" fill="#94a3b8" /><path d="M 15 44 C 10 44 10 56 15 56 Z" fill="#06b6d4" />
+                            <path d="M 85 40 C 93 40 93 60 85 60 Z" fill="#94a3b8" /><path d="M 85 44 C 90 44 90 56 85 56 Z" fill="#06b6d4" />
                             <rect x="15" y="25" width="70" height="50" rx="25" fill="#f59e0b" />
                             <rect x="17" y="27" width="66" height="46" rx="23" fill="#fbbf24" />
-
-                            <!-- Puti-AI 文字 -->
                             <text x="50" y="37" font-size="6.5" fill="#78350f" text-anchor="middle" font-weight="900" style="font-family: sans-serif;">Puti-AI</text>
-
-                            <!-- 黑色面罩區域 (螢幕背景) -->
                             <rect x="25" y="41" width="50" height="26" rx="10" fill="#0f172a" />
-                            
-                            <!-- 簡單電路板裝飾 -->
                             <path d="M 28 47 L 31 47 L 31 43 M 72 58 L 69 58 L 69 54" stroke="#1e293b" stroke-width="1" fill="none" />
-
-                            <!-- 眼睛群組 (加上隱藏動畫) -->
                             <g class="animate-eyes-toggle">
-                                <circle cx="36" cy="54" r="8" fill="#0891b2" />
-                                <circle cx="36" cy="54" r="6" fill="#22d3ee" class="animate-eye-glow" />
-                                <circle cx="64" cy="54" r="8" fill="#0891b2" />
-                                <circle cx="64" cy="54" r="6" fill="#22d3ee" class="animate-eye-glow" />
-
-                                <g class="animate-sparkle" style="transform-origin: 36px 54px;">
-                                    <circle cx="33" cy="51" r="2.5" fill="#ffffff" />
-                                    <circle cx="38" cy="56" r="1" fill="#ffffff" />
-                                </g>
-                                <g class="animate-sparkle-delay" style="transform-origin: 64px 54px;">
-                                    <circle cx="61" cy="51" r="2.5" fill="#ffffff" />
-                                    <circle cx="66" cy="56" r="1" fill="#ffffff" />
-                                </g>
+                                <circle cx="36" cy="54" r="8" fill="#0891b2" /><circle cx="36" cy="54" r="6" fill="#22d3ee" class="animate-eye-glow" />
+                                <circle cx="64" cy="54" r="8" fill="#0891b2" /><circle cx="64" cy="54" r="6" fill="#22d3ee" class="animate-eye-glow" />
+                                <g class="animate-sparkle" style="transform-origin: 36px 54px;"><circle cx="33" cy="51" r="2.5" fill="#ffffff" /><circle cx="38" cy="56" r="1" fill="#ffffff" /></g>
+                                <g class="animate-sparkle-delay" style="transform-origin: 64px 54px;"><circle cx="61" cy="51" r="2.5" fill="#ffffff" /><circle cx="66" cy="56" r="1" fill="#ffffff" /></g>
                             </g>
-
-                            <!-- 跑馬燈文字 -->
                             <g clip-path="url(#screenClip)">
-                                <text 
-                                    x="78" y="58" 
-                                    font-size="7" 
-                                    fill="#22d3ee" 
-                                    font-weight="bold" 
-                                    font-family="sans-serif, Microsoft JhengHei" 
-                                    class="animate-marquee-text"
-                                    style="filter: drop-shadow(0 0 2px #22d3ee);"
-                                >
-                                    我是小吉，歡迎光臨
-                                </text>
+                                <text x="78" y="58" font-size="7" fill="#22d3ee" font-weight="bold" font-family="sans-serif, Microsoft JhengHei" class="animate-marquee-text" style="filter: drop-shadow(0 0 2px #22d3ee);">開始拆分 PDF！</text>
                             </g>
-
-                            <!-- 嘴巴 -->
                             <path d="M 46 71 Q 50 73 54 71" fill="none" stroke="#92400e" stroke-width="2" stroke-linecap="round" />
                         </svg>
                     </div>
                 `;
             }
         }
-
-        // 註冊自訂元素標籤
         customElements.define('gigi-mascot', GiGiMascot);
 
+        // Core UI Elements
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('pdf-file');
         const fileDisplay = document.getElementById('file-display');
         const selectedFileInfo = document.getElementById('selected-file-info');
         const fileNameEl = document.getElementById('file-name');
         const fileSizeEl = document.getElementById('file-size');
-        const pagesInput = document.getElementById('pages-per-split');
+        const filePagesEl = document.getElementById('file-pages');
+        
+        const settingsZone = document.getElementById('settings-zone');
+        const radioModes = document.querySelectorAll('input[name="split-mode"]');
+        const modeInputs = document.querySelectorAll('.mode-input');
+        
         const splitBtn = document.getElementById('split-btn');
         const statusMessage = document.getElementById('status-message');
         const progressContainer = document.getElementById('progress-container');
         const progressBar = document.getElementById('progress-bar');
 
         let currentFile = null;
+        let pdfDocCache = null; // 暫存已載入的 PDF 以加快後續處理
+
+        // Mode Switching Logic
+        radioModes.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                // Hide all
+                modeInputs.forEach(el => {
+                    el.classList.remove('flex');
+                    el.classList.add('hidden');
+                });
+                // Show selected
+                const targetId = `input-${e.target.value}`;
+                const targetEl = document.getElementById(targetId);
+                if(targetEl) {
+                    targetEl.classList.remove('hidden');
+                    targetEl.classList.add('flex');
+                }
+            });
+        });
 
         // Drag and Drop Events
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -277,15 +273,14 @@
 
         dropZone.addEventListener('drop', (e) => {
             const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
+            handleFiles(dt.files);
         });
 
         fileInput.addEventListener('change', function() {
             handleFiles(this.files);
         });
 
-        function handleFiles(files) {
+        async function handleFiles(files) {
             if (files.length > 0) {
                 const file = files[0];
                 if (file.type !== 'application/pdf') {
@@ -293,16 +288,37 @@
                     return;
                 }
                 currentFile = file;
+                pdfDocCache = null; // 重置快取
                 
-                // Update UI
+                // Update Basic UI
                 fileDisplay.classList.add('hidden');
                 selectedFileInfo.classList.remove('hidden');
                 selectedFileInfo.classList.add('flex');
                 fileNameEl.textContent = file.name;
                 fileSizeEl.textContent = formatBytes(file.size);
                 
-                splitBtn.disabled = false;
-                showStatus('', '');
+                showStatus('正在讀取文件頁數...', 'text-blue-500');
+                
+                try {
+                    // 預先讀取以取得總頁數，幫助使用者填寫
+                    const arrayBuffer = await currentFile.arrayBuffer();
+                    pdfDocCache = await PDFLib.PDFDocument.load(arrayBuffer);
+                    const pages = pdfDocCache.getPageCount();
+                    
+                    filePagesEl.textContent = `(共 ${pages} 頁)`;
+                    filePagesEl.classList.remove('hidden');
+                    
+                    // Show Settings Zone
+                    settingsZone.classList.remove('hidden');
+                    setTimeout(() => settingsZone.classList.remove('opacity-0'), 50);
+                    
+                    splitBtn.disabled = false;
+                    showStatus('', '');
+                } catch (error) {
+                    showStatus('讀取 PDF 失敗，檔案可能已損毀。', 'text-red-500');
+                    splitBtn.disabled = true;
+                }
+                
                 progressContainer.classList.add('hidden');
                 progressBar.style.width = '0%';
             }
@@ -319,112 +335,167 @@
 
         function showStatus(text, colorClass) {
             statusMessage.textContent = text;
-            statusMessage.className = `mt-6 text-center text-sm font-bold ${colorClass} h-6`;
+            statusMessage.className = `mt-4 text-center text-sm font-bold ${colorClass} h-6`;
         }
 
         function updateProgress(percent) {
             progressBar.style.width = `${percent}%`;
         }
 
-        splitBtn.addEventListener('click', async () => {
-            if (!currentFile) return;
+        // 解析使用者輸入的頁碼字串 (例如: 1, 3, 5-8)
+        function parseCustomRange(rangeStr, maxPages) {
+            const indices = new Set();
+            // 支援英文逗號、中文逗號、中文頓號
+            const parts = rangeStr.split(/[,，、]/);
+            
+            for (let part of parts) {
+                part = part.trim();
+                if (!part) continue;
+                
+                if (part.includes('-')) {
+                    let [start, end] = part.split('-').map(n => parseInt(n.trim()));
+                    if (!isNaN(start) && !isNaN(end)) {
+                        start = Math.max(1, start);
+                        end = Math.min(maxPages, end);
+                        if (start <= end) {
+                            for (let i = start; i <= end; i++) indices.add(i - 1);
+                        }
+                    }
+                } else {
+                    const num = parseInt(part);
+                    if (!isNaN(num) && num >= 1 && num <= maxPages) {
+                        indices.add(num - 1); // 轉為 0-based index
+                    }
+                }
+            }
+            return Array.from(indices).sort((a,b) => a-b);
+        }
 
-            const n = parseInt(pagesInput.value);
-            if (isNaN(n) || n <= 0) {
-                showStatus('請輸入大於 0 的拆分頁數！', 'text-red-500');
+        splitBtn.addEventListener('click', async () => {
+            if (!currentFile || !pdfDocCache) return;
+
+            const mode = document.querySelector('input[name="split-mode"]:checked').value;
+            const totalPages = pdfDocCache.getPageCount();
+            let operations = []; // [{ filename_suffix: string, pageIndices: [number] }]
+
+            // --- 判斷模式並計算欲提取的頁碼陣列 ---
+            try {
+                if (mode === 'fixed') {
+                    const n = parseInt(document.getElementById('val-fixed').value);
+                    if (isNaN(n) || n <= 0) throw new Error('請輸入大於 0 的拆分頁數！');
+                    
+                    let count = 1;
+                    for (let i = 0; i < totalPages; i += n) {
+                        const indices = [];
+                        for (let j = 0; j < n && (i + j) < totalPages; j++) indices.push(i + j);
+                        operations.push({ suffix: `_${String(count++).padStart(3, '0')}`, indices });
+                    }
+                } 
+                else if (mode === 'equal') {
+                    const parts = parseInt(document.getElementById('val-equal').value);
+                    if (isNaN(parts) || parts < 2) throw new Error('等份數必須大於或等於 2！');
+                    
+                    const actualParts = Math.min(parts, totalPages);
+                    const baseCount = Math.floor(totalPages / actualParts);
+                    const remainder = totalPages % actualParts;
+                    
+                    let startIndex = 0;
+                    for (let i = 0; i < actualParts; i++) {
+                        const count = baseCount + (i < remainder ? 1 : 0);
+                        const indices = [];
+                        for (let j = 0; j < count; j++) indices.push(startIndex + j);
+                        startIndex += count;
+                        operations.push({ suffix: `_第${i+1}份`, indices });
+                    }
+                } 
+                else if (mode === 'custom') {
+                    const rangeStr = document.getElementById('val-custom').value;
+                    if (!rangeStr) throw new Error('請輸入指定的頁碼！');
+                    
+                    const indices = parseCustomRange(rangeStr, totalPages);
+                    if (indices.length === 0) throw new Error('無效的頁數範圍，請檢查輸入格式與總頁數。');
+                    
+                    // 自訂提取模式通常只產出一個檔案
+                    operations.push({ suffix: '_提取版', indices });
+                }
+            } catch (err) {
+                showStatus(err.message, 'text-red-500');
                 return;
             }
 
+            // --- 開始處理檔案 ---
             splitBtn.disabled = true;
-            fileInput.disabled = true;
             dropZone.classList.add('pointer-events-none');
-            showStatus('讀取 PDF 中...', 'text-blue-500');
             progressContainer.classList.remove('hidden');
-            updateProgress(5);
-
+            updateProgress(10);
+            
             try {
-                // Read original PDF
-                const arrayBuffer = await currentFile.arrayBuffer();
-                const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-                const totalPages = pdfDoc.getPageCount();
-
-                if (totalPages === 0) {
-                    throw new Error("此 PDF 檔案為空。");
-                }
-
-                showStatus(`讀取成功！共 ${totalPages} 頁，開始拆分...`, 'text-blue-500');
-                updateProgress(10);
-
                 const originalName = currentFile.name.replace(/\.pdf$/i, '');
-                const zip = new JSZip();
-                let splitCount = 0;
-                
-                // Calculate total loops for progress bar
-                const totalLoops = Math.ceil(totalPages / n);
+                const generatedFiles = []; // { name, bytes }
+                const totalOps = operations.length;
 
-                // Split process
-                for (let i = 0; i < totalPages; i += n) {
-                    splitCount++;
-                    
-                    // Create a new empty document
+                for (let i = 0; i < totalOps; i++) {
+                    const op = operations[i];
                     const newPdf = await PDFLib.PDFDocument.create();
-                    
-                    // Determine which pages to copy
-                    const pageIndices = [];
-                    for (let j = 0; j < n && (i + j) < totalPages; j++) {
-                        pageIndices.push(i + j);
-                    }
-                    
-                    // Copy pages
-                    const copiedPages = await newPdf.copyPages(pdfDoc, pageIndices);
+                    const copiedPages = await newPdf.copyPages(pdfDocCache, op.indices);
                     copiedPages.forEach((page) => newPdf.addPage(page));
-
-                    // Save new document to bytes
+                    
                     const pdfBytes = await newPdf.save();
-                    
-                    // Format filename with sequence (e.g., 001, 002)
-                    const sequenceNum = String(splitCount).padStart(3, '0');
-                    const newFileName = `${originalName}_${sequenceNum}.pdf`;
+                    generatedFiles.push({
+                        name: `${originalName}${op.suffix}.pdf`,
+                        bytes: pdfBytes
+                    });
 
-                    // Add to ZIP
-                    zip.file(newFileName, pdfBytes);
-
-                    // Update Progress (10% to 80%)
-                    const progress = 10 + Math.floor((splitCount / totalLoops) * 70);
+                    // Update Progress
+                    const progress = 10 + Math.floor(((i + 1) / totalOps) * 70);
                     updateProgress(progress);
-                    showStatus(`處理進度：${splitCount} / ${totalLoops} 份`, 'text-blue-500');
-                    
-                    // Small delay to let UI update
-                    await new Promise(resolve => setTimeout(resolve, 10));
+                    showStatus(`處理進度：${i + 1} / ${totalOps} 份`, 'text-blue-500');
+                    await new Promise(resolve => setTimeout(resolve, 10)); // UI delay
                 }
 
-                showStatus('打包下載檔中...', 'text-orange-500');
-                updateProgress(90);
+                // --- 產出下載機制 ---
+                updateProgress(85);
+                showStatus('準備下載中...', 'text-orange-500');
 
-                // Generate ZIP
-                const zipBlob = await zip.generateAsync({ type: 'blob' }, function updateCallback(metadata) {
-                    // Update progress (90% to 100%)
-                    updateProgress(90 + (metadata.percent / 10));
-                });
+                if (generatedFiles.length === 1) {
+                    // 若只有一個檔案 (例如提取模式)，直接下載 PDF
+                    const fileObj = generatedFiles[0];
+                    const blob = new Blob([fileObj.bytes], { type: 'application/pdf' });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = fileObj.name;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showStatus(`完成！已直接下載：${fileObj.name}`, 'text-green-600');
+                } else {
+                    // 若有多個檔案，打包為 ZIP
+                    const zip = new JSZip();
+                    generatedFiles.forEach(file => zip.file(file.name, file.bytes));
+                    
+                    const zipBlob = await zip.generateAsync({ type: 'blob' }, function(metadata) {
+                        updateProgress(85 + (metadata.percent / 100 * 15));
+                    });
 
-                // Trigger download
-                const downloadLink = document.createElement('a');
-                downloadLink.href = URL.createObjectURL(zipBlob);
-                downloadLink.download = `${originalName}_拆分檔案.zip`;
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                showStatus(`完成！共拆分成 ${splitCount} 份，已下載 ZIP 檔。`, 'text-green-600');
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(zipBlob);
+                    link.download = `${originalName}_拆分打包.zip`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showStatus(`完成！共拆分成 ${generatedFiles.length} 份，已下載 ZIP 壓縮檔。`, 'text-green-600');
+                }
+                
                 updateProgress(100);
 
             } catch (error) {
                 console.error(error);
-                showStatus(`拆分失敗：${error.message || '發生未知錯誤'}`, 'text-red-500');
+                showStatus(`處理失敗：${error.message || '發生未知錯誤'}`, 'text-red-500');
                 progressBar.classList.replace('bg-blue-600', 'bg-red-500');
             } finally {
                 splitBtn.disabled = false;
-                fileInput.disabled = false;
                 dropZone.classList.remove('pointer-events-none');
             }
         });
