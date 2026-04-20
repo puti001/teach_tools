@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- PDF.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <!-- html2canvas (用於畫面截圖) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* 自訂滾動條 */
         ::-webkit-scrollbar {
@@ -67,52 +69,64 @@
         <!-- 工具列 -->
         <div class="bg-slate-50 border-b border-slate-200 p-2 flex flex-wrap justify-between items-center gap-2 text-sm select-none">
             
-            <!-- 視窗控制 -->
-            <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm">
-                <button onclick="toggleMaximize()" class="p-2 hover:bg-slate-100 flex items-center gap-1 border-r border-slate-300 text-slate-600" title="最大化/還原視窗">
-                    <i id="maximize-icon" class="ph ph-corners-out"></i>
-                    <span class="hidden sm:inline">最大化</span>
-                </button>
-                <button onclick="toggleFullscreen()" class="p-2 hover:bg-slate-100 flex items-center gap-1 text-slate-600" title="全螢幕模式">
-                    <i id="fullscreen-icon" class="ph ph-monitor"></i>
-                    <span class="hidden sm:inline">全螢幕</span>
-                </button>
-            </div>
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- 視窗控制 -->
+                <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm">
+                    <button onclick="toggleMaximize()" class="p-2 hover:bg-slate-100 flex items-center gap-1 border-r border-slate-300 text-slate-600" title="最大化/還原視窗">
+                        <i id="maximize-icon" class="ph ph-corners-out"></i>
+                        <span class="hidden lg:inline">最大化</span>
+                    </button>
+                    <button onclick="toggleFullscreen()" class="p-2 hover:bg-slate-100 flex items-center gap-1 text-slate-600" title="全螢幕模式">
+                        <i id="fullscreen-icon" class="ph ph-monitor"></i>
+                        <span class="hidden lg:inline">全螢幕</span>
+                    </button>
+                </div>
 
-            <!-- 版面配置控制 -->
-            <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm px-3 text-slate-600 gap-2">
-                <i class="ph ph-squares-four text-lg" title="網格設定"></i>
-                <div class="flex items-center gap-1 py-1">
-                    <label for="grid-cols" class="text-xs sm:text-sm font-medium">欄(寬)</label>
-                    <input type="number" id="grid-cols" value="1" min="1" max="10" class="w-12 text-center border border-slate-200 rounded text-sm outline-none focus:border-blue-400 bg-slate-50" onchange="updateGrid()">
-                    <span class="text-xs text-slate-400">×</span>
-                    <label for="grid-rows" class="text-xs sm:text-sm font-medium">列(高)</label>
-                    <input type="number" id="grid-rows" value="1" min="1" max="10" class="w-12 text-center border border-slate-200 rounded text-sm outline-none focus:border-blue-400 bg-slate-50" onchange="updateGrid()">
+                <!-- 截圖下載功能 -->
+                <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm">
+                    <button onclick="downloadScreenshot()" id="btn-screenshot" class="p-2 hover:bg-slate-100 flex items-center gap-1 text-slate-600 text-blue-700 hover:text-blue-800 transition-colors" title="將目前檢視畫面下載為圖片">
+                        <i class="ph ph-camera text-lg"></i>
+                        <span class="hidden sm:inline font-medium">截圖下載</span>
+                    </button>
                 </div>
             </div>
 
-            <!-- 縮放控制 -->
-            <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm">
-                <button onclick="zoomOut()" class="p-2 hover:bg-slate-100 border-r border-slate-300 text-slate-600">
-                    <i class="ph ph-magnifying-glass-minus"></i>
-                </button>
-                <div class="px-3 py-1 font-mono text-slate-700 bg-slate-50" id="zoom-val">100%</div>
-                <button onclick="zoomIn()" class="p-2 hover:bg-slate-100 border-l border-slate-300 text-slate-600">
-                    <i class="ph ph-magnifying-glass-plus"></i>
-                </button>
-            </div>
-
-            <!-- 頁碼控制 -->
-            <div class="flex items-center gap-2">
-                <button onclick="prevPage()" class="p-2 bg-white rounded-md border border-slate-300 shadow-sm hover:bg-slate-100 text-slate-600 disabled:opacity-50" id="btn-prev">
-                    <i class="ph ph-caret-left font-bold"></i>
-                </button>
-                <div class="px-2 font-mono text-slate-700">
-                    第 <span id="page-num" class="font-bold text-blue-700">0</span> / <span id="page-count">0</span> 頁
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- 版面配置控制 -->
+                <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm px-3 text-slate-600 gap-2">
+                    <i class="ph ph-squares-four text-lg" title="網格設定"></i>
+                    <div class="flex items-center gap-1 py-1">
+                        <label for="grid-cols" class="text-xs sm:text-sm font-medium">欄(寬)</label>
+                        <input type="number" id="grid-cols" value="1" min="1" max="10" class="w-12 text-center border border-slate-200 rounded text-sm outline-none focus:border-blue-400 bg-slate-50" onchange="updateGrid()">
+                        <span class="text-xs text-slate-400">×</span>
+                        <label for="grid-rows" class="text-xs sm:text-sm font-medium">列(高)</label>
+                        <input type="number" id="grid-rows" value="1" min="1" max="10" class="w-12 text-center border border-slate-200 rounded text-sm outline-none focus:border-blue-400 bg-slate-50" onchange="updateGrid()">
+                    </div>
                 </div>
-                <button onclick="nextPage()" class="p-2 bg-white rounded-md border border-slate-300 shadow-sm hover:bg-slate-100 text-slate-600 disabled:opacity-50" id="btn-next">
-                    <i class="ph ph-caret-right font-bold"></i>
-                </button>
+
+                <!-- 縮放控制 -->
+                <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm">
+                    <button onclick="zoomOut()" class="p-2 hover:bg-slate-100 border-r border-slate-300 text-slate-600">
+                        <i class="ph ph-magnifying-glass-minus"></i>
+                    </button>
+                    <div class="px-3 py-1 font-mono text-slate-700 bg-slate-50 min-w-[3.5rem] text-center" id="zoom-val">100%</div>
+                    <button onclick="zoomIn()" class="p-2 hover:bg-slate-100 border-l border-slate-300 text-slate-600">
+                        <i class="ph ph-magnifying-glass-plus"></i>
+                    </button>
+                </div>
+
+                <!-- 頁碼控制 -->
+                <div class="flex items-center gap-2">
+                    <button onclick="prevPage()" class="p-2 bg-white rounded-md border border-slate-300 shadow-sm hover:bg-slate-100 text-slate-600 disabled:opacity-50" id="btn-prev">
+                        <i class="ph ph-caret-left font-bold"></i>
+                    </button>
+                    <div class="px-2 font-mono text-slate-700 whitespace-nowrap">
+                        第 <span id="page-num" class="font-bold text-blue-700">0</span> / <span id="page-count">0</span> 頁
+                    </div>
+                    <button onclick="nextPage()" class="p-2 bg-white rounded-md border border-slate-300 shadow-sm hover:bg-slate-100 text-slate-600 disabled:opacity-50" id="btn-next">
+                        <i class="ph ph-caret-right font-bold"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -125,7 +139,7 @@
             </div>
             
             <!-- 渲染畫布的網格容器 -->
-            <div id="pdf-grid" class="grid gap-6 transition-all origin-top">
+            <div id="pdf-grid" class="grid gap-6 transition-all origin-top p-4 rounded-lg">
                 <!-- Canvases will be injected here -->
             </div>
         </div>
@@ -167,7 +181,8 @@
             maximizeIcon: document.getElementById('maximize-icon'),
             fullscreenIcon: document.getElementById('fullscreen-icon'),
             gridCols: document.getElementById('grid-cols'),
-            gridRows: document.getElementById('grid-rows')
+            gridRows: document.getElementById('grid-rows'),
+            btnScreenshot: document.getElementById('btn-screenshot')
         };
 
         // 事件監聽
@@ -216,7 +231,6 @@
             els.pdfGrid.innerHTML = '';
             
             // 設定網格樣式
-            els.pdfGrid.className = 'grid gap-4 transition-all origin-top';
             els.pdfGrid.style.gridTemplateColumns = `repeat(${state.gridCols}, minmax(0, 1fr))`;
 
             const renderPromises = [];
@@ -285,6 +299,47 @@
         }
 
         // --- 控制功能 ---
+
+        // 截圖下載功能
+        async function downloadScreenshot() {
+            if (!state.pdfDoc) {
+                alert('請先開啟 PDF 檔案後再進行截圖！');
+                return;
+            }
+
+            // 按鈕狀態切換為處理中
+            const originalHTML = els.btnScreenshot.innerHTML;
+            els.btnScreenshot.innerHTML = '<i class="ph ph-spinner-gap animate-spin text-lg"></i><span class="hidden sm:inline font-medium">處理中...</span>';
+            els.btnScreenshot.disabled = true;
+
+            try {
+                // 將背景設定為與檢視區相同的顏色，讓截圖更美觀
+                const canvas = await html2canvas(els.pdfGrid, {
+                    scale: 2, // 提升圖片解析度
+                    backgroundColor: '#cbd5e1', // 對應 Tailwind 的 bg-slate-300
+                    useCORS: true 
+                });
+
+                // 產生檔案名稱 (例如: Puti-AI-PDF_p1-p12.png)
+                const pagesPerView = getPagesPerView();
+                const endPage = Math.min(state.pageNum + pagesPerView - 1, state.pageCount);
+                const fileName = `Puti-AI-PDF_p${state.pageNum}-p${endPage}.png`;
+
+                // 建立虛擬下載連結並觸發點擊
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+            } catch (error) {
+                console.error('截圖發生錯誤:', error);
+                alert('截圖失敗，請稍後再試！');
+            } finally {
+                // 恢復按鈕狀態
+                els.btnScreenshot.innerHTML = originalHTML;
+                els.btnScreenshot.disabled = false;
+            }
+        }
 
         function focusSinglePage(pageNum) {
             state.pageNum = pageNum;
