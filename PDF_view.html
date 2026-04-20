@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI PDF檢視器</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        /* 自訂滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        .pdf-canvas {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: white;
+            margin: auto;
+        }
+        #app-container.maximized {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 50;
+            margin: 0;
+            max-width: none;
+            border-radius: 0;
+        }
+    </style>
+</head>
+<body class="bg-slate-200 text-slate-800 font-sans p-2 sm:p-4 h-screen flex flex-col">
+
+    <!-- 主容器 -->
+    <div id="app-container" class="flex flex-col flex-1 max-w-7xl mx-auto w-full bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300">
+        
+        <!-- 頂部標題與檔案載入 -->
+        <header class="bg-blue-900 text-white p-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-2">
+                <i class="ph ph-file-pdf text-3xl text-red-400"></i>
+                <h1 class="text-xl font-bold tracking-wider">Puti-AI PDF檢視器</h1>
+            </div>
+            <div>
+                <label class="cursor-pointer bg-white/20 hover:bg-white/30 text-white py-2 px-4 rounded-lg transition flex items-center gap-2 text-sm">
+                    <i class="ph ph-upload-simple text-lg"></i>
+                    開啟 PDF 檔案
+                    <input type="file" id="file-input" class="hidden" accept="application/pdf">
+                </label>
+            </div>
+        </header>
+
+        <!-- 工具列 -->
+        <div class="bg-slate-50 border-b border-slate-200 p-2 flex flex-wrap justify-between items-center gap-2 text-sm select-none">
+            
+            <!-- 視窗控制 -->
+            <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm">
+                <button onclick="toggleMaximize()" class="p-2 hover:bg-slate-100 flex items-center gap-1 border-r border-slate-300 text-slate-600" title="最大化/還原視窗">
+                    <i id="maximize-icon" class="ph ph-corners-out"></i>
+                    <span class="hidden sm:inline">最大化</span>
+                </button>
+                <button onclick="toggleFullscreen()" class="p-2 hover:bg-slate-100 flex items-center gap-1 text-slate-600" title="全螢幕模式">
+                    <i id="fullscreen-icon" class="ph ph-monitor"></i>
+                    <span class="hidden sm:inline">全螢幕</span>
+                </button>
+            </div>
+
+            <!-- 版面配置控制 -->
+            <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm px-3 text-slate-600 gap-2">
+                <i class="ph ph-squares-four text-lg" title="網格設定"></i>
+                <div class="flex items-center gap-1 py-1">
+                    <label for="grid-cols" class="text-xs sm:text-sm font-medium">欄(寬)</label>
+                    <input type="number" id="grid-cols" value="1" min="1" max="10" class="w-12 text-center border border-slate-200 rounded text-sm outline-none focus:border-blue-400 bg-slate-50" onchange="updateGrid()">
+                    <span class="text-xs text-slate-400">×</span>
+                    <label for="grid-rows" class="text-xs sm:text-sm font-medium">列(高)</label>
+                    <input type="number" id="grid-rows" value="1" min="1" max="10" class="w-12 text-center border border-slate-200 rounded text-sm outline-none focus:border-blue-400 bg-slate-50" onchange="updateGrid()">
+                </div>
+            </div>
+
+            <!-- 縮放控制 -->
+            <div class="flex items-center bg-white rounded-md border border-slate-300 overflow-hidden shadow-sm">
+                <button onclick="zoomOut()" class="p-2 hover:bg-slate-100 border-r border-slate-300 text-slate-600">
+                    <i class="ph ph-magnifying-glass-minus"></i>
+                </button>
+                <div class="px-3 py-1 font-mono text-slate-700 bg-slate-50" id="zoom-val">100%</div>
+                <button onclick="zoomIn()" class="p-2 hover:bg-slate-100 border-l border-slate-300 text-slate-600">
+                    <i class="ph ph-magnifying-glass-plus"></i>
+                </button>
+            </div>
+
+            <!-- 頁碼控制 -->
+            <div class="flex items-center gap-2">
+                <button onclick="prevPage()" class="p-2 bg-white rounded-md border border-slate-300 shadow-sm hover:bg-slate-100 text-slate-600 disabled:opacity-50" id="btn-prev">
+                    <i class="ph ph-caret-left font-bold"></i>
+                </button>
+                <div class="px-2 font-mono text-slate-700">
+                    第 <span id="page-num" class="font-bold text-blue-700">0</span> / <span id="page-count">0</span> 頁
+                </div>
+                <button onclick="nextPage()" class="p-2 bg-white rounded-md border border-slate-300 shadow-sm hover:bg-slate-100 text-slate-600 disabled:opacity-50" id="btn-next">
+                    <i class="ph ph-caret-right font-bold"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- PDF 檢視區 -->
+        <div id="viewer-container" class="flex-1 bg-slate-300 overflow-auto relative p-4 sm:p-8 flex items-start justify-center">
+            <!-- 尚未載入檔案時的提示 -->
+            <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 opacity-70 pointer-events-none">
+                <i class="ph ph-file-pdf text-6xl mb-4"></i>
+                <p class="text-xl">請從上方開啟 PDF 檔案</p>
+            </div>
+            
+            <!-- 渲染畫布的網格容器 -->
+            <div id="pdf-grid" class="grid gap-6 transition-all origin-top">
+                <!-- Canvases will be injected here -->
+            </div>
+        </div>
+
+        <!-- 頁尾宣告 -->
+        <footer class="bg-slate-800 text-slate-300 text-xs sm:text-sm p-3 text-center">
+            屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為，更多 <span class="font-semibold text-blue-400">Puti-AI</span> 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-yellow-400 hover:text-yellow-300 underline">點此前往</a>。
+        </footer>
+    </div>
+
+    <!-- 邏輯腳本 -->
+    <script>
+        // 設定 PDF.js worker 路徑
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // 應用程式狀態
+        const state = {
+            pdfDoc: null,
+            pageNum: 1,
+            pageCount: 0,
+            scale: 1.0,
+            gridCols: 1, // 網格欄數
+            gridRows: 1, // 網格列數
+            isMaximized: false
+        };
+
+        // DOM 元素
+        const els = {
+            fileInput: document.getElementById('file-input'),
+            viewerContainer: document.getElementById('viewer-container'),
+            pdfGrid: document.getElementById('pdf-grid'),
+            emptyState: document.getElementById('empty-state'),
+            pageNum: document.getElementById('page-num'),
+            pageCount: document.getElementById('page-count'),
+            zoomVal: document.getElementById('zoom-val'),
+            btnPrev: document.getElementById('btn-prev'),
+            btnNext: document.getElementById('btn-next'),
+            appContainer: document.getElementById('app-container'),
+            maximizeIcon: document.getElementById('maximize-icon'),
+            fullscreenIcon: document.getElementById('fullscreen-icon'),
+            gridCols: document.getElementById('grid-cols'),
+            gridRows: document.getElementById('grid-rows')
+        };
+
+        // 事件監聽
+        els.fileInput.addEventListener('change', handleFileSelect);
+        
+        // 載入本地檔案
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file && file.type === 'application/pdf') {
+                const fileReader = new FileReader();
+                fileReader.onload = function() {
+                    const typedarray = new Uint8Array(this.result);
+                    loadPDF(typedarray);
+                };
+                fileReader.readAsArrayBuffer(file);
+            }
+        }
+
+        // 解析 PDF
+        async function loadPDF(data) {
+            try {
+                // 顯示載入中
+                els.emptyState.innerHTML = '<i class="ph ph-spinner-gap animate-spin text-4xl mb-2"></i><p>載入中...</p>';
+                
+                const loadingTask = pdfjsLib.getDocument(data);
+                state.pdfDoc = await loadingTask.promise;
+                state.pageCount = state.pdfDoc.numPages;
+                state.pageNum = 1;
+                els.pageCount.textContent = state.pageCount;
+                els.emptyState.style.display = 'none';
+                
+                updateUIPanel();
+                renderView();
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                alert('無法載入 PDF 檔案，請確定檔案格式正確。');
+                els.emptyState.innerHTML = '<i class="ph ph-warning-circle text-4xl mb-2 text-red-500"></i><p>載入失敗</p>';
+            }
+        }
+
+        // 渲染目前視圖
+        async function renderView() {
+            if (!state.pdfDoc) return;
+            
+            // 清空目前的網格
+            els.pdfGrid.innerHTML = '';
+            
+            // 設定網格樣式
+            els.pdfGrid.className = 'grid gap-4 transition-all origin-top';
+            els.pdfGrid.style.gridTemplateColumns = `repeat(${state.gridCols}, minmax(0, 1fr))`;
+
+            const renderPromises = [];
+            const startPage = state.pageNum;
+            const pagesPerView = getPagesPerView();
+            const endPage = Math.min(startPage + pagesPerView - 1, state.pageCount);
+
+            for (let i = startPage; i <= endPage; i++) {
+                // 建立包含畫布與標籤的容器
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative inline-block mx-auto max-w-full';
+
+                // 建立 Canvas
+                const canvas = document.createElement('canvas');
+                canvas.className = 'pdf-canvas rounded cursor-pointer transition-shadow hover:shadow-xl';
+                canvas.title = "連按兩下放大單頁檢視";
+                
+                // 綁定雙擊事件
+                canvas.addEventListener('dblclick', () => {
+                    focusSinglePage(i);
+                });
+
+                // 建立右下角頁碼標籤
+                const pageLabel = document.createElement('div');
+                pageLabel.className = 'absolute bottom-3 right-3 bg-slate-800/70 text-white text-xs font-mono px-2 py-1 rounded shadow-md pointer-events-none select-none';
+                pageLabel.textContent = `p${String(i).padStart(3, '0')}`;
+
+                wrapper.appendChild(canvas);
+                wrapper.appendChild(pageLabel);
+                els.pdfGrid.appendChild(wrapper);
+                
+                // 開始渲染
+                renderPromises.push(renderSinglePage(i, canvas));
+            }
+
+            // 等待所有頁面渲染完成
+            await Promise.all(renderPromises);
+            updateUIPanel();
+        }
+
+        // 渲染單頁
+        async function renderSinglePage(num, canvas) {
+            const page = await state.pdfDoc.getPage(num);
+            const ctx = canvas.getContext('2d');
+            
+            // 基礎解析度設定，搭配 devicePixelRatio 讓文字更清晰
+            const viewport = page.getViewport({ scale: state.scale });
+            const outputScale = window.devicePixelRatio || 1;
+
+            canvas.width = Math.floor(viewport.width * outputScale);
+            canvas.height = Math.floor(viewport.height * outputScale);
+            canvas.style.width = Math.floor(viewport.width) + "px";
+            canvas.style.height =  Math.floor(viewport.height) + "px";
+
+            const transform = outputScale !== 1 
+                ? [outputScale, 0, 0, outputScale, 0, 0] 
+                : null;
+
+            const renderContext = {
+                canvasContext: ctx,
+                transform: transform,
+                viewport: viewport
+            };
+
+            await page.render(renderContext).promise;
+        }
+
+        // --- 控制功能 ---
+
+        function focusSinglePage(pageNum) {
+            state.pageNum = pageNum;
+            // 強制切換為 1x1 網格 (單頁)
+            state.gridCols = 1;
+            state.gridRows = 1;
+            els.gridCols.value = 1;
+            els.gridRows.value = 1;
+            
+            // 若目前縮放比例較小，自動放大至 120% 方便閱讀
+            if (state.scale < 1.2) {
+                state.scale = 1.2;
+                updateZoomDisplay();
+            }
+            
+            renderView();
+        }
+
+        function getPagesPerView() {
+            return state.gridCols * state.gridRows;
+        }
+
+        function updateGrid() {
+            let cols = parseInt(els.gridCols.value);
+            let rows = parseInt(els.gridRows.value);
+            
+            // 防呆處理，避免輸入非數字或負數
+            if (cols < 1 || isNaN(cols)) cols = 1;
+            if (rows < 1 || isNaN(rows)) rows = 1;
+            
+            els.gridCols.value = cols;
+            els.gridRows.value = rows;
+            
+            state.gridCols = cols;
+            state.gridRows = rows;
+            
+            if (state.pdfDoc) renderView();
+        }
+
+        function zoomIn() {
+            if (state.scale >= 3.0) return; // 預設最高可放大至 300%
+            state.scale = Math.round((state.scale + 0.1) * 10) / 10;
+            updateZoomDisplay();
+            if (state.pdfDoc) renderView();
+        }
+
+        function zoomOut() {
+            if (state.scale <= 0.1) return; // 最低縮小至 10%
+            state.scale = Math.round((state.scale - 0.1) * 10) / 10;
+            if (state.scale < 0.1) state.scale = 0.1; // 雙重保險，避免低於 10%
+            updateZoomDisplay();
+            if (state.pdfDoc) renderView();
+        }
+
+        function updateZoomDisplay() {
+            els.zoomVal.textContent = Math.round(state.scale * 100) + '%';
+        }
+
+        function prevPage() {
+            if (state.pageNum <= 1) return;
+            state.pageNum = Math.max(1, state.pageNum - getPagesPerView());
+            renderView();
+        }
+
+        function nextPage() {
+            const pagesPerView = getPagesPerView();
+            if (state.pageNum + pagesPerView > state.pageCount && state.pageNum !== state.pageCount) {
+                // 如果下一步超出總頁數，但當前不是最後一頁，跳到結尾的頁面組
+                state.pageNum = state.pageCount;
+            } else if (state.pageNum + pagesPerView <= state.pageCount) {
+                state.pageNum += pagesPerView;
+            } else {
+                return;
+            }
+            renderView();
+        }
+
+        function updateUIPanel() {
+            // 更新頁碼文字 (如: 1 或 1-2)
+            const pagesPerView = getPagesPerView();
+            const endPage = Math.min(state.pageNum + pagesPerView - 1, state.pageCount);
+            if (state.pageNum === endPage || pagesPerView === 1) {
+                els.pageNum.textContent = state.pageNum;
+            } else {
+                els.pageNum.textContent = `${state.pageNum}-${endPage}`;
+            }
+
+            // 更新按鈕狀態
+            els.btnPrev.disabled = state.pageNum <= 1;
+            els.btnNext.disabled = state.pageNum + pagesPerView > state.pageCount;
+        }
+
+        // --- 視窗管理 ---
+
+        // 瀏覽器內部最大化
+        function toggleMaximize() {
+            state.isMaximized = !state.isMaximized;
+            if (state.isMaximized) {
+                els.appContainer.classList.add('maximized');
+                els.maximizeIcon.classList.replace('ph-corners-out', 'ph-corners-in');
+            } else {
+                els.appContainer.classList.remove('maximized');
+                els.maximizeIcon.classList.replace('ph-corners-in', 'ph-corners-out');
+            }
+            // 觸發重新繪圖，讓排版適應新空間（稍微延遲等待動畫）
+            setTimeout(() => { if (state.pdfDoc) renderView(); }, 300);
+        }
+
+        // 作業系統全螢幕
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error attempting to enable fullscreen: ${err.message}`);
+                });
+                els.fullscreenIcon.classList.replace('ph-monitor', 'ph-arrows-in');
+            } else {
+                document.exitFullscreen();
+                els.fullscreenIcon.classList.replace('ph-arrows-in', 'ph-monitor');
+            }
+        }
+
+        // 監聽 ESC 離開全螢幕的事件，重置圖示
+        document.addEventListener('fullscreenchange', () => {
+            if (!document.fullscreenElement) {
+                els.fullscreenIcon.classList.replace('ph-arrows-in', 'ph-monitor');
+            }
+        });
+
+    </script>
+</body>
+</html>
