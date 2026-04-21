@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puti-AI 乘除數字解碼產生器</title>
+    <title>Puti-AI 四則運算數字解碼產生器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
@@ -66,8 +66,8 @@
         <div class="puti-header p-6 relative flex flex-col md:flex-row justify-between items-center">
             <div class="md:w-1/4"></div> 
             <div class="text-center md:w-2/4">
-                <h1 class="text-3xl font-bold tracking-wider">Puti-AI 數字解碼產生器</h1>
-                <p class="text-sm mt-2 text-cyan-100/80">GiGi 數位助手 - 乘除法蟲食算 / 覆面算出題</p>
+                <h1 class="text-3xl font-bold tracking-wider">Puti-AI四則數字解碼產生器</h1>
+                <p class="text-sm mt-2 text-cyan-100/80">GiGi 數位助手 - 加減乘除 蟲食算 / 覆面算出題</p>
             </div>
             <div class="mt-4 md:mt-0 md:w-1/4 text-right pr-4 flex flex-col gap-2">
                 <button onclick="downloadAllImages()" class="bg-[#D4AF37] text-[#1A237E] font-bold py-2 px-4 rounded-lg shadow hover:bg-[#bfa030] transition flex items-center justify-center gap-2 ml-auto w-full md:w-auto">
@@ -86,20 +86,22 @@
                     <!-- 運算類型 -->
                     <div>
                         <label class="block text-sm text-[#1A237E] font-bold mb-1">運算類型</label>
-                        <select id="opType" class="w-24 px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                        <select id="opType" class="w-28 px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold">
+                            <option value="add">➕ 加法</option>
+                            <option value="sub">➖ 減法</option>
                             <option value="mul">✖️ 乘法</option>
                             <option value="div">➗ 除法</option>
-                            <option value="mix" selected>🎲 混合</option>
+                            <option value="mix" selected>🎲 混合(四則)</option>
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-sm text-[#1A237E] font-bold mb-1">被乘/除數</label>
-                        <input type="number" id="genM" value="3" min="2" max="5" class="w-20 px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold" title="位數">
+                        <label class="block text-sm text-[#1A237E] font-bold mb-1">第一數(位數)</label>
+                        <input type="number" id="genM" value="3" min="2" max="5" class="w-24 px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold" title="位數">
                     </div>
                     <div>
-                        <label class="block text-sm text-[#1A237E] font-bold mb-1">乘/除數</label>
-                        <input type="number" id="genN" value="2" min="1" max="3" class="w-20 px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold" title="位數">
+                        <label class="block text-sm text-[#1A237E] font-bold mb-1">第二數(位數)</label>
+                        <input type="number" id="genN" value="2" min="1" max="5" class="w-24 px-3 py-2 rounded-lg border border-gray-300 focus:border-[#D4AF37] focus:outline-none text-center font-bold" title="位數">
                     </div>
                     
                     <div>
@@ -178,26 +180,38 @@
         currentCards = [];
         document.getElementById('toggleGlobal').checked = false;
 
+        const opsList = ['add', 'sub', 'mul', 'div'];
+
         for (let i = 0; i < count; i++) {
             let currentOp = opType;
             if (currentOp === 'mix') {
-                currentOp = Math.random() > 0.5 ? 'mul' : 'div';
+                currentOp = opsList[Math.floor(Math.random() * opsList.length)];
             }
 
             let num1, num2;
             let dMin = Math.pow(10, n - 1);
             let dMax = Math.pow(10, n) - 1;
-            if (n === 1) dMin = 2; // 避免 1
+            if (n === 1) dMin = 2; // 避免 1，除非特定需要
 
             let DMin = Math.pow(10, m - 1);
             let DMax = Math.pow(10, m) - 1;
 
-            if (currentOp === 'mul') {
+            if (currentOp === 'add') {
                 num1 = Math.floor(Math.random() * (DMax - DMin + 1)) + DMin;
                 num2 = Math.floor(Math.random() * (dMax - dMin + 1)) + dMin;
-            } else {
+            } else if (currentOp === 'sub') {
+                num1 = Math.floor(Math.random() * (DMax - DMin + 1)) + DMin;
+                num2 = Math.floor(Math.random() * (dMax - dMin + 1)) + dMin;
+                // 確保大減小
+                if (num1 < num2) {
+                    let temp = num1; num1 = num2; num2 = temp;
+                }
+            } else if (currentOp === 'mul') {
+                num1 = Math.floor(Math.random() * (DMax - DMin + 1)) + DMin;
+                num2 = Math.floor(Math.random() * (dMax - dMin + 1)) + dMin;
+            } else if (currentOp === 'div') {
                 // 除法：確保被除數 >= 除數
-                if (m < n) { alert("除法模式下，被除數位數不能小於除數！"); return; }
+                if (m < n) { alert("除法模式下，第一數(位數)不能小於第二數！"); return; }
                 num2 = Math.floor(Math.random() * (dMax - dMin + 1)) + dMin; // 除數
                 let qMin = Math.ceil(DMin / num2);
                 let qMax = Math.floor(DMax / num2);
@@ -215,12 +229,20 @@
     }
 
     function createDecoderCard(type, num1, num2, idNum, maskRatio, maskStyle) {
-        let renderData = type === 'mul' ? calculateMultiplication(num1, num2) : calculateDivision(num1, num2);
+        let renderData;
+        let typeName = "";
+        
+        switch (type) {
+            case 'add': renderData = calculateAddition(num1, num2); typeName = '加法'; break;
+            case 'sub': renderData = calculateSubtraction(num1, num2); typeName = '減法'; break;
+            case 'mul': renderData = calculateMultiplication(num1, num2); typeName = '乘法'; break;
+            case 'div': renderData = calculateDivision(num1, num2); typeName = '除法'; break;
+        }
         
         // 應用遮蔽邏輯
         applyMasking(renderData, maskRatio, maskStyle);
 
-        renderData.qText = `Q${idNum}: 數字解碼 (${type === 'mul' ? '乘法' : '除法'})`; 
+        renderData.qText = `Q${idNum}: 數字解碼 (${typeName})`; 
 
         let canvasWidth = startX * 2 + renderData.cols * cellW;
         let canvasHeight = startY * 2 + renderData.rows * cellH;
@@ -282,6 +304,77 @@
         drawFn(false);
     }
 
+    // --- 加法排版運算 ---
+    function calculateAddition(A, B) {
+        let A_str = A.toString();
+        let B_str = B.toString();
+        let sum_str = (A + B).toString();
+        
+        // 總欄數：取最長數字位數 + 1(為了放加號)
+        let maxLen = Math.max(A_str.length, B_str.length, sum_str.length);
+        let cols = maxLen + 2; 
+        
+        let data = { chars: [], lines: [], symbols: [], cols: cols, rows: 3 };
+        let rightCol = cols - 1;
+
+        // Row 0: 被加數
+        for(let i=0; i<A_str.length; i++) {
+            data.chars.push({ char: A_str[i], row: 0, col: rightCol - (A_str.length - 1 - i), maskable: true });
+        }
+
+        // Row 1: 加號與加數
+        let signCol = rightCol - Math.max(A_str.length, B_str.length);
+        data.symbols.push({ char: '+', row: 1, col: signCol });
+        for(let i=0; i<B_str.length; i++) {
+            data.chars.push({ char: B_str[i], row: 1, col: rightCol - (B_str.length - 1 - i), maskable: true });
+        }
+
+        // Line 1
+        data.lines.push({ row: 1, startCol: signCol, endCol: rightCol });
+
+        // Row 2: 和
+        for(let i=0; i<sum_str.length; i++) {
+            data.chars.push({ char: sum_str[i], row: 2, col: rightCol - (sum_str.length - 1 - i), maskable: true });
+        }
+
+        return data;
+    }
+
+    // --- 減法排版運算 ---
+    function calculateSubtraction(A, B) {
+        let A_str = A.toString();
+        let B_str = B.toString();
+        let diff_str = (A - B).toString();
+        
+        let maxLen = Math.max(A_str.length, B_str.length);
+        let cols = maxLen + 2; 
+        
+        let data = { chars: [], lines: [], symbols: [], cols: cols, rows: 3 };
+        let rightCol = cols - 1;
+
+        // Row 0: 被減數
+        for(let i=0; i<A_str.length; i++) {
+            data.chars.push({ char: A_str[i], row: 0, col: rightCol - (A_str.length - 1 - i), maskable: true });
+        }
+
+        // Row 1: 減號與減數
+        let signCol = rightCol - Math.max(A_str.length, B_str.length);
+        data.symbols.push({ char: '-', row: 1, col: signCol });
+        for(let i=0; i<B_str.length; i++) {
+            data.chars.push({ char: B_str[i], row: 1, col: rightCol - (B_str.length - 1 - i), maskable: true });
+        }
+
+        // Line 1
+        data.lines.push({ row: 1, startCol: signCol, endCol: rightCol });
+
+        // Row 2: 差
+        for(let i=0; i<diff_str.length; i++) {
+            data.chars.push({ char: diff_str[i], row: 2, col: rightCol - (diff_str.length - 1 - i), maskable: true });
+        }
+
+        return data;
+    }
+
     // --- 乘法排版運算 ---
     function calculateMultiplication(A, B) {
         let A_str = A.toString();
@@ -291,7 +384,6 @@
         if ((A*B).toString().length + 1 > cols) cols = (A*B).toString().length + 1;
         
         let data = { chars: [], lines: [], symbols: [], cols: cols, rows: 0 };
-        
         let rightAlignCol = cols - 1;
 
         // Row 0: Multiplicand (A)
@@ -316,7 +408,6 @@
                 let digit = parseInt(B_str[i]);
                 let partial = A * digit;
                 if (partial === 0) {
-                    // 如果乘數某位數是0，依照台灣小學教法，可能寫000或直接跳過。這裡採取寫一個0
                     data.chars.push({ char: '0', row: cur_row, col: rightAlignCol - (B_str.length - 1 - i), maskable: true });
                 } else {
                     let p_str = partial.toString();
@@ -447,7 +538,6 @@
         let maskableChars = data.chars.filter(c => c.maskable);
         let numToMask = Math.floor(maskableChars.length * ratio);
         
-        // 洗牌並選取要遮蔽的字元
         let shuffled = maskableChars.sort(() => 0.5 - Math.random());
         let selected = shuffled.slice(0, numToMask);
 
@@ -459,10 +549,10 @@
                 item.maskColor = COLORS[rIdx];
             } else if (style === 'empty_boxes') {
                 item.maskShape = 'empty_box';
-                item.maskColor = '#000000'; // 黑框
+                item.maskColor = '#000000'; 
             } else {
                 item.maskShape = 'box';
-                item.maskColor = '#1F2937'; // 黑灰
+                item.maskColor = '#1F2937'; 
             }
         });
     }
@@ -490,7 +580,7 @@
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
 
-        // Draw standard symbols (like ×)
+        // Draw standard symbols (+, -, ×)
         ctx.fillStyle = "#2d3748";
         ctx.font = "bold 28px 'Nunito', sans-serif"; 
         data.symbols.forEach(sym => {
@@ -530,7 +620,6 @@
                 if (!showAns) {
                     drawShape(ctx, item.maskShape, cx, cy, cellW * 0.6, item.maskColor);
                 } else {
-                    // 解答模式：如果是填寫方框，保留方框並把紅字填入
                     if (item.maskShape === 'empty_box') {
                         drawShape(ctx, item.maskShape, cx, cy, cellW * 0.6, item.maskColor);
                     }
@@ -547,9 +636,8 @@
     }
 
     function drawShape(ctx, type, cx, cy, size, color) {
-        // 特別為「填寫大方框」設定最大尺寸
         if (type === 'empty_box') {
-            size = 30; // 配合格子的尺寸 (35x45)，30x30 已經是極限清晰可寫的大小
+            size = 30; 
         }
 
         ctx.fillStyle = color;
@@ -560,7 +648,7 @@
         
         switch(type) {
             case 'empty_box':
-                ctx.fillStyle = "#FFFFFF"; // 內部白底方便書寫
+                ctx.fillStyle = "#FFFFFF"; 
                 ctx.fillRect(cx - r, cy - r, size, size);
                 ctx.strokeRect(cx - r, cy - r, size, size);
                 break;
@@ -599,7 +687,6 @@
         }
     }
 
-    // 全域切換解答
     function toggleAllAnswers(show) {
         currentCards.forEach(card => {
             card.toggle.checked = show;
@@ -646,15 +733,13 @@
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, totalWidth, totalHeight);
 
-        // 標題
         let isAnsMode = document.getElementById('toggleGlobal').checked;
         ctx.fillStyle = "#1A237E";
         ctx.font = "bold 42px 'Nunito', 'Microsoft JhengHei', sans-serif";
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
-        ctx.fillText(`Puti-AI 數字解碼卷 ${isAnsMode ? "(解答)" : "(題目)"}`, totalWidth / 2, padding + headerHeight / 2 - 15);
+        ctx.fillText(`Puti-AI 四則運算解碼卷 ${isAnsMode ? "(解答)" : "(題目)"}`, totalWidth / 2, padding + headerHeight / 2 - 15);
 
-        // 浮水印
         ctx.fillStyle = "rgba(0, 0, 0, 0.03)";
         ctx.font = "30px Arial";
         ctx.textAlign = "right";
@@ -663,7 +748,6 @@
             ctx.fillText("©Puti-AI", 180, i + 350);
         }
 
-        // 畫卡片
         let currentY = padding + headerHeight;
         for (let r = 0; r < rows; r++) {
             let idx1 = r * cols;
@@ -683,7 +767,7 @@
         }
 
         const link = document.createElement('a');
-        link.download = `Puti_AI_解碼卷_${isAnsMode ? "解答" : "題目"}_${new Date().getTime()}.png`;
+        link.download = `Puti_AI_四則運算解碼卷_${isAnsMode ? "解答" : "題目"}_${new Date().getTime()}.png`;
         link.href = finalCanvas.toDataURL('image/png');
         link.click();
     }
