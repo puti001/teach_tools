@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 圖片拼接器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .canvas-container {
+            background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%), 
+                              linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #e5e7eb 75%), 
+                              linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: #f9fafb;
+        }
+        /* Hide scrollbar for cleaner look but keep functionality */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Grab cursor classes */
+        .cursor-grab { cursor: grab; }
+        .cursor-grabbing { cursor: grabbing !important; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-md py-4 px-6 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-layer-group text-2xl"></i>
+            <div>
+                <h1 class="text-2xl font-bold">Puti-AI 圖片拼接器</h1>
+                <p class="text-blue-200 text-sm">支援 2~9 張圖片｜直式、橫式、智慧網格合併、進階平移縮放 (Pan & Zoom)</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col md:flex-row p-4 gap-6 max-w-7xl mx-auto w-full">
+        
+        <!-- Controls Sidebar -->
+        <aside class="w-full md:w-1/3 lg:w-1/4 bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col gap-5 h-fit shrink-0 z-10">
+            
+            <!-- File Input -->
+            <div>
+                <label class="block text-sm font-semibold mb-2 text-slate-700">1. 選擇圖片 (2~9張)</label>
+                <div class="flex items-center justify-center w-full">
+                    <label for="imageInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-slate-400 mb-2"></i>
+                            <p class="mb-2 text-sm text-slate-500"><span class="font-semibold">點擊上傳</span> 或拖曳圖片至此</p>
+                            <p class="text-xs text-slate-400">PNG, JPG, WebP</p>
+                        </div>
+                        <input id="imageInput" type="file" class="hidden" multiple accept="image/png, image/jpeg, image/webp" />
+                    </label>
+                </div>
+                <!-- Thumbnail Preview Area (WYSIWYG) -->
+                <div id="thumbnailContainer" class="mt-3 empty:hidden transition-all duration-300"></div>
+                
+                <!-- Drag Hint -->
+                <div id="dragHint" class="text-xs text-blue-600 mt-2 hidden space-y-1 bg-blue-50 p-2 rounded border border-blue-100">
+                    <p><i class="fas fa-hand-pointer"></i> <b>所見即所得</b>：在此區拖曳拼圖可<b>直接對調</b></p>
+                    <p><i class="fas fa-sync-alt"></i> 游標移至圖上可旋轉、縮放、<b>合併儲存格</b></p>
+                </div>
+                <!-- Error Message Display -->
+                <div id="errorMsg" class="hidden mt-2 text-sm text-red-500 bg-red-50 p-2 rounded border border-red-200"></div>
+            </div>
+
+            <!-- Layout Settings -->
+            <div class="border-t border-slate-100 pt-4">
+                <label class="block text-sm font-semibold mb-2 text-slate-700">2. 排版方式</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <button type="button" class="layout-btn active bg-blue-50 border-blue-500 text-blue-700 border rounded py-2 text-sm flex flex-col items-center gap-1 transition" data-layout="col">
+                        <i class="fas fa-grip-lines transform rotate-90 text-lg"></i>
+                        <span>單列(直式)</span>
+                    </button>
+                    <button type="button" class="layout-btn bg-white border-slate-200 text-slate-600 hover:bg-slate-50 border rounded py-2 text-sm flex flex-col items-center gap-1 transition" data-layout="row">
+                        <i class="fas fa-grip-lines text-lg"></i>
+                        <span>單行(橫式)</span>
+                    </button>
+                    <button type="button" class="layout-btn bg-white border-slate-200 text-slate-600 hover:bg-slate-50 border rounded py-2 text-sm flex flex-col items-center gap-1 transition" data-layout="grid">
+                        <i class="fas fa-th text-lg"></i>
+                        <span>智慧網格</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid Specific Settings (Hidden by default) -->
+            <div id="gridSettings" class="hidden space-y-3 bg-slate-50 p-3 rounded-lg border border-slate-200 shadow-inner">
+                <div>
+                    <label class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                        <span>基礎欄數 (左右寬度)</span>
+                        <span class="text-xs text-emerald-600">行數將自動展開</span>
+                    </label>
+                    <input type="number" id="gridCols" min="1" max="9" value="2" class="w-full border border-slate-300 rounded p-1.5 text-sm outline-none focus:border-blue-500">
+                </div>
+                
+                <div class="pt-2 border-t border-slate-200">
+                    <label class="block text-xs font-medium text-slate-600 mb-1">圖片顯示方式</label>
+                    <select id="imageFit" class="w-full border border-slate-300 rounded p-1.5 text-sm outline-none focus:border-blue-500 bg-white">
+                        <option value="contain">完整顯示 (不裁切，自動留白)</option>
+                        <option value="cover">填滿格子 (自動裁切邊緣)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="flex justify-between text-xs font-medium text-slate-600 mb-1">
+                        <span>基礎格子比例 (寬/高)</span>
+                        <span id="gridRatioVal" class="text-blue-600 font-mono font-bold">1.00</span>
+                    </label>
+                    <input type="range" id="gridRatioSlider" min="0.25" max="4.0" step="0.05" value="1.0" class="w-full accent-blue-600">
+                    <div class="flex justify-between text-[10px] text-slate-400 mt-1 px-1">
+                        <span>直長型</span>
+                        <span>正方</span>
+                        <span>扁寬型</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appearance & Output Settings -->
+            <div class="border-t border-slate-100 pt-4 space-y-4">
+                <div>
+                    <label class="flex justify-between text-sm font-semibold mb-1 text-slate-700">
+                        <span>間距 (Gap)</span>
+                        <span id="gapValue" class="text-blue-600">20 px</span>
+                    </label>
+                    <input type="range" id="gapRange" min="0" max="100" value="20" class="w-full accent-blue-600">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-slate-700">背景顏色</label>
+                    <div class="flex items-center gap-2">
+                        <input type="color" id="bgColor" value="#ffffff" class="w-10 h-10 rounded cursor-pointer border-0 p-0">
+                        <span id="bgColorText" class="text-sm text-slate-600 font-mono uppercase">#FFFFFF</span>
+                    </div>
+                </div>
+
+                <!-- Output Quality & Format -->
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                    <label class="block text-sm font-semibold mb-2 text-slate-700">3. 輸出設定</label>
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">格式</label>
+                            <select id="outFormat" class="w-full border border-slate-300 rounded p-1.5 text-sm outline-none focus:border-blue-500 bg-white">
+                                <option value="image/jpeg">JPG</option>
+                                <option value="image/png">PNG</option>
+                                <option value="image/webp">WebP</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-medium text-slate-600 mb-1">畫質</label>
+                            <select id="outQuality" class="w-full border border-slate-300 rounded p-1.5 text-sm outline-none focus:border-blue-500 bg-white transition-opacity">
+                                <option value="0.95">高 (清晰)</option>
+                                <option value="0.7">中 (平衡)</option>
+                                <option value="0.4">低 (小檔案)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="mt-auto pt-4 flex flex-col gap-2">
+                <button id="generateBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition flex justify-center items-center gap-2 shadow-sm disabled:bg-slate-400 disabled:cursor-not-allowed">
+                    <i class="fas fa-magic"></i> 產生拼接圖片
+                </button>
+                <div id="actionGroup" class="flex gap-2 hidden">
+                    <button id="copyBtn" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-2 rounded-lg transition flex justify-center items-center gap-2 shadow-sm text-sm">
+                        <i class="fas fa-copy"></i> 複製圖片
+                    </button>
+                    <button id="downloadBtn" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-2 rounded-lg transition flex justify-center items-center gap-2 shadow-sm text-sm">
+                        <i class="fas fa-download"></i> 下載圖片
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas Preview Area -->
+        <section class="flex-grow bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col min-h-[500px]">
+            <div class="bg-slate-100 border-b border-slate-200 px-4 py-2 flex justify-between items-center shrink-0">
+                <span class="text-sm font-semibold text-slate-600">
+                    拼接預覽
+                    <span class="font-normal text-xs text-emerald-600 ml-2 hidden md:inline-block">
+                        <i class="fas fa-search-plus"></i> 在圖片上滾輪縮放 / 拖曳平移
+                    </span>
+                </span>
+                <span id="resolutionBadge" class="text-xs bg-slate-200 text-slate-600 px-2 py-1 rounded hidden"></span>
+            </div>
+            <div class="flex-grow canvas-container overflow-auto p-4 flex items-center justify-center relative select-none cursor-grab active:cursor-grabbing" id="canvasWrapper">
+                <!-- Placeholder -->
+                <div id="canvasPlaceholder" class="text-slate-400 flex flex-col items-center gap-2">
+                    <i class="far fa-images text-5xl"></i>
+                    <p>上傳圖片並點擊產生</p>
+                </div>
+                <!-- Actual Canvas -->
+                <canvas id="resultCanvas" class="max-w-full shadow-lg rounded hidden transition-opacity"></canvas>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-800 text-slate-300 py-6 px-4 text-center text-sm shrink-0">
+        <p class="mb-2">屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣。</p>
+        <p class="mb-2 text-red-400 font-medium">嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+        <p>更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-400 hover:text-blue-300 underline decoration-blue-400/30 underline-offset-4">點此前往</a></p>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const imageInput = document.getElementById('imageInput');
+        const thumbnailContainer = document.getElementById('thumbnailContainer');
+        const layoutBtns = document.querySelectorAll('.layout-btn');
+        const gridSettings = document.getElementById('gridSettings');
+        const gridCols = document.getElementById('gridCols');
+        const gridRatioSlider = document.getElementById('gridRatioSlider');
+        const gridRatioVal = document.getElementById('gridRatioVal');
+        const imageFit = document.getElementById('imageFit');
+        const gapRange = document.getElementById('gapRange');
+        const gapValue = document.getElementById('gapValue');
+        const bgColor = document.getElementById('bgColor');
+        const bgColorText = document.getElementById('bgColorText');
+        const outFormat = document.getElementById('outFormat');
+        const outQuality = document.getElementById('outQuality');
+        const generateBtn = document.getElementById('generateBtn');
+        const actionGroup = document.getElementById('actionGroup');
+        const copyBtn = document.getElementById('copyBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resultCanvas = document.getElementById('resultCanvas');
+        const canvasPlaceholder = document.getElementById('canvasPlaceholder');
+        const errorMsg = document.getElementById('errorMsg');
+        const resolutionBadge = document.getElementById('resolutionBadge');
+        const dragHint = document.getElementById('dragHint');
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        
+        // State
+        let loadedImages = []; // { img, rotate, flipH, flipV, panX, panY, zoom, colSpan, rowSpan }
+        let currentLayout = 'col'; // col, row, grid
+        let draggedItem = null;
+        let renderBoxes = []; // To track hit areas for panning/zooming
+
+        // Initialize empty state
+        generateBtn.disabled = true;
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.remove('hidden');
+            setTimeout(() => errorMsg.classList.add('hidden'), 5000);
+        }
+
+        // Auto generator calling rendering directly
+        function autoGenerate() {
+            if (loadedImages.length >= 2) {
+                updateThumbnailVisuals();
+                renderCanvas();
+            }
+        }
+
+        outFormat.addEventListener('change', (e) => {
+            if (e.target.value === 'image/png') {
+                outQuality.disabled = true;
+                outQuality.classList.add('opacity-50', 'bg-slate-100');
+            } else {
+                outQuality.disabled = false;
+                outQuality.classList.remove('opacity-50', 'bg-slate-100');
+            }
+        });
+
+        // Thumbnail Syncing
+        function updateThumbnailVisuals() {
+            if (loadedImages.length === 0) return;
+            
+            const fitMode = imageFit.value;
+            const cellRatio = parseFloat(gridRatioSlider.value) || 1.0;
+            const cols = parseInt(gridCols.value) || 2;
+            
+            thumbnailContainer.className = 'mt-3 empty:hidden gap-2 bg-slate-100 p-3 rounded-lg border border-slate-200 shadow-inner max-h-[400px] overflow-auto no-scrollbar transition-all duration-300';
+            
+            thumbnailContainer.style.display = '';
+            thumbnailContainer.style.gridTemplateColumns = '';
+            thumbnailContainer.style.gridAutoFlow = '';
+            thumbnailContainer.style.gridAutoRows = '';
+            thumbnailContainer.style.flexDirection = '';
+            thumbnailContainer.style.alignItems = '';
+            thumbnailContainer.style.overflowX = '';
+
+            Array.from(thumbnailContainer.children).forEach((thumb) => {
+                const imgData = thumb.imgObj; 
+                if(!imgData) return;
+                
+                const imgEl = thumb.querySelector('img');
+                const spanControls = thumb.querySelector('.grid-span-controls');
+                
+                imgEl.style.transform = `rotate(${imgData.rotate}deg) scaleX(${imgData.flipH ? -1 : 1}) scaleY(${imgData.flipV ? -1 : 1})`;
+
+                thumb.style.width = '';
+                thumb.style.height = '';
+                thumb.style.aspectRatio = '';
+                thumb.style.gridColumn = '';
+                thumb.style.gridRow = '';
+
+                if (currentLayout === 'grid') {
+                    if (spanControls) spanControls.classList.remove('hidden');
+                    const cs = Math.min(imgData.colSpan || 1, cols);
+                    const rs = imgData.rowSpan || 1;
+                    
+                    thumb.style.gridColumn = `span ${cs}`;
+                    thumb.style.gridRow = `span ${rs}`;
+                    thumb.style.width = '100%';
+                    thumb.style.height = '100%';
+                    imgEl.style.objectFit = fitMode;
+                } else {
+                    if (spanControls) spanControls.classList.add('hidden');
+                    
+                    if (currentLayout === 'col') {
+                        const ew = (imgData.rotate % 180 !== 0) ? imgData.img.height : imgData.img.width;
+                        const eh = (imgData.rotate % 180 !== 0) ? imgData.img.width : imgData.img.height;
+                        thumb.style.aspectRatio = `${ew} / ${eh}`;
+                        thumb.style.width = '140px'; 
+                        imgEl.style.objectFit = 'contain';
+                    } else if (currentLayout === 'row') {
+                        const ew = (imgData.rotate % 180 !== 0) ? imgData.img.height : imgData.img.width;
+                        const eh = (imgData.rotate % 180 !== 0) ? imgData.img.width : imgData.img.height;
+                        thumb.style.aspectRatio = `${ew} / ${eh}`;
+                        thumb.style.height = '100px'; 
+                        imgEl.style.objectFit = 'contain';
+                    }
+                }
+            });
+
+            if (currentLayout === 'col') {
+                thumbnailContainer.style.display = 'flex';
+                thumbnailContainer.style.flexDirection = 'column';
+                thumbnailContainer.style.alignItems = 'center';
+            } else if (currentLayout === 'row') {
+                thumbnailContainer.style.display = 'flex';
+                thumbnailContainer.style.flexDirection = 'row';
+                thumbnailContainer.style.overflowX = 'auto';
+            } else if (currentLayout === 'grid') {
+                thumbnailContainer.style.display = 'grid';
+                thumbnailContainer.style.gridTemplateColumns = `repeat(${cols}, minmax(40px, 1fr))`;
+                thumbnailContainer.style.gridAutoFlow = 'row dense';
+                thumbnailContainer.style.gridAutoRows = `minmax(${60 / cellRatio}px, auto)`;
+            }
+        }
+
+        // Handle File Selection
+        imageInput.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+            if (files.length < 2 || files.length > 9) {
+                showError('請選擇 2 到 9 張圖片！');
+                imageInput.value = ''; 
+                if(dragHint) dragHint.classList.add('hidden');
+                return;
+            }
+
+            loadedImages = [];
+            thumbnailContainer.innerHTML = '';
+            generateBtn.disabled = true;
+            actionGroup.classList.add('hidden');
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 處理中...';
+
+            try {
+                const promises = files.map(file => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            const img = new Image();
+                            img.onload = () => resolve({
+                                img: img,
+                                rotate: 0,
+                                flipH: false,
+                                flipV: false,
+                                panX: 0,
+                                panY: 0,
+                                zoom: 1.0,
+                                colSpan: 1, 
+                                rowSpan: 1
+                            });
+                            img.onerror = () => reject('圖片載入失敗');
+                            img.src = event.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                    });
+                });
+
+                const results = await Promise.all(promises);
+                
+                results.forEach((imgData) => {
+                    loadedImages.push(imgData);
+
+                    const thumb = document.createElement('div');
+                    thumb.className = 'relative group rounded border-2 border-slate-200 overflow-hidden bg-white cursor-move transition-all shrink-0 shadow-sm hover:border-blue-400 min-h-[60px]';
+                    thumb.draggable = true;
+                    thumb.imgObj = imgData; 
+                    
+                    const imgEl = document.createElement('img');
+                    imgEl.src = imgData.img.src;
+                    imgEl.className = 'w-full h-full pointer-events-none transition-transform duration-200';
+                    thumb.appendChild(imgEl);
+
+                    // Tools Overlay
+                    const toolsOverlay = document.createElement('div');
+                    toolsOverlay.className = 'absolute inset-0 bg-black/60 hidden group-hover:flex flex-col justify-center items-center p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10';
+                    
+                    const toolsRow1 = document.createElement('div');
+                    toolsRow1.className = 'flex justify-center gap-1 mb-2 w-full px-1';
+
+                    const btnRot = document.createElement('button');
+                    btnRot.innerHTML = '<i class="fas fa-redo"></i>';
+                    btnRot.className = 'text-white hover:text-blue-300 px-1';
+                    btnRot.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); imgData.rotate = (imgData.rotate + 90) % 360; autoGenerate(); };
+
+                    const btnFlipH = document.createElement('button');
+                    btnFlipH.innerHTML = '<i class="fas fa-arrows-alt-h"></i>';
+                    btnFlipH.className = 'text-white hover:text-blue-300 px-1';
+                    btnFlipH.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); imgData.flipH = !imgData.flipH; autoGenerate(); };
+
+                    const btnFlipV = document.createElement('button');
+                    btnFlipV.innerHTML = '<i class="fas fa-arrows-alt-v"></i>';
+                    btnFlipV.className = 'text-white hover:text-blue-300 px-1';
+                    btnFlipV.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); imgData.flipV = !imgData.flipV; autoGenerate(); };
+
+                    const btnZoomOut = document.createElement('button');
+                    btnZoomOut.innerHTML = '<i class="fas fa-search-minus"></i>';
+                    btnZoomOut.className = 'text-white hover:text-blue-300 px-1 border-l border-white/30 pl-2 ml-1';
+                    btnZoomOut.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); imgData.zoom = Math.max(0.5, (imgData.zoom || 1.0) - 0.1); autoGenerate(); };
+
+                    const btnZoomIn = document.createElement('button');
+                    btnZoomIn.innerHTML = '<i class="fas fa-search-plus"></i>';
+                    btnZoomIn.className = 'text-white hover:text-blue-300 px-1';
+                    btnZoomIn.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); imgData.zoom = Math.min(4.0, (imgData.zoom || 1.0) + 0.1); autoGenerate(); };
+
+                    toolsRow1.appendChild(btnRot);
+                    toolsRow1.appendChild(btnFlipH);
+                    toolsRow1.appendChild(btnFlipV);
+                    toolsRow1.appendChild(btnZoomOut);
+                    toolsRow1.appendChild(btnZoomIn);
+                    toolsOverlay.appendChild(toolsRow1);
+
+                    const toolsRow2 = document.createElement('div');
+                    toolsRow2.className = 'grid-span-controls flex flex-col gap-1 w-full px-2 border-t border-white/30 pt-1 text-[10px] text-white';
+
+                    const colCtrl = document.createElement('div');
+                    colCtrl.className = 'flex justify-between items-center bg-black/50 rounded px-1';
+                    colCtrl.innerHTML = `<span>橫向</span>`;
+                    
+                    const colBtns = document.createElement('div');
+                    const cMinus = document.createElement('button'); cMinus.innerHTML = '<i class="fas fa-minus"></i>'; cMinus.className = 'px-1 hover:text-red-300';
+                    const cPlus = document.createElement('button'); cPlus.innerHTML = '<i class="fas fa-plus"></i>'; cPlus.className = 'px-1 hover:text-emerald-300';
+                    
+                    cMinus.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); if(imgData.colSpan > 1) { imgData.colSpan--; autoGenerate(); }};
+                    cPlus.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); imgData.colSpan++; autoGenerate(); };
+                    
+                    colBtns.appendChild(cMinus); colBtns.appendChild(cPlus);
+                    colCtrl.appendChild(colBtns);
+                    toolsRow2.appendChild(colCtrl);
+
+                    const rowCtrl = document.createElement('div');
+                    rowCtrl.className = 'flex justify-between items-center bg-black/50 rounded px-1';
+                    rowCtrl.innerHTML = `<span>直向</span>`;
+                    
+                    const rowBtns = document.createElement('div');
+                    const rMinus = document.createElement('button'); rMinus.innerHTML = '<i class="fas fa-minus"></i>'; rMinus.className = 'px-1 hover:text-red-300';
+                    const rPlus = document.createElement('button'); rPlus.innerHTML = '<i class="fas fa-plus"></i>'; rPlus.className = 'px-1 hover:text-emerald-300';
+                    
+                    rMinus.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); if(imgData.rowSpan > 1) { imgData.rowSpan--; autoGenerate(); }};
+                    rPlus.onclick = (ev) => { ev.stopPropagation(); ev.preventDefault(); imgData.rowSpan++; autoGenerate(); };
+                    
+                    rowBtns.appendChild(rMinus); rowBtns.appendChild(rPlus);
+                    rowCtrl.appendChild(rowBtns);
+                    toolsRow2.appendChild(rowCtrl);
+
+                    toolsOverlay.appendChild(toolsRow2);
+                    thumb.appendChild(toolsOverlay);
+
+                    // Drag Drop Swap Logic
+                    thumb.addEventListener('dragstart', function(e) {
+                        draggedItem = this;
+                        setTimeout(() => this.classList.add('opacity-50'), 0);
+                    });
+
+                    thumb.addEventListener('dragend', function(e) {
+                        setTimeout(() => this.classList.remove('opacity-50'), 0);
+                        draggedItem = null;
+                    });
+
+                    thumb.addEventListener('dragenter', function(e) {
+                        e.preventDefault();
+                        if (draggedItem !== this) this.classList.replace('border-slate-200', 'border-blue-500');
+                    });
+
+                    thumb.addEventListener('dragleave', function(e) {
+                        this.classList.replace('border-blue-500', 'border-slate-200');
+                    });
+
+                    thumb.addEventListener('dragover', function(e) {
+                        e.preventDefault();
+                    });
+
+                    thumb.addEventListener('drop', function(e) {
+                        e.preventDefault();
+                        this.classList.replace('border-blue-500', 'border-slate-200');
+                        
+                        if (draggedItem !== this) {
+                            const draggedNext = draggedItem.nextSibling;
+                            const thisNext = this.nextSibling;
+                            const parent = this.parentNode;
+
+                            if (draggedNext === this) parent.insertBefore(this, draggedItem);
+                            else if (thisNext === draggedItem) parent.insertBefore(draggedItem, this);
+                            else {
+                                parent.insertBefore(draggedItem, thisNext);
+                                parent.insertBefore(this, draggedNext);
+                            }
+
+                            loadedImages = Array.from(thumbnailContainer.children).map(t => t.imgObj);
+                            autoGenerate();
+                        }
+                    });
+
+                    thumbnailContainer.appendChild(thumb);
+                });
+
+                if(dragHint) dragHint.classList.remove('hidden');
+
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-magic"></i> 產生拼接圖片';
+                
+                const count = loadedImages.length;
+                gridCols.value = Math.ceil(Math.sqrt(count));
+
+                autoGenerate();
+
+            } catch (error) {
+                showError('讀取圖片時發生錯誤。');
+                generateBtn.innerHTML = '<i class="fas fa-magic"></i> 產生拼接圖片';
+            }
+        });
+
+        // Layout Tabs
+        layoutBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                layoutBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-blue-50', 'border-blue-500', 'text-blue-700');
+                    b.classList.add('bg-white', 'border-slate-200', 'text-slate-600');
+                });
+                btn.classList.add('active', 'bg-blue-50', 'border-blue-500', 'text-blue-700');
+                btn.classList.remove('bg-white', 'border-slate-200', 'text-slate-600');
+
+                currentLayout = btn.dataset.layout;
+
+                if (currentLayout === 'grid') gridSettings.classList.remove('hidden');
+                else gridSettings.classList.add('hidden');
+                
+                autoGenerate();
+            });
+        });
+
+        // Instant Updates
+        gridRatioSlider.addEventListener('input', (e) => {
+            gridRatioVal.textContent = parseFloat(e.target.value).toFixed(2);
+            autoGenerate();
+        });
+        imageFit.addEventListener('change', autoGenerate);
+        gridCols.addEventListener('input', autoGenerate);
+        gapRange.addEventListener('input', (e) => {
+            gapValue.textContent = `${e.target.value} px`;
+            autoGenerate();
+        });
+        bgColor.addEventListener('input', (e) => {
+            bgColorText.textContent = e.target.value.toUpperCase();
+            autoGenerate();
+        });
+
+        // --- Core Rendering Engine (Pan & Zoom Support for ALL layouts) ---
+        function drawImageEx(ctx, data, x, y, targetW, targetH, fitMode) {
+            const isRotated = data.rotate === 90 || data.rotate === 270;
+            const ew = isRotated ? data.img.height : data.img.width;
+            const eh = isRotated ? data.img.width : data.img.height;
+            
+            const imgRatio = ew / eh;
+            const targetRatio = targetW / targetH;
+
+            let drawW, drawH;
+            let zoom = data.zoom || 1.0;
+            
+            if (fitMode === 'cover') {
+                if (imgRatio > targetRatio) {
+                    drawH = targetH;
+                    drawW = ew * (targetH / eh);
+                } else {
+                    drawW = targetW;
+                    drawH = eh * (targetW / ew);
+                }
+            } else { 
+                if (imgRatio > targetRatio) {
+                    drawW = targetW;
+                    drawH = eh * (targetW / ew);
+                } else {
+                    drawH = targetH;
+                    drawW = ew * (targetH / eh);
+                }
+            }
+
+            drawW *= zoom;
+            drawH *= zoom;
+
+            let offsetX = (targetW - drawW) / 2;
+            let offsetY = (targetH - drawH) / 2;
+
+            offsetX += data.panX;
+            offsetY += data.panY;
+
+            // Universal Safe Boundaries (Works for both Cover and Contain)
+            let minX = Math.min(0, targetW - drawW);
+            let maxX = Math.max(0, targetW - drawW);
+            offsetX = Math.max(minX, Math.min(maxX, offsetX));
+
+            let minY = Math.min(0, targetH - drawH);
+            let maxY = Math.max(0, targetH - drawH);
+            offsetY = Math.max(minY, Math.min(maxY, offsetY));
+
+            // Write back purely clamped differences to prevent "sticky edge" bug
+            data.panX = offsetX - (targetW - drawW) / 2;
+            data.panY = offsetY - (targetH - drawH) / 2;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, targetW, targetH);
+            ctx.clip();
+
+            ctx.translate(x + offsetX + drawW / 2, y + offsetY + drawH / 2);
+            ctx.scale(data.flipH ? -1 : 1, data.flipV ? -1 : 1);
+            ctx.rotate(data.rotate * Math.PI / 180);
+
+            let paintW = isRotated ? drawH : drawW;
+            let paintH = isRotated ? drawW : drawH;
+
+            ctx.drawImage(data.img, -paintW / 2, -paintH / 2, paintW, paintH);
+            ctx.restore();
+        }
+
+        function renderCanvas() {
+            if (loadedImages.length < 2) return;
+
+            const ctx = resultCanvas.getContext('2d');
+            const gap = parseInt(gapRange.value);
+            const bgHex = bgColor.value;
+
+            let finalWidth = 0;
+            let finalHeight = 0;
+            renderBoxes = []; 
+
+            if (currentLayout === 'col') {
+                const firstImg = loadedImages[0];
+                const effFirstW = (firstImg.rotate % 180 !== 0) ? firstImg.img.height : firstImg.img.width;
+                finalWidth = effFirstW;
+                
+                finalHeight = loadedImages.reduce((sum, data) => {
+                    const ew = (data.rotate % 180 !== 0) ? data.img.height : data.img.width;
+                    const eh = (data.rotate % 180 !== 0) ? data.img.width : data.img.height;
+                    const scale = finalWidth / ew;
+                    return sum + (eh * scale);
+                }, 0) + gap * (loadedImages.length - 1);
+
+                resultCanvas.width = finalWidth;
+                resultCanvas.height = finalHeight;
+                ctx.fillStyle = bgHex;
+                ctx.fillRect(0, 0, finalWidth, finalHeight);
+
+                let currentY = 0;
+                loadedImages.forEach((data, index) => {
+                    const ew = (data.rotate % 180 !== 0) ? data.img.height : data.img.width;
+                    const eh = (data.rotate % 180 !== 0) ? data.img.width : data.img.height;
+                    const scale = finalWidth / ew;
+                    const drawHeight = eh * scale;
+                    
+                    drawImageEx(ctx, data, 0, currentY, finalWidth, drawHeight, imageFit.value); // Apply universal fit mode
+                    renderBoxes.push({ index, x: 0, y: currentY, w: finalWidth, h: drawHeight });
+                    currentY += drawHeight + gap;
+                });
+
+            } else if (currentLayout === 'row') {
+                const firstImg = loadedImages[0];
+                const effFirstH = (firstImg.rotate % 180 !== 0) ? firstImg.img.width : firstImg.img.height;
+                finalHeight = effFirstH;
+                
+                finalWidth = loadedImages.reduce((sum, data) => {
+                    const ew = (data.rotate % 180 !== 0) ? data.img.height : data.img.width;
+                    const eh = (data.rotate % 180 !== 0) ? data.img.width : data.img.height;
+                    const scale = finalHeight / eh;
+                    return sum + (ew * scale);
+                }, 0) + gap * (loadedImages.length - 1);
+
+                resultCanvas.width = finalWidth;
+                resultCanvas.height = finalHeight;
+                ctx.fillStyle = bgHex;
+                ctx.fillRect(0, 0, finalWidth, finalHeight);
+
+                let currentX = 0;
+                loadedImages.forEach((data, index) => {
+                    const ew = (data.rotate % 180 !== 0) ? data.img.height : data.img.width;
+                    const eh = (data.rotate % 180 !== 0) ? data.img.width : data.img.height;
+                    const scale = finalHeight / eh;
+                    const drawWidth = ew * scale;
+
+                    drawImageEx(ctx, data, currentX, 0, drawWidth, finalHeight, imageFit.value);
+                    renderBoxes.push({ index, x: currentX, y: 0, w: drawWidth, h: finalHeight });
+                    currentX += drawWidth + gap;
+                });
+
+            } else if (currentLayout === 'grid') {
+                const cols = parseInt(gridCols.value) || 2;
+                const cellRatio = parseFloat(gridRatioSlider.value) || 1.0;
+                const fitMode = imageFit.value;
+                
+                const cellW = 800;
+                const cellH = Math.round(cellW / cellRatio);
+
+                let layoutMap = [];
+                let gridOccupied = []; 
+                let r = 0, c = 0;
+
+                loadedImages.forEach((data) => {
+                    let cs = Math.min(data.colSpan || 1, cols); 
+                    let rs = data.rowSpan || 1;
+
+                    let found = false;
+                    while (!found) {
+                        if (c + cs > cols) { c = 0; r++; }
+                        let isFree = true;
+                        for (let i = r; i < r + rs; i++) {
+                            for (let j = c; j < c + cs; j++) {
+                                if (gridOccupied[i] && gridOccupied[i][j]) {
+                                    isFree = false;
+                                    break;
+                                }
+                            }
+                            if (!isFree) break;
+                        }
+                        if (isFree) found = true;
+                        else c++; 
+                    }
+
+                    for (let i = r; i < r + rs; i++) {
+                        if (!gridOccupied[i]) gridOccupied[i] = [];
+                        for (let j = c; j < c + cs; j++) gridOccupied[i][j] = true;
+                    }
+
+                    layoutMap.push({
+                        x: c * (cellW + gap),
+                        y: r * (cellH + gap),
+                        w: cs * cellW + (cs - 1) * gap,
+                        h: rs * cellH + (rs - 1) * gap,
+                        maxRow: r + rs 
+                    });
+
+                    c += cs; 
+                });
+
+                let calculatedMaxRows = layoutMap.reduce((max, item) => Math.max(max, item.maxRow), 0);
+                if (calculatedMaxRows === 0) calculatedMaxRows = 1;
+
+                finalWidth = (cols * cellW) + ((cols - 1) * gap);
+                finalHeight = (calculatedMaxRows * cellH) + ((calculatedMaxRows - 1) * gap);
+
+                resultCanvas.width = finalWidth;
+                resultCanvas.height = finalHeight;
+                ctx.fillStyle = bgHex;
+                ctx.fillRect(0, 0, finalWidth, finalHeight);
+
+                loadedImages.forEach((data, index) => {
+                    const l = layoutMap[index];
+                    drawImageEx(ctx, data, l.x, l.y, l.w, l.h, fitMode);
+                    renderBoxes.push({ index, x: l.x, y: l.y, w: l.w, h: l.h });
+                });
+            }
+
+            // Draw watermark
+            ctx.font = `bold ${Math.max(14, finalWidth*0.015)}px Arial`;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.shadowColor = "rgba(0,0,0,0.5)";
+            ctx.shadowBlur = 4;
+            ctx.fillText('©Puti-AI', finalWidth - 10, finalHeight - 10);
+
+            canvasPlaceholder.classList.add('hidden');
+            resultCanvas.classList.remove('hidden');
+            actionGroup.classList.remove('hidden');
+            
+            resolutionBadge.textContent = `${finalWidth} x ${finalHeight} px`;
+            resolutionBadge.classList.remove('hidden');
+        }
+
+        // Attach renderer to button
+        generateBtn.addEventListener('click', renderCanvas);
+
+        // --- Seamless Canvas Panning & Zooming Logic ---
+        let isPanningCanvas = false;
+        let panTargetState = null;
+
+        function getCanvasMousePos(evt) {
+            const rect = resultCanvas.getBoundingClientRect();
+            const scaleX = resultCanvas.width / rect.width;
+            const scaleY = resultCanvas.height / rect.height;
+            
+            let clientX = evt.clientX;
+            let clientY = evt.clientY;
+            
+            if(evt.touches && evt.touches.length > 0) {
+                clientX = evt.touches[0].clientX;
+                clientY = evt.touches[0].clientY;
+            }
+
+            return {
+                x: (clientX - rect.left) * scaleX,
+                y: (clientY - rect.top) * scaleY
+            };
+        }
+
+        resultCanvas.addEventListener('wheel', (e) => {
+            const pos = getCanvasMousePos(e);
+            let targetIndex = -1;
+            
+            for (let box of renderBoxes) {
+                if (pos.x >= box.x && pos.x <= box.x + box.w && pos.y >= box.y && pos.y <= box.y + box.h) {
+                    targetIndex = box.index;
+                    break;
+                }
+            }
+            
+            if (targetIndex !== -1) {
+                e.preventDefault(); 
+                let zoomDelta = e.deltaY > 0 ? -0.1 : 0.1; 
+                let currentZoom = loadedImages[targetIndex].zoom || 1.0;
+                let newZoom = Math.max(0.5, Math.min(4.0, currentZoom + zoomDelta));
+                
+                if(newZoom !== currentZoom) {
+                    loadedImages[targetIndex].zoom = newZoom;
+                    renderCanvas(); 
+                }
+            }
+        }, { passive: false });
+
+        function handlePanStart(e) {
+            const pos = getCanvasMousePos(e);
+            
+            for (let box of renderBoxes) {
+                if (pos.x >= box.x && pos.x <= box.x + box.w && pos.y >= box.y && pos.y <= box.y + box.h) {
+                    isPanningCanvas = true;
+                    // Prevent native image dragging & text selection which breaks pan
+                    if(e.type === 'touchstart') e.preventDefault(); 
+                    if(e.type === 'mousedown') e.preventDefault(); 
+                    
+                    panTargetState = {
+                        index: box.index,
+                        lastX: pos.x, // Store last instead of start to prevent sticky edge
+                        lastY: pos.y
+                    };
+                    break;
+                }
+            }
+        }
+
+        function handlePanMove(e) {
+            if (!isPanningCanvas || !panTargetState) return;
+            if(e.type === 'touchmove') e.preventDefault(); 
+
+            const pos = getCanvasMousePos(e);
+            const dx = pos.x - panTargetState.lastX;
+            const dy = pos.y - panTargetState.lastY;
+            
+            loadedImages[panTargetState.index].panX += dx;
+            loadedImages[panTargetState.index].panY += dy;
+
+            panTargetState.lastX = pos.x;
+            panTargetState.lastY = pos.y;
+            
+            renderCanvas(); 
+        }
+
+        function handlePanEnd() {
+            isPanningCanvas = false;
+            panTargetState = null;
+        }
+
+        // Event Listeners
+        resultCanvas.addEventListener('mousedown', handlePanStart);
+        window.addEventListener('mousemove', handlePanMove);
+        window.addEventListener('mouseup', handlePanEnd);
+
+        resultCanvas.addEventListener('touchstart', handlePanStart, { passive: false });
+        window.addEventListener('touchmove', handlePanMove, { passive: false });
+        window.addEventListener('touchend', handlePanEnd);
+
+        // Download & Copy
+        downloadBtn.addEventListener('click', () => {
+            try {
+                const format = outFormat.value;
+                const quality = parseFloat(outQuality.value);
+                const extension = format.split('/')[1] === 'jpeg' ? 'jpg' : format.split('/')[1]; 
+                
+                const dataURL = resultCanvas.toDataURL(format, quality);
+                const link = document.createElement('a');
+                link.download = `Puti-AI_Collage_${new Date().getTime()}.${extension}`;
+                link.href = dataURL;
+                link.click();
+            } catch (err) {
+                showError('圖片太大，無法直接下載，請嘗試在圖片上按右鍵選擇「另存圖片」。');
+            }
+        });
+
+        copyBtn.addEventListener('click', () => {
+            try {
+                resultCanvas.toBlob(async (blob) => {
+                    try {
+                        const item = new ClipboardItem({ 'image/png': blob });
+                        await navigator.clipboard.write([item]);
+                        
+                        const originalHTML = copyBtn.innerHTML;
+                        copyBtn.innerHTML = `<i class="fas fa-check"></i> 已複製！`;
+                        copyBtn.classList.replace('bg-indigo-500', 'bg-emerald-500');
+                        copyBtn.classList.replace('hover:bg-indigo-600', 'hover:bg-emerald-600');
+                        
+                        setTimeout(() => {
+                            copyBtn.innerHTML = originalHTML;
+                            copyBtn.classList.replace('bg-emerald-500', 'bg-indigo-500');
+                            copyBtn.classList.replace('hover:bg-emerald-600', 'hover:bg-indigo-600');
+                        }, 2500);
+
+                    } catch (clipboardErr) {
+                        showError('由於您的瀏覽器安全性限制，請直接在右側預覽圖上「按右鍵 → 複製圖片」。');
+                    }
+                }, 'image/png');
+            } catch (err) {
+                showError('複製時發生錯誤，請重試或改用右鍵複製。');
+            }
+        });
+    </script>
+</body>
+</html>
