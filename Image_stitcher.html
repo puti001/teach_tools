@@ -49,8 +49,8 @@
             <div>
                 <label class="block text-sm font-semibold mb-2 text-slate-700">1. 選擇圖片 (2~9張)</label>
                 <div class="flex items-center justify-center w-full">
-                    <label for="imageInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
-                        <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <label id="dropZone" for="imageInput" class="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition">
+                        <div class="flex flex-col items-center justify-center pt-5 pb-6 pointer-events-none">
                             <i class="fas fa-cloud-upload-alt text-3xl text-slate-400 mb-2"></i>
                             <p class="mb-2 text-sm text-slate-500"><span class="font-semibold">點擊上傳</span> 或拖曳圖片至此</p>
                             <p class="text-xs text-slate-400">PNG, JPG, WebP</p>
@@ -236,6 +236,7 @@
         const resolutionBadge = document.getElementById('resolutionBadge');
         const dragHint = document.getElementById('dragHint');
         const canvasWrapper = document.getElementById('canvasWrapper');
+        const dropZone = document.getElementById('dropZone');
         
         // State
         let loadedImages = []; // { img, rotate, flipH, flipV, panX, panY, zoom, colSpan, rowSpan }
@@ -348,9 +349,8 @@
             }
         }
 
-        // Handle File Selection
-        imageInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
+        // 獨立出的檔案處理函式 (給按鈕點擊與拖曳共用)
+        async function processInputFiles(files) {
             if (files.length === 0) return;
             if (files.length < 2 || files.length > 9) {
                 showError('請選擇 2 到 9 張圖片！');
@@ -540,6 +540,39 @@
             } catch (error) {
                 showError('讀取圖片時發生錯誤。');
                 generateBtn.innerHTML = '<i class="fas fa-magic"></i> 產生拼接圖片';
+            }
+        }
+
+        // Handle File Selection (Button Click)
+        imageInput.addEventListener('change', (e) => {
+            processInputFiles(Array.from(e.target.files));
+        });
+
+        // Handle File Selection (Drag and Drop)
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            dropZone.classList.remove('border-slate-300', 'bg-slate-50');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            dropZone.classList.add('border-slate-300', 'bg-slate-50');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            dropZone.classList.add('border-slate-300', 'bg-slate-50');
+            
+            if (e.dataTransfer.files) {
+                const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+                if (files.length > 0) {
+                    processInputFiles(files);
+                } else {
+                    showError('請上傳有效的圖片檔案 (PNG, JPG, WebP)');
+                }
             }
         });
 
