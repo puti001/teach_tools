@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 照片轉輪播影片產生器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col justify-between">
+
+    <main class="container mx-auto px-4 py-8 flex-grow max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-3 flex justify-center items-center gap-3">
+                <i class="fas fa-photo-video text-blue-600"></i>
+                Puti-AI 照片轉輪播影片產生器
+            </h1>
+            <p class="text-slate-600">上傳照片與音樂，輕鬆一鍵生成高質感的專屬輪播影片</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左側：控制面板 -->
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                
+                <!-- 1. 上傳照片 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">1. 選擇照片 (可多選)</label>
+                    <div class="border-2 border-dashed border-slate-300 rounded-xl p-4 text-center hover:bg-slate-50 transition-colors cursor-pointer relative" id="drop-zone">
+                        <input type="file" id="imageInput" accept="image/*" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <i class="fas fa-cloud-upload-alt text-3xl text-blue-500 mb-2"></i>
+                        <p class="text-sm text-slate-500">點擊或拖曳照片至此</p>
+                    </div>
+                    <div id="imagePreviewContainer" class="mt-3 flex gap-2 overflow-x-auto custom-scrollbar pb-2 hidden">
+                        <!-- 預覽圖將在此生成 -->
+                    </div>
+                    <p id="imageCount" class="text-xs text-slate-400 mt-1 hidden">已選擇 0 張照片</p>
+                </div>
+
+                <!-- 2. 背景音樂 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">2. 背景音樂 (選填)</label>
+                    <input type="file" id="audioInput" accept="audio/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors">
+                    <p id="audioName" class="text-xs text-slate-400 mt-1 truncate hidden">已選擇：</p>
+                    <p class="text-xs text-green-600 mt-1"><i class="fas fa-info-circle"></i> 影片產生時會自動加入淡入/淡出效果</p>
+                </div>
+
+                <!-- 3. 設定 -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">3. 影片設定</label>
+                    <div class="flex flex-col gap-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-600">影片比例</span>
+                            <select id="ratioInput" class="bg-white border border-slate-300 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block p-1.5 w-28">
+                                <option value="16:9" selected>橫式 16:9</option>
+                                <option value="9:16">直式 9:16</option>
+                                <option value="1:1">方形 1:1</option>
+                                <option value="4:3">傳統 4:3</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-600">每張照片停留時間</span>
+                            <select id="durationInput" class="bg-white border border-slate-300 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block p-1.5 w-28">
+                                <option value="2">2 秒</option>
+                                <option value="3" selected>3 秒</option>
+                                <option value="5">5 秒</option>
+                                <option value="8">8 秒</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-slate-600">轉場特效</span>
+                            <select id="transitionInput" class="bg-white border border-slate-300 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block p-1.5 w-28">
+                                <option value="fade" selected>漸變淡入</option>
+                                <option value="slideLeft">向左滑動</option>
+                                <option value="slideUp">向上滑動</option>
+                                <option value="zoomFade">縮放漸變</option>
+                                <option value="none">無 (直接切換)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. 產生與預覽按鈕 -->
+                <div class="flex gap-3">
+                    <button id="previewBtn" class="w-1/3 bg-slate-600 hover:bg-slate-700 text-white font-bold py-3 px-2 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed text-sm md:text-base">
+                        <i class="fas fa-play"></i> 預覽
+                    </button>
+                    <button id="stopPreviewBtn" class="w-1/3 bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-2 rounded-xl transition-colors hidden items-center justify-center gap-2 text-sm md:text-base">
+                        <i class="fas fa-stop"></i> 停止預覽
+                    </button>
+                    <button id="generateBtn" class="w-2/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-2 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed text-sm md:text-base">
+                        <i class="fas fa-magic"></i> 生成影片
+                    </button>
+                </div>
+
+                <div id="statusMessage" class="mt-4 text-sm text-center font-medium hidden"></div>
+            </div>
+
+            <!-- 右側：畫布與預覽 -->
+            <div class="lg:col-span-2 flex flex-col items-center justify-center bg-slate-900 rounded-2xl overflow-hidden relative shadow-inner min-h-[400px]">
+                
+                <!-- 預設提示 -->
+                <div id="canvasPlaceholder" class="text-slate-400 text-center p-6 z-10 flex flex-col items-center">
+                    <i class="fas fa-film text-5xl mb-3 opacity-50"></i>
+                    <p>影片生成畫面將在此顯示</p>
+                    <p class="text-xs mt-2 opacity-70 text-yellow-400"><i class="fas fa-exclamation-triangle"></i> 生成為即時錄製，期間請停留在本頁面等待</p>
+                </div>
+
+                <!-- 生成進度覆蓋層 -->
+                <div id="progressOverlay" class="absolute inset-0 bg-black/70 z-20 hidden flex-col items-center justify-center text-white backdrop-blur-sm">
+                    <div class="loader mb-4"></div>
+                    <p class="text-lg font-semibold mb-2">正在即時錄製影片中...</p>
+                    <div class="w-64 bg-slate-700 rounded-full h-2.5 mb-2">
+                        <div id="progressBar" class="bg-blue-500 h-2.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                    <p id="progressText" class="text-sm text-slate-300">0%</p>
+                </div>
+
+                <!-- 實際繪製的 Canvas (16:9 比例) -->
+                <canvas id="videoCanvas" width="1280" height="720" class="w-full h-auto max-h-full object-contain hidden"></canvas>
+                
+                <!-- 完成後的影片播放器與下載區 -->
+                <div id="resultContainer" class="absolute inset-0 bg-slate-900 z-30 hidden flex-col">
+                    <video id="resultVideo" controls class="w-full h-full object-contain"></video>
+                    <div class="absolute bottom-4 left-0 right-0 flex justify-center">
+                        <a id="downloadBtn" href="#" download="Puti-AI-Slideshow.webm" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2">
+                            <i class="fas fa-download"></i> 下載影片 (.webm)
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer 版權宣告區 -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-slate-600 text-sm leading-relaxed">
+                屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣。<br>
+                <span class="text-red-500 font-semibold">嚴禁商用與任何侵權、不尊重著作權的行為。</span><br>
+                更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-600 hover:text-blue-800 underline font-medium">點此前往</a>
+            </p>
+            <p class="text-slate-400 text-xs mt-3">&copy; Puti-AI</p>
+        </div>
+    </footer>
+
+    <!-- 訊息提示框 -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-slate-800 text-white px-6 py-3 rounded-lg shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 z-50"></div>
+
+    <script>
+        // DOM 元素
+        const imageInput = document.getElementById('imageInput');
+        const audioInput = document.getElementById('audioInput');
+        const ratioInput = document.getElementById('ratioInput');
+        const durationInput = document.getElementById('durationInput');
+        const transitionInput = document.getElementById('transitionInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const previewBtn = document.getElementById('previewBtn');
+        const stopPreviewBtn = document.getElementById('stopPreviewBtn');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imageCount = document.getElementById('imageCount');
+        const audioName = document.getElementById('audioName');
+        const canvas = document.getElementById('videoCanvas');
+        const ctx = canvas.getContext('2d');
+        const canvasPlaceholder = document.getElementById('canvasPlaceholder');
+        const progressOverlay = document.getElementById('progressOverlay');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const resultContainer = document.getElementById('resultContainer');
+        const resultVideo = document.getElementById('resultVideo');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // 狀態變數
+        let uploadedImages = [];
+        let audioFile = null;
+        let isGenerating = false;
+        let animationId = null;
+        let currentAudioSource = null;
+        let currentAudioCtx = null;
+        let currentVideoUrl = null; // 新增：用於記錄當前影片的 Blob URL，方便後續釋放記憶體
+        let currentImageUrls = [];  // 用於記錄當前照片的虛擬路徑
+        let currentVideoStream = null; // 💡 新增：用於記錄並關閉 Canvas 的影像流，解決隱形記憶體怪獸！
+
+        // 顯示訊息框
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-xl transition-all duration-300 z-50 transform translate-y-0 opacity-100 ${
+                type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-slate-800'
+            } text-white`;
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // 處理照片上傳
+        imageInput.addEventListener('change', handleImageUpload);
+        
+        async function handleImageUpload(e) {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+
+            // 鎖定按鈕，避免照片還沒載入完就按預覽或生成
+            generateBtn.disabled = true;
+            previewBtn.disabled = true;
+
+            // 💡 終極優化：清空舊照片時，一併釋放瀏覽器深層記憶體
+            currentImageUrls.forEach(url => URL.revokeObjectURL(url));
+            currentImageUrls = [];
+            uploadedImages = [];
+            
+            // 清空畫面
+            imagePreviewContainer.innerHTML = '';
+            imagePreviewContainer.classList.remove('hidden');
+            imageCount.classList.remove('hidden');
+            imageCount.innerHTML = `<i class="fas fa-spinner fa-spin text-blue-500"></i> 照片載入中 (0 / ${files.length})...`;
+
+            let loadedCount = 0;
+            
+            // 使用 Promise 確保所有照片都讀取完畢
+            const loadPromises = files.map(file => {
+                return new Promise(resolve => {
+                    if (!file.type.startsWith('image/')) {
+                        resolve(null);
+                        return;
+                    }
+                    
+                    // 💡 終極優化：改用 ObjectURL 輕量化載入，取代極度耗費記憶體的 DataURL
+                    const objectUrl = URL.createObjectURL(file);
+                    currentImageUrls.push(objectUrl); // 記錄路徑，以便下次大掃除
+
+                    const img = new Image();
+                    img.onload = () => {
+                        loadedCount++;
+                        imageCount.innerHTML = `<i class="fas fa-spinner fa-spin text-blue-500"></i> 照片載入中 (${loadedCount} / ${files.length})...`;
+                        resolve({ img: img, src: objectUrl });
+                    };
+                    img.onerror = () => resolve(null);
+                    img.src = objectUrl;
+                });
+            });
+
+            // 等待所有照片載入
+            const results = await Promise.all(loadPromises);
+
+            results.forEach(item => {
+                if(item && item.img) {
+                    uploadedImages.push(item.img);
+                    const thumb = document.createElement('img');
+                    thumb.src = item.src;
+                    thumb.className = "h-16 w-16 object-cover rounded-md border border-slate-200 flex-shrink-0";
+                    imagePreviewContainer.appendChild(thumb);
+                }
+            });
+
+            imageCount.textContent = `已選擇 ${uploadedImages.length} 張照片`;
+            
+            // 照片載入完畢，恢復按鈕功能
+            generateBtn.disabled = false;
+            previewBtn.disabled = false;
+        }
+
+        // 處理音訊上傳
+        audioInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                audioFile = e.target.files[0];
+                audioName.textContent = `已選擇音樂：${audioFile.name}`;
+                audioName.classList.remove('hidden');
+            } else {
+                audioFile = null;
+                audioName.classList.add('hidden');
+            }
+        });
+
+        // 繪製單張影像 (支援透明度、位移、縮放等轉場參數)
+        function drawImageToCanvas(img, alpha, xOffsetRatio = 0, yOffsetRatio = 0, scale = 1) {
+            if (!img) return;
+
+            const cw = canvas.width;
+            const ch = canvas.height;
+            
+            ctx.save(); // 儲存畫布狀態
+            ctx.globalAlpha = alpha;
+
+            // 應用轉場變換 (以畫布中心點進行縮放與位移)
+            ctx.translate(cw / 2, ch / 2);
+            ctx.translate(cw * xOffsetRatio, ch * yOffsetRatio);
+            ctx.scale(scale, scale);
+            ctx.translate(-cw / 2, -ch / 2);
+
+            // 1. 繪製模糊背景 (填滿)
+            const imgRatio = img.width / img.height;
+            const canvasRatio = cw / ch;
+            
+            let bgWidth, bgHeight, bgX, bgY;
+            if (imgRatio > canvasRatio) {
+                bgHeight = ch;
+                bgWidth = img.width * (ch / img.height);
+                bgX = (cw - bgWidth) / 2;
+                bgY = 0;
+            } else {
+                bgWidth = cw;
+                bgHeight = img.height * (cw / img.width);
+                bgX = 0;
+                bgY = (ch - bgHeight) / 2;
+            }
+
+            // 模糊背景
+            ctx.filter = 'blur(30px) brightness(0.6)';
+            ctx.drawImage(img, bgX, bgY, bgWidth, bgHeight);
+            ctx.filter = 'none';
+
+            // 2. 繪製主體圖片 (Contain)
+            let drawWidth, drawHeight, offsetX, offsetY;
+            if (imgRatio > canvasRatio) {
+                drawWidth = cw;
+                drawHeight = img.height * (cw / img.width);
+                offsetX = 0;
+                offsetY = (ch - drawHeight) / 2;
+            } else {
+                drawHeight = ch;
+                drawWidth = img.width * (ch / img.height);
+                offsetX = (cw - drawWidth) / 2;
+                offsetY = 0;
+            }
+
+            // 圖片陰影
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 20;
+            ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
+            
+            ctx.restore(); // 恢復畫布狀態
+        }
+
+        // 清除與還原狀態函數
+        function cleanup() {
+            cancelAnimationFrame(animationId);
+            
+            // 💡 新增：強制關閉隱形的 Canvas 影像流軌道，釋放大量記憶體
+            if (currentVideoStream) {
+                currentVideoStream.getTracks().forEach(track => track.stop());
+                currentVideoStream = null;
+            }
+
+            if (currentAudioSource) {
+                try { currentAudioSource.stop(); } catch(e) {}
+                currentAudioSource = null;
+            }
+            if (currentAudioCtx) {
+                currentAudioCtx.close();
+                currentAudioCtx = null;
+            }
+            isGenerating = false;
+            generateBtn.disabled = false;
+            previewBtn.disabled = false;
+            generateBtn.innerHTML = '<i class="fas fa-magic"></i> 生成影片';
+            previewBtn.innerHTML = '<i class="fas fa-play"></i> 預覽';
+            previewBtn.classList.remove('hidden');
+            previewBtn.classList.add('flex');
+            stopPreviewBtn.classList.add('hidden');
+            stopPreviewBtn.classList.remove('flex');
+        }
+
+        // 停止預覽按鈕
+        stopPreviewBtn.addEventListener('click', () => {
+            cleanup();
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            canvas.classList.add('hidden');
+            canvasPlaceholder.classList.remove('hidden');
+            showToast('已停止預覽', 'info');
+        });
+
+        // 綁定按鈕事件
+        generateBtn.addEventListener('click', () => runSlideshow('record'));
+        previewBtn.addEventListener('click', () => runSlideshow('preview'));
+
+        // 下載按鈕點擊提示
+        downloadBtn.addEventListener('click', () => {
+            if (downloadBtn.href !== '#' && downloadBtn.href !== '') {
+                showToast('💾 影片下載中... 請等待瀏覽器存檔完成', 'info');
+                // 💡 修正：移除「5秒自動刪除」機制！這會導致下載中途被拔掉插頭，造成瀏覽器卡死1分鐘！
+            }
+        });
+
+        // 核心邏輯：預覽或錄製影片
+        async function runSlideshow(mode) {
+            if (uploadedImages.length === 0) {
+                showToast('請先上傳至少一張照片！', 'error');
+                return;
+            }
+
+            if (isGenerating) return;
+            isGenerating = true;
+
+            const isRecord = mode === 'record';
+
+            // 新增：每次開始新生成或預覽前，釋放上一支影片的記憶體
+            if (currentVideoUrl) {
+                URL.revokeObjectURL(currentVideoUrl);
+                currentVideoUrl = null;
+                resultVideo.src = "";
+                downloadBtn.href = "#";
+            }
+
+            // UI 狀態切換
+            generateBtn.disabled = true;
+            previewBtn.disabled = true;
+            canvasPlaceholder.classList.add('hidden');
+            resultContainer.classList.add('hidden');
+            canvas.classList.remove('hidden');
+
+            if (isRecord) {
+                generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 生成中...';
+                progressOverlay.classList.remove('hidden');
+                progressOverlay.classList.add('flex');
+                progressBar.style.width = '0%';
+                progressText.textContent = '準備中...';
+            } else {
+                previewBtn.classList.add('hidden');
+                previewBtn.classList.remove('flex');
+                stopPreviewBtn.classList.remove('hidden');
+                stopPreviewBtn.classList.add('flex');
+            }
+
+            // 設定畫布比例與解析度
+            const ratio = ratioInput.value;
+            if (ratio === '16:9') {
+                canvas.width = 1280; canvas.height = 720;
+            } else if (ratio === '9:16') {
+                canvas.width = 720; canvas.height = 1280;
+            } else if (ratio === '1:1') {
+                canvas.width = 1080; canvas.height = 1080;
+            } else if (ratio === '4:3') {
+                canvas.width = 1024; canvas.height = 768;
+            }
+
+            const durationPerImage = parseInt(durationInput.value);
+            const transitionType = transitionInput.value;
+            const transitionDuration = 0.8; // 轉場時間(秒)
+            const fps = 30;
+            const totalImages = uploadedImages.length;
+            const totalDuration = totalImages * durationPerImage;
+            
+            // 設定音訊與淡入淡出 (Fade In / Fade Out)
+            let dest, gainNode;
+            if (audioFile) {
+                try {
+                    currentAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    if (isRecord) {
+                        dest = currentAudioCtx.createMediaStreamDestination();
+                    }
+                    
+                    const arrayBuffer = await audioFile.arrayBuffer();
+                    const audioBuffer = await currentAudioCtx.decodeAudioData(arrayBuffer);
+                    
+                    currentAudioSource = currentAudioCtx.createBufferSource();
+                    currentAudioSource.buffer = audioBuffer;
+                    currentAudioSource.loop = true; // 音樂循環
+                    
+                    gainNode = currentAudioCtx.createGain();
+                    
+                    // 連接： 音源 -> 增益節點(控制音量) -> 輸出
+                    currentAudioSource.connect(gainNode);
+                    if (isRecord) {
+                        gainNode.connect(dest);
+                    } else {
+                        gainNode.connect(currentAudioCtx.destination); // 預覽時直接從喇叭播放
+                    }
+                    
+                    // 設定淡入淡出時間參數
+                    const fadeSeconds = 2.0; // 2秒淡入淡出
+                    const startT = currentAudioCtx.currentTime;
+                    const maxVolume = isRecord ? 2.0 : 1.0; // 💡 更新：錄影模式自動放大 2.0 倍音量
+                    
+                    // 開頭淡入 (Fade In)
+                    gainNode.gain.setValueAtTime(0, startT);
+                    gainNode.gain.linearRampToValueAtTime(maxVolume, startT + fadeSeconds);
+                    
+                    // 結尾淡出 (Fade Out)
+                    const endT = startT + totalDuration;
+                    gainNode.gain.setValueAtTime(maxVolume, Math.max(startT, endT - fadeSeconds));
+                    gainNode.gain.linearRampToValueAtTime(0, endT);
+
+                } catch (err) {
+                    console.error("Audio error:", err);
+                    showToast('載入音樂失敗，將無聲生成', 'error');
+                }
+            }
+
+            // 若為錄製模式，設定 MediaRecorder
+            let recorder;
+            const chunks = [];
+            if (isRecord) {
+                try {
+                    // 💡 修正：將影像流存入全域變數，以便生成結束時可以關閉它
+                    currentVideoStream = canvas.captureStream(fps);
+                    const tracks = [currentVideoStream.getVideoTracks()[0]];
+                    
+                    if (audioFile && dest && dest.stream.getAudioTracks().length > 0) {
+                        tracks.push(dest.stream.getAudioTracks()[0]);
+                    }
+                    const combinedStream = new MediaStream(tracks);
+
+                    // 💡 修復了此處大括號遺失造成的語法錯誤
+                    let options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 3000000 };
+                    if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                        options = { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 3000000 };
+                        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                            options = { mimeType: 'video/webm', videoBitsPerSecond: 3000000 };
+                        }
+                    }
+
+                    recorder = new MediaRecorder(combinedStream, options);
+
+                    recorder.ondataavailable = (e) => {
+                        if (e.data && e.data.size > 0) chunks.push(e.data);
+                    };
+
+                    recorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: options.mimeType || 'video/webm' });
+                        
+                        // 💡 新增：建立完 Blob 影片檔後，立刻清空原始資料塊陣列，強迫釋放深層記憶體
+                        chunks.length = 0; 
+
+                        // 更新：將 URL 存入全域變數，以便下次產生時能釋放記憶體
+                        currentVideoUrl = URL.createObjectURL(blob);
+                        
+                        resultVideo.src = currentVideoUrl;
+                        downloadBtn.href = currentVideoUrl;
+                        
+                        cleanup();
+
+                        // 恢復 UI 狀態並顯示結果
+                        progressOverlay.classList.add('hidden');
+                        progressOverlay.classList.remove('flex');
+                        resultContainer.classList.remove('hidden');
+                        resultContainer.classList.add('flex');
+                        showToast('影片生成完成！可以點選下載了', 'success');
+                        
+                        // 確保影片載入但不自動播放
+                        resultVideo.load();
+                    };
+
+                    recorder.start();
+                } catch (err) {
+                    console.error("Recording error:", err);
+                    showToast('產生影片時發生錯誤，請重試', 'error');
+                    cleanup();
+                    progressOverlay.classList.add('hidden');
+                    progressOverlay.classList.remove('flex');
+                    return;
+                }
+            }
+
+            // 開始播放音樂
+            if (currentAudioSource) currentAudioSource.start(0);
+
+            // 畫面渲染迴圈 (Canvas Animation Loop)
+            const startTime = performance.now();
+
+            function renderFrame(now) {
+                const elapsed = (now - startTime) / 1000; // 經過秒數
+                
+                if (elapsed >= totalDuration) {
+                    if (isRecord && recorder && recorder.state !== 'inactive') {
+                        recorder.stop();
+                    } else if (!isRecord) {
+                        cleanup();
+                        showToast('預覽播放完畢', 'success');
+                    }
+                    return;
+                }
+                
+                if (isRecord) {
+                    // 更新進度條
+                    const progressPercent = Math.min(100, Math.floor((elapsed / totalDuration) * 100));
+                    progressBar.style.width = `${progressPercent}%`;
+                    progressText.textContent = `${progressPercent}%`;
+                }
+
+                // 計算當前與下一張照片並限制索引防呆
+                let currentIndex = Math.floor(elapsed / durationPerImage);
+                currentIndex = Math.min(currentIndex, totalImages - 1);
+                const timeInCurrent = elapsed % durationPerImage;
+                
+                // 清空畫布底色
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // 多種轉場特效邏輯
+                if (timeInCurrent > durationPerImage - transitionDuration && currentIndex < totalImages - 1 && transitionType !== 'none') {
+                    const nextIndex = Math.min(currentIndex + 1, totalImages - 1);
+                    const progress = (timeInCurrent - (durationPerImage - transitionDuration)) / transitionDuration; 
+                    
+                    if (transitionType === 'fade') {
+                        drawImageToCanvas(uploadedImages[currentIndex], 1 - progress);
+                        drawImageToCanvas(uploadedImages[nextIndex], progress);
+                    } 
+                    else if (transitionType === 'slideLeft') {
+                        drawImageToCanvas(uploadedImages[currentIndex], 1, -progress, 0);
+                        drawImageToCanvas(uploadedImages[nextIndex], 1, 1 - progress, 0);
+                    }
+                    else if (transitionType === 'slideUp') {
+                        drawImageToCanvas(uploadedImages[currentIndex], 1, 0, -progress);
+                        drawImageToCanvas(uploadedImages[nextIndex], 1, 0, 1 - progress);
+                    }
+                    else if (transitionType === 'zoomFade') {
+                        drawImageToCanvas(uploadedImages[currentIndex], 1 - progress, 0, 0, 1 + (0.2 * progress));
+                        drawImageToCanvas(uploadedImages[nextIndex], progress, 0, 0, 1.2 - (0.2 * progress));
+                    }
+                } else {
+                    // 一般情況或無轉場，完全顯示當前照片
+                    drawImageToCanvas(uploadedImages[currentIndex], 1.0);
+                }
+
+                animationId = requestAnimationFrame(renderFrame);
+            }
+
+            // 啟動渲染
+            animationId = requestAnimationFrame(renderFrame);
+        }
+    </script>
+</body>
+</html>
