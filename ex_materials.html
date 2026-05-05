@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI Chrome擴充元件上架素材產生器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .canvas-container {
+            background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%), 
+                              linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), 
+                              linear-gradient(45deg, transparent 75%, #e5e7eb 75%), 
+                              linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-md">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-2xl font-bold flex items-center gap-2">
+                <i class="fa-brands fa-chrome"></i> Puti-AI Chrome素材產生器
+            </h1>
+            <div class="text-sm opacity-80">解決 Chrome Web Store 尺寸煩惱</div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8 flex flex-col md:flex-row gap-8">
+        
+        <!-- Left Panel: Controls -->
+        <div class="w-full md:w-1/3 space-y-6">
+            
+            <!-- Upload Area -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-semibold mb-3 border-b pb-2">1. 選擇圖片</h2>
+                <label class="block w-full h-32 border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50 rounded-lg cursor-pointer flex flex-col items-center justify-center transition-colors">
+                    <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500 mb-2"></i>
+                    <span class="text-gray-500 font-medium" id="upload-text">點擊或拖曳圖片至此</span>
+                    <input type="file" id="image-upload" class="hidden" accept="image/png, image/jpeg, image/webp">
+                </label>
+            </div>
+
+            <!-- Settings Area -->
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-semibold mb-3 border-b pb-2">2. 設定輸出格式</h2>
+                
+                <div class="space-y-4">
+                    <!-- Type Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">素材類型 (尺寸)</label>
+                        <select id="asset-type" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
+                            <option value="1280x800">螢幕截圖 (1280 x 800) - 推薦</option>
+                            <option value="640x400">螢幕截圖 (640 x 400)</option>
+                            <option value="440x280">宣傳圖片 (440 x 280)</option>
+                            <option value="128x128">擴充功能 Icon (128 x 128)</option>
+                        </select>
+                    </div>
+
+                    <!-- Fit Mode -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">圖片排版方式</label>
+                        <div class="grid grid-cols-1 gap-2">
+                            <label class="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="fit-mode" value="blur" checked class="text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">完整保留 + 背景模糊 <span class="text-xs text-gray-500">(最適合截圖)</span></span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="fit-mode" value="color" class="text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">完整保留 + 純色背景</span>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
+                                <input type="radio" name="fit-mode" value="cover" class="text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm">裁切填滿 <span class="text-xs text-gray-500">(最適合Icon)</span></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Color Picker (shown only when color is selected) -->
+                    <div id="color-picker-container" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">背景顏色</label>
+                        <div class="flex items-center gap-2">
+                            <input type="color" id="bg-color" value="#ffffff" class="h-8 w-12 cursor-pointer border border-gray-300 rounded">
+                            <span class="text-sm text-gray-500" id="color-hex">#ffffff</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <button id="download-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                <i class="fa-solid fa-download"></i> 下載圖片 (PNG)
+            </button>
+
+        </div>
+
+        <!-- Right Panel: Preview -->
+        <div class="w-full md:w-2/3 flex flex-col">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex-grow flex flex-col">
+                <div class="flex justify-between items-center mb-3 border-b pb-2">
+                    <h2 class="text-lg font-semibold">預覽區</h2>
+                    <span id="preview-size" class="text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">1280 x 800</span>
+                </div>
+                
+                <!-- Canvas Container -->
+                <div class="flex-grow flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden border border-gray-200 canvas-container p-4">
+                    <canvas id="preview-canvas" class="max-w-full max-h-[500px] shadow-lg bg-white"></canvas>
+                    <div id="placeholder-msg" class="text-gray-400 text-center absolute">
+                        <i class="fa-regular fa-image text-5xl mb-2"></i>
+                        <p>請先上傳圖片</p>
+                    </div>
+                </div>
+                
+                <p class="text-xs text-gray-500 mt-4 text-center">
+                    <i class="fa-solid fa-circle-info"></i> 輸出的圖片將精準符合 Chrome Web Store 要求的尺寸。
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-300 py-6 text-center text-sm mt-auto">
+        <div class="max-w-4xl mx-auto px-4 leading-relaxed">
+            屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為，<br class="hidden md:block">
+            更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-400 hover:text-blue-300 underline font-medium">點此前往</a>。
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uploadInput = document.getElementById('image-upload');
+            const uploadText = document.getElementById('upload-text');
+            const assetTypeSelect = document.getElementById('asset-type');
+            const fitModeRadios = document.getElementsByName('fit-mode');
+            const colorPickerContainer = document.getElementById('color-picker-container');
+            const bgColorInput = document.getElementById('bg-color');
+            const colorHexSpan = document.getElementById('color-hex');
+            const canvas = document.getElementById('preview-canvas');
+            const ctx = canvas.getContext('2d');
+            const downloadBtn = document.getElementById('download-btn');
+            const previewSizeText = document.getElementById('preview-size');
+            const placeholderMsg = document.getElementById('placeholder-msg');
+
+            let currentImage = null;
+
+            // Dimensions mapping
+            const dimensions = {
+                '1280x800': { w: 1280, h: 800 },
+                '640x400': { w: 640, h: 400 },
+                '440x280': { w: 440, h: 280 },
+                '128x128': { w: 128, h: 128 }
+            };
+
+            // Initialize canvas size
+            updateCanvasSize();
+
+            // Event Listeners
+            uploadInput.addEventListener('change', handleImageUpload);
+            assetTypeSelect.addEventListener('change', () => {
+                updateCanvasSize();
+                
+                // Auto-suggest fit mode based on type
+                if(assetTypeSelect.value === '128x128') {
+                    document.querySelector('input[name="fit-mode"][value="cover"]').checked = true;
+                } else if (!document.querySelector('input[name="fit-mode"][value="color"]').checked) {
+                    document.querySelector('input[name="fit-mode"][value="blur"]').checked = true;
+                }
+                
+                toggleColorPicker();
+                renderCanvas();
+            });
+            
+            fitModeRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    toggleColorPicker();
+                    renderCanvas();
+                });
+            });
+
+            bgColorInput.addEventListener('input', (e) => {
+                colorHexSpan.textContent = e.target.value;
+                renderCanvas();
+            });
+
+            downloadBtn.addEventListener('click', downloadImage);
+
+            // Drag and drop support
+            const dropZone = uploadInput.parentElement;
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    uploadInput.files = e.dataTransfer.files;
+                    handleImageUpload({ target: uploadInput });
+                }
+            });
+
+            // Functions
+            function handleImageUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                uploadText.textContent = file.name;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        currentImage = img;
+                        placeholderMsg.style.display = 'none';
+                        downloadBtn.disabled = false;
+                        renderCanvas();
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            function updateCanvasSize() {
+                const sizeStr = assetTypeSelect.value;
+                const dim = dimensions[sizeStr];
+                canvas.width = dim.w;
+                canvas.height = dim.h;
+                previewSizeText.textContent = `${dim.w} x ${dim.h}`;
+            }
+
+            function toggleColorPicker() {
+                const selectedMode = document.querySelector('input[name="fit-mode"]:checked').value;
+                if (selectedMode === 'color') {
+                    colorPickerContainer.classList.remove('hidden');
+                } else {
+                    colorPickerContainer.classList.add('hidden');
+                }
+            }
+
+            function renderCanvas() {
+                if (!currentImage) return;
+
+                const mode = document.querySelector('input[name="fit-mode"]:checked').value;
+                const cw = canvas.width;
+                const ch = canvas.height;
+                const iw = currentImage.width;
+                const ih = currentImage.height;
+
+                // Clear canvas
+                ctx.clearRect(0, 0, cw, ch);
+
+                if (mode === 'cover') {
+                    // Crop to fill
+                    const scale = Math.max(cw / iw, ch / ih);
+                    const x = (cw / 2) - (iw / 2) * scale;
+                    const y = (ch / 2) - (ih / 2) * scale;
+                    ctx.drawImage(currentImage, x, y, iw * scale, ih * scale);
+                } 
+                else if (mode === 'blur') {
+                    // Draw blurred background
+                    const scaleCover = Math.max(cw / iw, ch / ih);
+                    const xc = (cw / 2) - (iw / 2) * scaleCover;
+                    const yc = (ch / 2) - (ih / 2) * scaleCover;
+                    
+                    ctx.filter = 'blur(25px) brightness(0.8)';
+                    ctx.drawImage(currentImage, xc - 20, yc - 20, iw * scaleCover + 40, ih * scaleCover + 40); // extra padding to avoid edge artifacts
+                    ctx.filter = 'none';
+
+                    // Draw contained image
+                    const scaleContain = Math.min(cw / iw, ch / ih);
+                    const x = (cw / 2) - (iw / 2) * scaleContain;
+                    const y = (ch / 2) - (ih / 2) * scaleContain;
+                    
+                    // Add subtle shadow to the main image for depth
+                    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    ctx.shadowBlur = 15;
+                    ctx.shadowOffsetX = 0;
+                    ctx.shadowOffsetY = 5;
+                    
+                    ctx.drawImage(currentImage, x, y, iw * scaleContain, ih * scaleContain);
+                    
+                    // Reset shadow
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                }
+                else if (mode === 'color') {
+                    // Fill background color
+                    ctx.fillStyle = bgColorInput.value;
+                    ctx.fillRect(0, 0, cw, ch);
+
+                    // Draw contained image
+                    const scaleContain = Math.min(cw / iw, ch / ih);
+                    const x = (cw / 2) - (iw / 2) * scaleContain;
+                    const y = (ch / 2) - (ih / 2) * scaleContain;
+                    ctx.drawImage(currentImage, x, y, iw * scaleContain, ih * scaleContain);
+                }
+            }
+
+            function downloadImage() {
+                if (!currentImage) return;
+                
+                const sizeStr = assetTypeSelect.value;
+                const dataUrl = canvas.toDataURL('image/png');
+                
+                const a = document.createElement('a');
+                a.href = dataUrl;
+                a.download = `extension_${sizeStr}.png`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        });
+    </script>
+</body>
+</html>
