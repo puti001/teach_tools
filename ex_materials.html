@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puti-AI 擴充上架素材產生器</title>
+    <title>Puti-AI 擴充素材尺寸合規器</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -20,23 +20,19 @@
 </head>
 <body class="bg-gray-50 min-h-screen flex flex-col text-gray-800">
 
-    <!-- Header -->
     <header class="bg-blue-600 text-white shadow-md">
         <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
             <h1 class="text-2xl font-bold flex items-center gap-2">
-                <i class="fa-brands fa-chrome"></i> Puti-AI 擴充上架素材產生器
+                <i class="fa-brands fa-chrome"></i> Puti-AI 擴充素材尺寸合規器
             </h1>
-            <div class="text-sm opacity-80">解決 Chrome Web Store 尺寸煩惱</div>
+            <div class="text-sm opacity-80">自動校準符合 Chrome Web Store 官方規格</div>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="flex-grow max-w-6xl mx-auto w-full px-4 py-8 flex flex-col md:flex-row gap-8">
         
-        <!-- Left Panel: Controls -->
         <div class="w-full md:w-1/3 space-y-6">
             
-            <!-- Upload Area -->
             <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
                 <h2 class="text-lg font-semibold mb-3 border-b pb-2">1. 選擇圖片</h2>
                 <label class="block w-full h-32 border-2 border-dashed border-blue-300 hover:border-blue-500 hover:bg-blue-50 rounded-lg cursor-pointer flex flex-col items-center justify-center transition-colors">
@@ -46,14 +42,12 @@
                 </label>
             </div>
 
-            <!-- Settings Area -->
             <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-                <h2 class="text-lg font-semibold mb-3 border-b pb-2">2. 設定輸出格式</h2>
+                <h2 class="text-lg font-semibold mb-3 border-b pb-2">2. 設定合規格式</h2>
                 
                 <div class="space-y-4">
-                    <!-- Type Selection -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">素材類型 (尺寸)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">素材類型 (強制尺寸)</label>
                         <select id="asset-type" class="w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 p-2 border">
                             <option value="1280x800">螢幕截圖 (1280 x 800) - 推薦</option>
                             <option value="640x400">螢幕截圖 (640 x 400)</option>
@@ -62,9 +56,8 @@
                         </select>
                     </div>
 
-                    <!-- Fit Mode -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">圖片排版方式</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">圖片校準排版</label>
                         <div class="grid grid-cols-1 gap-2">
                             <label class="flex items-center gap-2 p-2 border rounded cursor-pointer hover:bg-gray-50">
                                 <input type="radio" name="fit-mode" value="blur" checked class="text-blue-600 focus:ring-blue-500">
@@ -81,7 +74,6 @@
                         </div>
                     </div>
 
-                    <!-- Color Picker (shown only when color is selected) -->
                     <div id="color-picker-container" class="hidden">
                         <label class="block text-sm font-medium text-gray-700 mb-1">背景顏色</label>
                         <div class="flex items-center gap-2">
@@ -92,39 +84,35 @@
                 </div>
             </div>
 
-            <!-- Actions -->
             <button id="download-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
-                <i class="fa-solid fa-download"></i> 下載圖片 (PNG)
+                <i class="fa-solid fa-download"></i> 下載合規圖片 (PNG)
             </button>
 
         </div>
 
-        <!-- Right Panel: Preview -->
         <div class="w-full md:w-2/3 flex flex-col">
             <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 flex-grow flex flex-col">
                 <div class="flex justify-between items-center mb-3 border-b pb-2">
-                    <h2 class="text-lg font-semibold">預覽區</h2>
+                    <h2 class="text-lg font-semibold">合規預覽區</h2>
                     <span id="preview-size" class="text-sm text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded">1280 x 800</span>
                 </div>
                 
-                <!-- Canvas Container -->
                 <div class="flex-grow flex items-center justify-center bg-gray-100 rounded-lg overflow-hidden border border-gray-200 canvas-container p-4">
                     <canvas id="preview-canvas" class="max-w-full max-h-[500px] shadow-lg bg-white"></canvas>
                     <div id="placeholder-msg" class="text-gray-400 text-center absolute">
                         <i class="fa-regular fa-image text-5xl mb-2"></i>
-                        <p>請先上傳圖片</p>
+                        <p>請先上傳圖片進行合規處理</p>
                     </div>
                 </div>
                 
                 <p class="text-xs text-gray-500 mt-4 text-center">
-                    <i class="fa-solid fa-circle-info"></i> 輸出的圖片將精準符合 Chrome Web Store 要求的尺寸。
+                    <i class="fa-solid fa-circle-check text-green-500"></i> 輸出圖片保證符合 Chrome Web Store 審核規格。
                 </p>
             </div>
         </div>
 
     </main>
 
-    <!-- Footer -->
     <footer class="bg-gray-800 text-gray-300 py-6 text-center text-sm mt-auto">
         <div class="max-w-4xl mx-auto px-4 leading-relaxed">
             屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為，<br class="hidden md:block">
@@ -272,7 +260,7 @@
                     const yc = (ch / 2) - (ih / 2) * scaleCover;
                     
                     ctx.filter = 'blur(25px) brightness(0.8)';
-                    ctx.drawImage(currentImage, xc - 20, yc - 20, iw * scaleCover + 40, ih * scaleCover + 40); // extra padding to avoid edge artifacts
+                    ctx.drawImage(currentImage, xc - 20, yc - 20, iw * scaleCover + 40, ih * scaleCover + 40);
                     ctx.filter = 'none';
 
                     // Draw contained image
@@ -280,7 +268,6 @@
                     const x = (cw / 2) - (iw / 2) * scaleContain;
                     const y = (ch / 2) - (ih / 2) * scaleContain;
                     
-                    // Add subtle shadow to the main image for depth
                     ctx.shadowColor = 'rgba(0,0,0,0.5)';
                     ctx.shadowBlur = 15;
                     ctx.shadowOffsetX = 0;
@@ -288,16 +275,13 @@
                     
                     ctx.drawImage(currentImage, x, y, iw * scaleContain, ih * scaleContain);
                     
-                    // Reset shadow
                     ctx.shadowColor = 'transparent';
                     ctx.shadowBlur = 0;
                 }
                 else if (mode === 'color') {
-                    // Fill background color
                     ctx.fillStyle = bgColorInput.value;
                     ctx.fillRect(0, 0, cw, ch);
 
-                    // Draw contained image
                     const scaleContain = Math.min(cw / iw, ch / ih);
                     const x = (cw / 2) - (iw / 2) * scaleContain;
                     const y = (ch / 2) - (ih / 2) * scaleContain;
@@ -313,7 +297,7 @@
                 
                 const a = document.createElement('a');
                 a.href = dataUrl;
-                a.download = `extension_${sizeStr}.png`;
+                a.download = `extension_${sizeStr}_compliant.png`;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
