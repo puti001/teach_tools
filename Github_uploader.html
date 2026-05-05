@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI GitHub Pages 自動上傳小幫手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 小吉 (GiGi) 專屬配色與發光效果 */
+        :root {
+            --gigi-yellow: #E5A91E; /* 芥末黃/金橙色 */
+            --gigi-cyan: #00FFFF; /* 螢光青藍色 */
+            --gigi-dark: #333333; /* 深灰色 */
+        }
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .gigi-border {
+            border: 2px solid var(--gigi-yellow);
+        }
+        .gigi-glow:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--gigi-cyan);
+            border-color: var(--gigi-cyan);
+        }
+        .gigi-btn {
+            background-color: var(--gigi-yellow);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .gigi-btn:hover {
+            background-color: #c99318;
+            box-shadow: 0 0 15px var(--gigi-cyan);
+        }
+        #drop-zone.dragover {
+            background-color: rgba(0, 255, 255, 0.1);
+            border-color: var(--gigi-cyan);
+            box-shadow: 0 0 15px var(--gigi-cyan) inset;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-4">
+
+    <!-- 主容器 -->
+    <main class="w-full max-w-3xl bg-white rounded-2xl shadow-xl overflow-hidden mt-4 gigi-border">
+        <!-- 標題區 -->
+        <div class="bg-gray-800 text-white p-6 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-full border-2 border-cyan-400 flex items-center justify-center bg-gray-700 shadow-[0_0_10px_#00FFFF]">
+                    <span class="text-cyan-400 font-bold text-xs text-center leading-tight">GiGi<br>AI</span>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-yellow-400">Puti-AI GitHub 上傳小幫手</h1>
+                    <p class="text-sm text-gray-300">支援實體檔案與 AI 程式碼直接轉檔上傳</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-8 space-y-6">
+            <!-- Token 設定區 -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <label class="block text-sm font-bold text-gray-700 mb-2">1. GitHub Personal Access Token (PAT)</label>
+                <div class="flex gap-2">
+                    <input type="password" id="github-token" placeholder="請輸入 ghp_ 開頭的 Token..." 
+                           class="flex-1 p-2 border rounded-lg gigi-glow text-sm">
+                    <button onclick="saveToken()" class="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 text-sm transition">儲存</button>
+                    <button onclick="clearToken()" class="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm transition">清除</button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">※ Token 會安全地儲存在您目前的瀏覽器中，不會外洩。只需設定一次。</p>
+            </div>
+
+            <!-- 檔案準備區 -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">2. 準備檔案 (拖曳實體檔案 或 直接貼上程式碼)</label>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 左側：實體檔案拖曳區 -->
+                    <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center transition-all hover:bg-gray-50 flex flex-col justify-center">
+                        <svg class="mx-auto h-10 w-10 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0-12l-4 4m4-4l4 4" />
+                        </svg>
+                        <p class="text-gray-600 text-sm font-medium">拖曳實體檔案/資料夾至此</p>
+                        <p class="text-xs text-gray-400 mt-1">例如：圖片、圖示等素材</p>
+                        <div class="flex gap-2 justify-center mt-3">
+                            <button onclick="document.getElementById('file-input').click()" class="px-3 py-1.5 bg-white border border-gray-300 rounded text-xs text-gray-700 hover:bg-gray-100 shadow-sm">選擇檔案</button>
+                            <button onclick="document.getElementById('folder-input').click()" class="px-3 py-1.5 bg-white border border-gray-300 rounded text-xs text-gray-700 hover:bg-gray-100 shadow-sm">選擇資料夾</button>
+                        </div>
+                        <input type="file" id="file-input" multiple class="hidden">
+                        <input type="file" id="folder-input" webkitdirectory directory multiple class="hidden">
+                    </div>
+
+                    <!-- 右側：程式碼轉檔區 -->
+                    <div class="border-2 border-yellow-300 bg-yellow-50 rounded-xl p-4 flex flex-col gap-2">
+                        <div class="flex items-center gap-2 text-yellow-800 font-bold text-sm mb-1">
+                            <span>⚡ AI 程式碼直接轉檔</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold text-gray-700 whitespace-nowrap">檔名:</span>
+                            <input type="text" id="code-filename" value="index.html" class="flex-1 p-1.5 border rounded border-yellow-300 focus:ring focus:ring-yellow-200 text-xs">
+                        </div>
+                        <textarea id="code-content" rows="4" class="w-full p-2 border rounded border-yellow-300 focus:ring focus:ring-yellow-200 text-xs font-mono" placeholder="請將 Gemini 生成的 HTML 程式碼貼在這裡..."></textarea>
+                        <button onclick="addCodeToQueue()" class="mt-auto w-full py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm font-bold shadow transition">
+                            ➕ 加入上傳清單
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 當前清單顯示區 -->
+                <div id="file-name-display" class="mt-4 p-4 border border-gray-200 rounded-lg bg-gray-50 min-h-[60px] flex items-center justify-center">
+                    <p class="text-gray-500 text-sm">目前清單為空，請拖曳檔案或貼上程式碼。</p>
+                </div>
+            </div>
+
+            <!-- 檔案名稱與提交區 -->
+            <div class="space-y-4 pt-2">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">3. 上傳至目標資料夾 (選填)</label>
+                    <input type="text" id="upload-path" placeholder="例如: my_game/ (若留空則上傳至根目錄)" class="w-full p-2 border rounded-lg gigi-glow">
+                    <p class="text-xs text-gray-500 mt-1">這會在 teach_tools 中建立對應的路徑。</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">更新紀錄 (Commit Message)</label>
+                    <input type="text" id="commit-message" value="Puti-AI 自動上傳更新" class="w-full p-2 border rounded-lg gigi-glow">
+                </div>
+            </div>
+
+            <!-- 上傳按鈕 -->
+            <button id="upload-btn" onclick="uploadFiles()" class="w-full py-4 gigi-btn rounded-xl font-bold text-lg flex justify-center items-center gap-2 mt-4 shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                一鍵上傳到 GitHub Pages
+            </button>
+
+            <!-- 狀態顯示區 -->
+            <div id="status-box" class="hidden p-4 rounded-lg text-sm font-medium whitespace-pre-wrap"></div>
+        </div>
+    </main>
+
+    <!-- 版權宣告區 -->
+    <footer class="mt-8 mb-4 text-center text-sm text-gray-500 w-full max-w-3xl">
+        <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+        <p class="mt-1">©Puti-AI 更多教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-yellow-600 hover:text-cyan-600 font-bold underline">點此前往</a></p>
+    </footer>
+
+    <script>
+        const REPO_OWNER = 'puti001';
+        const REPO_NAME = 'teach_tools';
+        let fileQueue = []; // 儲存準備上傳的檔案清單
+
+        // 初始化：讀取儲存的 Token
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedToken = localStorage.getItem('puti_github_token');
+            if (savedToken) {
+                document.getElementById('github-token').value = savedToken;
+            }
+        });
+
+        // 儲存 Token 到 localStorage
+        function saveToken() {
+            const token = document.getElementById('github-token').value.trim();
+            if (token) {
+                localStorage.setItem('puti_github_token', token);
+                showStatus('Token 已成功儲存在瀏覽器中！', 'success');
+            } else {
+                showStatus('請輸入 Token', 'error');
+            }
+        }
+
+        function clearToken() {
+            localStorage.removeItem('puti_github_token');
+            document.getElementById('github-token').value = '';
+            showStatus('Token 已清除', 'success');
+        }
+
+        /* ================= 程式碼轉檔邏輯 (新功能) ================= */
+        function addCodeToQueue() {
+            const filename = document.getElementById('code-filename').value.trim();
+            const code = document.getElementById('code-content').value;
+
+            if (!filename) return showStatus('錯誤：請輸入網頁檔名 (例如 index.html)', 'error');
+            if (!code) return showStatus('錯誤：請貼上程式碼', 'error');
+
+            try {
+                // 安全地將字串轉為 Base64 (可完美處理中文等 Unicode 字符)
+                const base64 = btoa(unescape(encodeURIComponent(code)));
+                const size = new Blob([code]).size; // 計算實際位元組大小
+
+                // 檢查清單中是否已經有同名檔案，有的話就覆蓋
+                const existingIndex = fileQueue.findIndex(f => f.relativePath === filename);
+                if (existingIndex !== -1) {
+                    fileQueue[existingIndex] = { relativePath: filename, base64: base64, size: size };
+                } else {
+                    fileQueue.push({ relativePath: filename, base64: base64, size: size });
+                }
+
+                updateFileDisplay();
+                showStatus(`✅ 程式碼已成功轉換為「${filename}」並加入上傳清單！`, 'success');
+                
+                // 貼心設計：不清空程式碼框，讓老師可以直接微調後再次點擊更新
+            } catch (error) {
+                showStatus(`❌ 程式碼轉換失敗：${error.message}`, 'error');
+            }
+        }
+
+        /* ================= 實體檔案與資料夾讀取邏輯 ================= */
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const folderInput = document.getElementById('folder-input');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            
+            if (e.dataTransfer.items) {
+                showStatus('正在讀取檔案與資料夾結構...', 'info');
+                const items = e.dataTransfer.items;
+                let promises = [];
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i].webkitGetAsEntry();
+                    if (item) promises.push(traverseFileTree(item, ''));
+                }
+                await Promise.all(promises);
+                updateFileDisplay();
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => processFileInput(e.target.files));
+        folderInput.addEventListener('change', (e) => processFileInput(e.target.files));
+
+        async function processFileInput(files) {
+            if (files.length === 0) return;
+            showStatus('正在處理實體檔案...', 'info');
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (file.name.startsWith('.DS_Store')) continue;
+                
+                const base64 = await readFileAsBase64(file);
+                const relativePath = file.webkitRelativePath || file.name;
+                
+                // 避免重複加入
+                const existingIndex = fileQueue.findIndex(f => f.relativePath === relativePath);
+                if (existingIndex !== -1) {
+                    fileQueue[existingIndex] = { relativePath, base64, size: file.size };
+                } else {
+                    fileQueue.push({ relativePath, base64, size: file.size });
+                }
+            }
+            updateFileDisplay();
+            fileInput.value = '';
+            folderInput.value = '';
+        }
+
+        async function traverseFileTree(item, path) {
+            if (item.isFile) {
+                const file = await new Promise(resolve => item.file(resolve));
+                if (file.name.startsWith('.DS_Store')) return; 
+                const base64 = await readFileAsBase64(file);
+                
+                const relativePath = path + file.name;
+                const existingIndex = fileQueue.findIndex(f => f.relativePath === relativePath);
+                if (existingIndex !== -1) {
+                    fileQueue[existingIndex] = { relativePath, base64, size: file.size };
+                } else {
+                    fileQueue.push({ relativePath, base64, size: file.size });
+                }
+            } else if (item.isDirectory) {
+                const dirReader = item.createReader();
+                let entries = [];
+                let readEntries = await new Promise(resolve => dirReader.readEntries(resolve));
+                while (readEntries.length > 0) {
+                    entries.push(...readEntries);
+                    readEntries = await new Promise(resolve => dirReader.readEntries(resolve));
+                }
+                for (let i = 0; i < entries.length; i++) {
+                    await traverseFileTree(entries[i], path + item.name + "/");
+                }
+            }
+        }
+
+        function readFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result.split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 更新清單顯示畫面
+        function updateFileDisplay() {
+            const displayObj = document.getElementById('file-name-display');
+            displayObj.classList.remove('flex', 'items-center', 'justify-center');
+            
+            if (fileQueue.length === 0) {
+                displayObj.classList.add('flex', 'items-center', 'justify-center');
+                displayObj.innerHTML = `<p class="text-gray-500 text-sm">目前清單為空，請拖曳檔案或貼上程式碼。</p>`;
+                return;
+            }
+
+            const totalSize = fileQueue.reduce((acc, curr) => acc + curr.size, 0);
+            
+            let html = `<div class="w-full">
+                <span class="text-yellow-600 font-bold text-lg">已準備 ${fileQueue.length} 個檔案</span>
+                <span class="text-xs text-gray-500 ml-2">(總計 ${(totalSize/1024).toFixed(1)} KB)</span>
+                <button onclick="clearQueue()" class="float-right text-xs text-red-500 hover:text-red-700 underline mt-1">清空列表</button>
+                <div class="mt-2 text-left text-xs text-gray-600 max-h-40 overflow-y-auto bg-white p-2 rounded border border-gray-200 shadow-inner">`;
+            
+            for (let i = 0; i < fileQueue.length; i++) {
+                const isHtml = fileQueue[i].relativePath.endsWith('.html');
+                const icon = isHtml ? '⚡' : '📄';
+                html += `<div class="truncate py-1 border-b border-gray-100 last:border-0">${icon} ${fileQueue[i].relativePath} <span class="text-gray-400">(${(fileQueue[i].size/1024).toFixed(1)} KB)</span></div>`;
+            }
+            html += `</div></div>`;
+            
+            displayObj.innerHTML = html;
+        }
+
+        // 新增清空佇列功能
+        function clearQueue() {
+            fileQueue = [];
+            updateFileDisplay();
+            showStatus('清單已清空。', 'info');
+        }
+
+        /* ================= 核心上傳邏輯 ================= */
+        async function uploadFiles() {
+            const token = document.getElementById('github-token').value.trim();
+            const rawBasePath = document.getElementById('upload-path').value.trim();
+            const message = document.getElementById('commit-message').value.trim();
+
+            if (!token) return showStatus('錯誤：請先輸入並儲存 GitHub Token', 'error');
+            if (fileQueue.length === 0) return showStatus('錯誤：請先將檔案或程式碼加入清單', 'error');
+
+            const btn = document.getElementById('upload-btn');
+            btn.disabled = true;
+            btn.classList.add('opacity-75');
+
+            let basePrefix = rawBasePath;
+            if (basePrefix && !basePrefix.endsWith('/')) basePrefix += '/';
+            if (basePrefix.startsWith('/')) basePrefix = basePrefix.substring(1);
+
+            let successCount = 0;
+            let errorCount = 0;
+
+            try {
+                for (let i = 0; i < fileQueue.length; i++) {
+                    const fileObj = fileQueue[i];
+                    const fullPath = basePrefix + fileObj.relativePath;
+                    
+                    btn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> 上傳中... (${i+1}/${fileQueue.length})`;
+                    showStatus(`正在處理 (${i+1}/${fileQueue.length}):\n${fullPath}`, 'info');
+
+                    const encodedPath = fullPath.split('/').map(encodeURIComponent).join('/');
+                    const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${encodedPath}`;
+                    
+                    let fileSha = null;
+                    const getRes = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json'
+                        }
+                    });
+
+                    if (getRes.ok) {
+                        const getData = await getRes.json();
+                        fileSha = getData.sha;
+                    }
+
+                    const bodyData = {
+                        message: `${message} - ${fileObj.relativePath}`,
+                        content: fileObj.base64
+                    };
+                    if (fileSha) bodyData.sha = fileSha;
+
+                    const putRes = await fetch(apiUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(bodyData)
+                    });
+
+                    if (putRes.ok) {
+                        successCount++;
+                    } else {
+                        const errorData = await putRes.json();
+                        console.error("Upload error:", errorData);
+                        errorCount++;
+                    }
+                    
+                    await new Promise(r => setTimeout(r, 200));
+                }
+
+                let finalUrl = `https://${REPO_OWNER}.github.io/${REPO_NAME}/`;
+                if (basePrefix) finalUrl += basePrefix;
+                
+                const hasIndex = fileQueue.find(f => f.relativePath.endsWith('index.html'));
+                if (hasIndex) {
+                    finalUrl = `https://${REPO_OWNER}.github.io/${REPO_NAME}/${basePrefix}${hasIndex.relativePath}`;
+                } else if (fileQueue.length === 1) {
+                    finalUrl = `https://${REPO_OWNER}.github.io/${REPO_NAME}/${basePrefix}${fileQueue[0].relativePath}`;
+                }
+
+                if (errorCount === 0) {
+                    showStatus(`✅ 上傳完成！共成功上傳 ${successCount} 個檔案。\n\n(註：GitHub Pages 更新約需 1~3 分鐘)\n\n瀏覽網址：<br><a href="${finalUrl}" target="_blank" class="underline text-blue-600 break-all">${finalUrl}</a>`, 'success');
+                } else {
+                    showStatus(`⚠️ 上傳結束，但有 ${errorCount} 個檔案失敗，成功 ${successCount} 個。`, 'error');
+                }
+
+            } catch (error) {
+                showStatus(`❌ 發生網路或未知錯誤：${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-75');
+                btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg> 一鍵上傳到 GitHub Pages`;
+                fileQueue = []; 
+                updateFileDisplay();
+            }
+        }
+
+        function showStatus(text, type) {
+            const box = document.getElementById('status-box');
+            box.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+            
+            if (type === 'error') box.classList.add('bg-red-100', 'text-red-700');
+            else if (type === 'success') box.classList.add('bg-green-100', 'text-green-700');
+            else box.classList.add('bg-blue-100', 'text-blue-700');
+
+            box.innerHTML = text;
+        }
+    </script>
+</body>
+</html>
