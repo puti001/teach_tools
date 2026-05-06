@@ -121,6 +121,8 @@
                                 <option value="2">2 秒</option>
                                 <option value="3" selected>3 秒</option>
                                 <option value="5">5 秒</option>
+                                <option value="6">6 秒</option>
+                                <option value="7">7 秒</option>
                                 <option value="8">8 秒</option>
                             </select>
                         </div>
@@ -228,12 +230,12 @@
         const bgBrightInput = document.getElementById('bgBrightInput');
         const bgBlurVal = document.getElementById('bgBlurVal');
         const bgBrightVal = document.getElementById('bgBrightVal');
-        const titleInput = document.getElementById('titleInput'); // 新增：標題輸入
-        const titleColorInput = document.getElementById('titleColorInput'); // 新增：標題顏色
-        const titleSizeInput = document.getElementById('titleSizeInput'); // 新增：標題大小
-        const titleOutlineColorInput = document.getElementById('titleOutlineColorInput'); // 新增：外框顏色
-        const titleOutlineSizeInput = document.getElementById('titleOutlineSizeInput'); // 新增：外框粗細
-        const titleOutlineVal = document.getElementById('titleOutlineVal'); // 新增：外框數值顯示
+        const titleInput = document.getElementById('titleInput'); 
+        const titleColorInput = document.getElementById('titleColorInput'); 
+        const titleSizeInput = document.getElementById('titleSizeInput'); 
+        const titleOutlineColorInput = document.getElementById('titleOutlineColorInput'); 
+        const titleOutlineSizeInput = document.getElementById('titleOutlineSizeInput'); 
+        const titleOutlineVal = document.getElementById('titleOutlineVal'); 
         const generateBtn = document.getElementById('generateBtn');
         const previewBtn = document.getElementById('previewBtn');
         const stopPreviewBtn = document.getElementById('stopPreviewBtn');
@@ -257,16 +259,16 @@
         let animationId = null;
         let currentAudioSource = null;
         let currentAudioCtx = null;
-        let currentVideoUrl = null; // 新增：用於記錄當前影片的 Blob URL，方便後續釋放記憶體
-        let currentImageUrls = [];  // 用於記錄當前照片的虛擬路徑
-        let currentVideoStream = null; // 💡 新增：用於記錄並關閉 Canvas 的影像流，解決隱形記憶體怪獸！
-        let bgImage = null; // 新增：靜態背景圖
-        let bgImageUrl = null; // 新增：靜態背景圖虛擬路徑
+        let currentVideoUrl = null; 
+        let currentImageUrls = [];  
+        let currentVideoStream = null; 
+        let bgImage = null; 
+        let bgImageUrl = null; 
         
         // 標題拖曳狀態變數
         let isDraggingText = false;
-        let textXRatio = 0.5; // 預設X軸中間 (50%)
-        let textYRatio = 0.8; // 預設Y軸偏下方 (80%)
+        let textXRatio = 0.5; 
+        let textYRatio = 0.8; 
 
         // 顯示訊息框
         function showToast(message, type = 'info') {
@@ -282,16 +284,12 @@
             }, 3000);
         }
 
-        // 綁定背景設定數值顯示
         bgBlurInput.addEventListener('input', (e) => bgBlurVal.textContent = e.target.value);
         bgBrightInput.addEventListener('input', (e) => bgBrightVal.textContent = e.target.value);
-        
-        // 綁定外框粗細數值顯示
         titleOutlineSizeInput.addEventListener('input', (e) => titleOutlineVal.textContent = e.target.value);
 
-        // 綁定 Canvas 拖曳文字事件
         canvas.addEventListener('pointerdown', (e) => {
-            if (!titleInput.value.trim()) return; // 沒打字不作用
+            if (!titleInput.value.trim()) return; 
             isDraggingText = true;
             canvas.style.cursor = 'grabbing';
             updateTextPosition(e);
@@ -301,7 +299,7 @@
             if (isDraggingText) {
                 updateTextPosition(e);
             } else if (titleInput.value.trim()) {
-                canvas.style.cursor = 'grab'; // 滑過畫面給予可拖曳提示
+                canvas.style.cursor = 'grab'; 
             } else {
                 canvas.style.cursor = 'default';
             }
@@ -313,31 +311,25 @@
         });
 
         function updateTextPosition(e) {
-            // 將滑鼠座標轉換為 Canvas 畫布的相對比例 (0.0 ~ 1.0)
             textXRatio = e.offsetX / canvas.clientWidth;
             textYRatio = e.offsetY / canvas.clientHeight;
-            // 限制在畫布範圍內
             textXRatio = Math.max(0, Math.min(1, textXRatio));
             textYRatio = Math.max(0, Math.min(1, textYRatio));
         }
 
-        // 處理照片上傳
         imageInput.addEventListener('change', handleImageUpload);
         
         async function handleImageUpload(e) {
             const files = Array.from(e.target.files);
             if (files.length === 0) return;
 
-            // 鎖定按鈕，避免照片還沒載入完就按預覽或生成
             generateBtn.disabled = true;
             previewBtn.disabled = true;
 
-            // 💡 終極優化：清空舊照片時，一併釋放瀏覽器深層記憶體
             currentImageUrls.forEach(url => URL.revokeObjectURL(url));
             currentImageUrls = [];
             uploadedImages = [];
             
-            // 清空畫面
             imagePreviewContainer.innerHTML = '';
             imagePreviewContainer.classList.remove('hidden');
             imageCount.classList.remove('hidden');
@@ -345,7 +337,6 @@
 
             let loadedCount = 0;
             
-            // 使用 Promise 確保所有照片都讀取完畢
             const loadPromises = files.map(file => {
                 return new Promise(resolve => {
                     if (!file.type.startsWith('image/')) {
@@ -353,9 +344,8 @@
                         return;
                     }
                     
-                    // 💡 終極優化：改用 ObjectURL 輕量化載入，取代極度耗費記憶體的 DataURL
                     const objectUrl = URL.createObjectURL(file);
-                    currentImageUrls.push(objectUrl); // 記錄路徑，以便下次大掃除
+                    currentImageUrls.push(objectUrl); 
 
                     const img = new Image();
                     img.onload = () => {
@@ -368,7 +358,6 @@
                 });
             });
 
-            // 等待所有照片載入
             const results = await Promise.all(loadPromises);
 
             results.forEach(item => {
@@ -383,12 +372,10 @@
 
             imageCount.textContent = `已選擇 ${uploadedImages.length} 張照片`;
             
-            // 照片載入完畢，恢復按鈕功能
             generateBtn.disabled = false;
             previewBtn.disabled = false;
         }
 
-        // 處理背景圖片上傳
         bgInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 const file = e.target.files[0];
@@ -413,7 +400,6 @@
             }
         });
 
-        // 處理音訊上傳
         audioInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 audioFile = e.target.files[0];
@@ -425,23 +411,20 @@
             }
         });
 
-        // 繪製單張影像 (支援透明度、位移、縮放等轉場參數)
         function drawImageToCanvas(img, alpha, xOffsetRatio = 0, yOffsetRatio = 0, scale = 1) {
             if (!img) return;
 
             const cw = canvas.width;
             const ch = canvas.height;
             
-            ctx.save(); // 儲存畫布狀態
+            ctx.save(); 
             ctx.globalAlpha = alpha;
 
-            // 應用轉場變換 (以畫布中心點進行縮放與位移)
             ctx.translate(cw / 2, ch / 2);
             ctx.translate(cw * xOffsetRatio, ch * yOffsetRatio);
             ctx.scale(scale, scale);
             ctx.translate(-cw / 2, -ch / 2);
 
-            // 1. 繪製模糊背景 (填滿) - 💡 若無設定靜態背景圖，才繪製模糊背景
             const imgRatio = img.width / img.height;
             const canvasRatio = cw / ch;
             
@@ -459,7 +442,6 @@
                     bgY = (ch - bgHeight) / 2;
                 }
 
-                // 套用使用者自訂的模糊與亮度設定 (針對動態背景)
                 const blurVal = bgBlurInput.value;
                 const brightVal = bgBrightInput.value / 100;
                 ctx.filter = `blur(${blurVal}px) brightness(${brightVal})`;
@@ -467,7 +449,6 @@
                 ctx.filter = 'none';
             }
 
-            // 2. 繪製主體圖片 (Contain)
             let drawWidth, drawHeight, offsetX, offsetY;
             if (imgRatio > canvasRatio) {
                 drawWidth = cw;
@@ -481,19 +462,16 @@
                 offsetY = 0;
             }
 
-            // 圖片陰影
             ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
             ctx.shadowBlur = 20;
             ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight);
             
-            ctx.restore(); // 恢復畫布狀態
+            ctx.restore(); 
         }
 
-        // 清除與還原狀態函數
         function cleanup() {
             cancelAnimationFrame(animationId);
             
-            // 💡 新增：強制關閉隱形的 Canvas 影像流軌道，釋放大量記憶體
             if (currentVideoStream) {
                 currentVideoStream.getTracks().forEach(track => track.stop());
                 currentVideoStream = null;
@@ -518,7 +496,6 @@
             stopPreviewBtn.classList.remove('flex');
         }
 
-        // 停止預覽按鈕
         stopPreviewBtn.addEventListener('click', () => {
             cleanup();
             ctx.fillStyle = 'black';
@@ -528,19 +505,15 @@
             showToast('已停止預覽', 'info');
         });
 
-        // 綁定按鈕事件
         generateBtn.addEventListener('click', () => runSlideshow('record'));
         previewBtn.addEventListener('click', () => runSlideshow('preview'));
 
-        // 下載按鈕點擊提示
         downloadBtn.addEventListener('click', () => {
             if (downloadBtn.href !== '#' && downloadBtn.href !== '') {
                 showToast('💾 影片下載中... 請等待瀏覽器存檔完成', 'info');
-                // 💡 修正：移除「5秒自動刪除」機制！這會導致下載中途被拔掉插頭，造成瀏覽器卡死1分鐘！
             }
         });
 
-        // 核心邏輯：預覽或錄製影片
         async function runSlideshow(mode) {
             if (uploadedImages.length === 0) {
                 showToast('請先上傳至少一張照片！', 'error');
@@ -552,7 +525,6 @@
 
             const isRecord = mode === 'record';
 
-            // 新增：每次開始新生成或預覽前，釋放上一支影片的記憶體
             if (currentVideoUrl) {
                 URL.revokeObjectURL(currentVideoUrl);
                 currentVideoUrl = null;
@@ -560,7 +532,6 @@
                 downloadBtn.href = "#";
             }
 
-            // UI 狀態切換
             generateBtn.disabled = true;
             previewBtn.disabled = true;
             canvasPlaceholder.classList.add('hidden');
@@ -580,7 +551,6 @@
                 stopPreviewBtn.classList.add('flex');
             }
 
-            // 設定畫布比例與解析度
             const ratio = ratioInput.value;
             if (ratio === '16:9') {
                 canvas.width = 1280; canvas.height = 720;
@@ -594,12 +564,11 @@
 
             const durationPerImage = parseInt(durationInput.value);
             const transitionType = transitionInput.value;
-            const transitionDuration = 0.8; // 轉場時間(秒)
+            const transitionDuration = 0.8; 
             const fps = 30;
             const totalImages = uploadedImages.length;
             const totalDuration = totalImages * durationPerImage;
             
-            // 設定音訊與淡入淡出 (Fade In / Fade Out)
             let dest, gainNode;
             if (audioFile) {
                 try {
@@ -613,28 +582,24 @@
                     
                     currentAudioSource = currentAudioCtx.createBufferSource();
                     currentAudioSource.buffer = audioBuffer;
-                    currentAudioSource.loop = true; // 音樂循環
+                    currentAudioSource.loop = true; 
                     
                     gainNode = currentAudioCtx.createGain();
                     
-                    // 連接： 音源 -> 增益節點(控制音量) -> 輸出
                     currentAudioSource.connect(gainNode);
                     if (isRecord) {
                         gainNode.connect(dest);
                     } else {
-                        gainNode.connect(currentAudioCtx.destination); // 預覽時直接從喇叭播放
+                        gainNode.connect(currentAudioCtx.destination); 
                     }
                     
-                    // 設定淡入淡出時間參數
-                    const fadeSeconds = 2.0; // 2秒淡入淡出
+                    const fadeSeconds = 2.0; 
                     const startT = currentAudioCtx.currentTime;
-                    const maxVolume = isRecord ? 2.0 : 1.0; // 💡 更新：錄影模式自動放大 2.0 倍音量
+                    const maxVolume = isRecord ? 2.0 : 1.0; 
                     
-                    // 開頭淡入 (Fade In)
                     gainNode.gain.setValueAtTime(0, startT);
                     gainNode.gain.linearRampToValueAtTime(maxVolume, startT + fadeSeconds);
                     
-                    // 結尾淡出 (Fade Out)
                     const endT = startT + totalDuration;
                     gainNode.gain.setValueAtTime(maxVolume, Math.max(startT, endT - fadeSeconds));
                     gainNode.gain.linearRampToValueAtTime(0, endT);
@@ -645,12 +610,10 @@
                 }
             }
 
-            // 若為錄製模式，設定 MediaRecorder
             let recorder;
             const chunks = [];
             if (isRecord) {
                 try {
-                    // 💡 修正：將影像流存入全域變數，以便生成結束時可以關閉它
                     currentVideoStream = canvas.captureStream(fps);
                     const tracks = [currentVideoStream.getVideoTracks()[0]];
                     
@@ -659,7 +622,6 @@
                     }
                     const combinedStream = new MediaStream(tracks);
 
-                    // 💡 修復了此處大括號遺失造成的語法錯誤
                     let options = { mimeType: 'video/webm; codecs=vp9', videoBitsPerSecond: 3000000 };
                     if (!MediaRecorder.isTypeSupported(options.mimeType)) {
                         options = { mimeType: 'video/webm; codecs=vp8', videoBitsPerSecond: 3000000 };
@@ -676,26 +638,16 @@
 
                     recorder.onstop = () => {
                         const blob = new Blob(chunks, { type: options.mimeType || 'video/webm' });
-                        
-                        // 💡 新增：建立完 Blob 影片檔後，立刻清空原始資料塊陣列，強迫釋放深層記憶體
                         chunks.length = 0; 
-
-                        // 更新：將 URL 存入全域變數，以便下次產生時能釋放記憶體
                         currentVideoUrl = URL.createObjectURL(blob);
-                        
                         resultVideo.src = currentVideoUrl;
                         downloadBtn.href = currentVideoUrl;
-                        
                         cleanup();
-
-                        // 恢復 UI 狀態並顯示結果
                         progressOverlay.classList.add('hidden');
                         progressOverlay.classList.remove('flex');
                         resultContainer.classList.remove('hidden');
                         resultContainer.classList.add('flex');
                         showToast('影片生成完成！可以點選下載了', 'success');
-                        
-                        // 確保影片載入但不自動播放
                         resultVideo.load();
                     };
 
@@ -710,14 +662,12 @@
                 }
             }
 
-            // 開始播放音樂
             if (currentAudioSource) currentAudioSource.start(0);
 
-            // 畫面渲染迴圈 (Canvas Animation Loop)
             const startTime = performance.now();
 
             function renderFrame(now) {
-                const elapsed = (now - startTime) / 1000; // 經過秒數
+                const elapsed = (now - startTime) / 1000; 
                 
                 if (elapsed >= totalDuration) {
                     if (isRecord && recorder && recorder.state !== 'inactive') {
@@ -730,22 +680,18 @@
                 }
                 
                 if (isRecord) {
-                    // 更新進度條
                     const progressPercent = Math.min(100, Math.floor((elapsed / totalDuration) * 100));
                     progressBar.style.width = `${progressPercent}%`;
                     progressText.textContent = `${progressPercent}%`;
                 }
 
-                // 計算當前與下一張照片並限制索引防呆
                 let currentIndex = Math.floor(elapsed / durationPerImage);
                 currentIndex = Math.min(currentIndex, totalImages - 1);
                 const timeInCurrent = elapsed % durationPerImage;
                 
-                // 清空畫布底色
                 ctx.fillStyle = 'black';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // 💡 新增：繪製靜態全域背景圖 (置於最底層，不受轉場動畫影響)
                 if (bgImage) {
                     const bgRatio = bgImage.width / bgImage.height;
                     const canvasRatio = canvas.width / canvas.height;
@@ -762,7 +708,6 @@
                         drawY = (canvas.height - drawH) / 2;
                     }
                     
-                    // 套用使用者自訂的模糊與亮度設定 (針對靜態圖)
                     const blurVal = bgBlurInput.value;
                     const brightVal = bgBrightInput.value / 100;
                     ctx.save();
@@ -771,7 +716,6 @@
                     ctx.restore();
                 }
 
-                // 多種轉場特效邏輯
                 if (timeInCurrent > durationPerImage - transitionDuration && currentIndex < totalImages - 1 && transitionType !== 'none') {
                     const nextIndex = Math.min(currentIndex + 1, totalImages - 1);
                     const progress = (timeInCurrent - (durationPerImage - transitionDuration)) / transitionDuration; 
@@ -793,11 +737,9 @@
                         drawImageToCanvas(uploadedImages[nextIndex], progress, 0, 0, 1.2 - (0.2 * progress));
                     }
                 } else {
-                    // 一般情況或無轉場，完全顯示當前照片
                     drawImageToCanvas(uploadedImages[currentIndex], 1.0);
                 }
 
-                // 💡 新增：繪製標題字幕 (畫在所有圖層的最上方)
                 const titleText = titleInput.value.trim();
                 if (titleText) {
                     const fontSize = parseInt(titleSizeInput.value);
@@ -806,23 +748,19 @@
                     const outlineSize = parseInt(titleOutlineSizeInput.value);
                     
                     ctx.save();
-                    // 設定字體樣式 (自動適應 Canvas 大小)
                     ctx.font = `bold ${fontSize}px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif`;
                     ctx.fillStyle = fontColor;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     
-                    // 加入高質感陰影，確保文字在任何背景都清楚可見
                     ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
                     ctx.shadowBlur = 10;
                     ctx.shadowOffsetX = 3;
                     ctx.shadowOffsetY = 3;
 
-                    // 根據拖曳比例計算絕對座標
                     const drawX = canvas.width * textXRatio;
                     const drawY = canvas.height * textYRatio;
 
-                    // 💡 先畫外框 (設定粗細與圓角接縫才不會有刺刺的邊)
                     if (outlineSize > 0) {
                         ctx.strokeStyle = outlineColor;
                         ctx.lineWidth = outlineSize;
@@ -830,7 +768,6 @@
                         ctx.strokeText(titleText, drawX, drawY);
                     }
 
-                    // 💡 再畫實心文字 (疊在外框上方)
                     ctx.fillText(titleText, drawX, drawY);
                     
                     ctx.restore();
@@ -839,7 +776,6 @@
                 animationId = requestAnimationFrame(renderFrame);
             }
 
-            // 啟動渲染
             animationId = requestAnimationFrame(renderFrame);
         }
     </script>
