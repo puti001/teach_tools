@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI Autohotkey 腳本產生器 v2.0</title>
+    
+    <!-- 載入 Tailwind CSS (負責美觀排版) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 載入 React (負責核心邏輯) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- 載入 Babel (讓瀏覽器看得懂 React 語法) -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* 自訂捲軸樣式 */
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e1e1e; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800">
+    <!-- React 應用程式的掛載點 -->
+    <div id="root"></div>
+
+    <!-- 所有的應用程式邏輯都寫在這裡 -->
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- Inline SVG Icons ---
+        const PlusIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>;
+        const TrashIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>;
+        const CopyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>;
+        const DownloadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>;
+        const CheckIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>;
+        const InfoIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>;
+        const CodeIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>;
+        const ShareIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>;
+
+        function App() {
+            // App State: 'generator', 'tutorial', 'share'
+            const [activeTab, setActiveTab] = useState('generator'); 
+
+            // Generator State
+            const [rules, setRules] = useState([
+                {
+                id: 1,
+                type: 'text',
+                trigger: '@@',
+                action: 'my_email@gmail.com',
+                modifiers: { ctrl: false, alt: false, shift: false, win: false },
+                memo: '快速輸入常用信箱'
+                },
+                {
+                id: 2,
+                type: 'shortcut',
+                trigger: '1',
+                action: '屏東縣後庄國小',
+                modifiers: { ctrl: false, alt: true, shift: false, win: false },
+                memo: '快速輸入單位/學校名稱'
+                },
+                {
+                id: 3,
+                type: 'run',
+                trigger: 'F4',
+                action: 'calc.exe',
+                modifiers: { ctrl: false, alt: false, shift: false, win: false },
+                memo: '一鍵呼叫計算機'
+                }
+            ]);
+            
+            const [ruleType, setRuleType] = useState('text');
+            const [trigger, setTrigger] = useState('');
+            const [action, setAction] = useState('');
+            const [memo, setMemo] = useState('');
+            const [modifiers, setModifiers] = useState({ ctrl: false, alt: false, shift: false, win: false });
+            const [copied, setCopied] = useState(false);
+
+            // Common Key Options Grouped
+            const keyGroups = {
+                "字母 (A-Z)": "A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z".split(','),
+                "數字 (0-9)": "0,1,2,3,4,5,6,7,8,9".split(','),
+                "功能鍵 (F1-F12)": "F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12".split(','),
+                "特殊鍵": "Space,Enter,Tab,Esc,Up,Down,Left,Right".split(',')
+            };
+            const keyOptions = Object.values(keyGroups).flat();
+
+            const handleAddRule = () => {
+                if (!trigger) return;
+                if (!action && ruleType !== 'suspend_toggle') return;
+
+                const newRule = {
+                id: Date.now(),
+                type: ruleType,
+                trigger: trigger,
+                action: action,
+                modifiers: { ...modifiers },
+                memo: memo
+                };
+
+                setRules([...rules, newRule]);
+                // Reset form partially
+                setTrigger((ruleType === 'shortcut' || ruleType === 'run' || ruleType === 'suspend_toggle') ? 'A' : '');
+                setAction('');
+                setMemo('');
+            };
+
+            const handleDeleteRule = (id) => {
+                setRules(rules.filter(rule => rule.id !== id));
+            };
+
+            const generateScript = () => {
+                // 升級為 AHK v2 語法
+                let script = "; === Puti-AI Autohotkey 自動生成腳本 (v2.0) ===\n";
+                script += "; 建立時間: " + new Date().toLocaleString() + "\n";
+                script += "#Requires AutoHotkey v2.0  ; 指定環境為最新版 v2.0\n";
+                script += "SendMode(\"Input\")  ; 推薦設定，提升發送速度與可靠性\n";
+                script += "SetWorkingDir(A_ScriptDir)  ; 確保工作目錄一致\n\n";
+
+                if (rules.length === 0) {
+                return script + "; 尚未加入任何規則，請在左側介面新增。\n";
+                }
+
+                let autoLaunchBlock = "";
+                rules.forEach(rule => {
+                if (rule.type === 'suspend_toggle' && rule.action) {
+                    let exeName = rule.action.split('\\').pop() || "program.exe";
+                    let safeAction = rule.action;
+                    if (!safeAction.startsWith('"') && !safeAction.startsWith('http')) safeAction = `"${safeAction}"`;
+                    // v2 語法: ProcessExist()
+                    autoLaunchBlock += `if not ProcessExist("${exeName}") {\n`;
+                    autoLaunchBlock += `    Run(${safeAction})\n`;
+                    autoLaunchBlock += `}\n`;
+                }
+                });
+
+                if (autoLaunchBlock) {
+                script += `; --- 啟動腳本時自動執行關聯程式 ---\n`;
+                script += autoLaunchBlock + `\n`;
+                }
+
+                let hasToolTip = false;
+
+                rules.forEach(rule => {
+                let memoText = rule.memo ? `【${rule.memo}】 ` : "";
+                if (rule.type === 'text') {
+                    script += `; [文字縮寫] ${memoText}輸入 ${rule.trigger} 自動替換為: ${rule.action.replace(/\n/g, "\\n")}\n`;
+                    let safeAction = rule.action.replace(/\n/g, "`n"); 
+                    script += `::${rule.trigger}::${safeAction}\n\n`;
+                } 
+                else if (rule.type === 'shortcut' || rule.type === 'run') {
+                    let mods = "";
+                    if (rule.modifiers.ctrl) mods += "^";
+                    if (rule.modifiers.alt) mods += "!";
+                    if (rule.modifiers.shift) mods += "+";
+                    if (rule.modifiers.win) mods += "#";
+                    
+                    let hotkey = `${mods}${rule.trigger}`;
+                    
+                    if (rule.type === 'shortcut') {
+                    script += `; [快捷輸入] ${memoText}按下 ${mods}${rule.trigger} 輸出文字\n`;
+                    let safeAction = rule.action.replace(/\n/g, "`n");
+                    let escapedAction = safeAction.replace(/"/g, '`"');
+                    script += `${hotkey}::\n{\n    Send("${escapedAction}")\n}\n\n`;
+                    } 
+                    else if (rule.type === 'run') {
+                    let safeAction = rule.action;
+                    if (!safeAction.startsWith('"') && !safeAction.startsWith('http')) safeAction = `"${safeAction}"`;
+                    script += `; [開啟程式/網頁] ${memoText}按下 ${mods}${rule.trigger} 開啟 ${rule.action}\n`;
+                    script += `${hotkey}::\n{\n    Run(${safeAction})\n}\n\n`;
+                    }
+                }
+                else if (rule.type === 'suspend_toggle') {
+                    let mods = "";
+                    if (rule.modifiers.ctrl) mods += "^";
+                    if (rule.modifiers.alt) mods += "!";
+                    if (rule.modifiers.shift) mods += "+";
+                    if (rule.modifiers.win) mods += "#";
+                    
+                    let hotkey = `${mods}${rule.trigger}`;
+                    let appName = "快捷";
+                    if (rule.action && rule.action.toLowerCase().includes('zoomit')) appName = "ZoomIt ";
+                    
+                    let safeAction = rule.action;
+                    if (safeAction && !safeAction.startsWith('"') && !safeAction.startsWith('http')) {
+                        safeAction = `"${safeAction}"`;
+                    }
+                    
+                    script += `; [腳本總開關] ${memoText}按下 ${mods}${rule.trigger} 切換正常模式/${appName}模式\n`;
+                    script += `${hotkey}::\n{\n`;
+                    script += `    Suspend(-1)\n`; 
+                    script += `    if (A_IsSuspended) {\n`;
+                    script += `        ToolTip("【正常模式】\`n原本的按鍵功能已恢復")\n`;
+                    script += `    } else {\n`;
+                    script += `        ToolTip("【${appName}模式】\`n自訂的 AHK 快捷鍵已啟用")\n`;
+                    if (rule.action) {
+                        const exeName = rule.action.split('\\').pop() || "program.exe";
+                        script += `        if not ProcessExist("${exeName}") {\n`;
+                        script += `            Run(${safeAction})\n`;
+                        script += `        }\n`;
+                    }
+                    script += `    }\n`;
+                    script += `    SetTimer(RemoveToolTip, -2000)\n`;
+                    script += `}\n\n`;
+                    hasToolTip = true;
+                }
+                });
+
+                if (hasToolTip) {
+                script += `; --- 共用功能區 ---\n`;
+                script += `RemoveToolTip() {\n`;
+                script += `    ToolTip()\n`;
+                script += `}\n`;
+                }
+
+                return script;
+            };
+
+            const handleCopy = () => {
+                const textArea = document.createElement("textarea");
+                textArea.value = generateScript();
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                document.execCommand('copy');
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+                } catch (err) {
+                console.error('複製失敗', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            const handleDownload = () => {
+                const element = document.createElement("a");
+                const file = new Blob(["\uFEFF" + generateScript()], {type: 'text/plain;charset=utf-8'});
+                element.href = URL.createObjectURL(file);
+                element.download = "Puti-AI_Script_v2.ahk";
+                document.body.appendChild(element);
+                element.click();
+                document.body.removeChild(element);
+            };
+
+            const handleModifierChange = (mod) => {
+                setModifiers({ ...modifiers, [mod]: !modifiers[mod] });
+            };
+
+            useEffect(() => {
+                if ((ruleType === 'shortcut' || ruleType === 'run' || ruleType === 'suspend_toggle') && !keyOptions.includes(trigger)) {
+                setTrigger('A');
+                } else if (ruleType === 'text') {
+                setTrigger('');
+                }
+            }, [ruleType]);
+
+            return (
+                <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
+                {/* Header */}
+                <header className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white pt-6 pb-0 px-6 shadow-md">
+                    <div className="max-w-6xl mx-auto">
+                    <div className="flex flex-col md:flex-row items-center justify-between mb-4">
+                        <div>
+                        <h1 className="text-3xl font-bold mb-2 flex items-center">
+                            <span className="bg-yellow-400 text-blue-900 px-2 py-1 rounded mr-3 text-2xl">Puti-AI</span>
+                            Autohotkey 腳本產生器 <span className="ml-3 text-sm bg-indigo-900/50 text-indigo-100 px-2 py-1 rounded border border-indigo-400">v2.0 專用版</span>
+                        </h1>
+                        <p className="text-blue-100">完全免寫程式！視覺化點選，輕鬆打造專屬你的提升效率鍵盤神器。</p>
+                        </div>
+                        <div className="mt-4 md:mt-0 hidden md:block">
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                            <span className="text-2xl">⌨️</span>
+                        </div>
+                        </div>
+                    </div>
+                    
+                    {/* Navigation Tabs */}
+                    <div className="flex space-x-1 sm:space-x-2 mt-4 overflow-x-auto pb-0">
+                        <button 
+                        onClick={() => setActiveTab('generator')}
+                        className={`flex items-center gap-2 px-4 sm:px-5 py-3 rounded-t-lg font-medium transition-colors whitespace-nowrap ${activeTab === 'generator' ? 'bg-slate-50 text-indigo-700' : 'bg-indigo-800/50 text-indigo-100 hover:bg-indigo-800'}`}
+                        >
+                        <CodeIcon /> 🚀 腳本產生器
+                        </button>
+                        <button 
+                        onClick={() => setActiveTab('tutorial')}
+                        className={`flex items-center gap-2 px-4 sm:px-5 py-3 rounded-t-lg font-medium transition-colors whitespace-nowrap ${activeTab === 'tutorial' ? 'bg-slate-50 text-indigo-700' : 'bg-indigo-800/50 text-indigo-100 hover:bg-indigo-800'}`}
+                        >
+                        <InfoIcon /> 📚 教學與指南
+                        </button>
+                        <button 
+                        onClick={() => setActiveTab('share')}
+                        className={`flex items-center gap-2 px-4 sm:px-5 py-3 rounded-t-lg font-medium transition-colors whitespace-nowrap ${activeTab === 'share' ? 'bg-slate-50 text-indigo-700' : 'bg-indigo-800/50 text-indigo-100 hover:bg-indigo-800'}`}
+                        >
+                        <ShareIcon /> 📤 分享與推廣
+                        </button>
+                    </div>
+                    </div>
+                </header>
+
+                {/* Main Content Area */}
+                <div className="flex-grow max-w-6xl mx-auto w-full p-4 md:p-6">
+                    
+                    {/* --- Tab 1: Generator --- */}
+                    {activeTab === 'generator' && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+                        {/* Left Column: Builder */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                        <div className="bg-slate-100 border-b border-slate-200 p-4 font-semibold text-slate-700">
+                            1. 新增腳本規則
+                        </div>
+                        
+                        <div className="p-5 flex-grow space-y-6">
+                            {/* Rule Type Selector */}
+                            <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-2">請選擇功能類型：</label>
+                            <div className="flex flex-wrap gap-2">
+                                <button 
+                                onClick={() => setRuleType('text')}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ruleType === 'text' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                >
+                                📝 縮寫自動展開
+                                </button>
+                                <button 
+                                onClick={() => setRuleType('shortcut')}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ruleType === 'shortcut' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                >
+                                ⚡ 快捷發送文字
+                                </button>
+                                <button 
+                                onClick={() => setRuleType('run')}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ruleType === 'run' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                >
+                                🚀 開啟程式/網頁
+                                </button>
+                                <button 
+                                onClick={() => setRuleType('suspend_toggle')}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${ruleType === 'suspend_toggle' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                >
+                                🎛️ 腳本總開關
+                                </button>
+                            </div>
+                            </div>
+
+                            {/* Dynamic Input Form */}
+                            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-4">
+                            {/* Trigger Input */}
+                            {ruleType === 'text' ? (
+                                <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">當我輸入短代碼 (例如: fq)：</label>
+                                <input 
+                                    type="text" 
+                                    value={trigger} 
+                                    onChange={(e) => setTrigger(e.target.value)}
+                                    placeholder="請輸入英文或數字組合..."
+                                    className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                />
+                                </div>
+                            ) : (
+                                <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">當我按下組合鍵：</label>
+                                <div className="flex flex-wrap gap-2 mb-2">
+                                    {['ctrl', 'alt', 'shift', 'win'].map(mod => (
+                                    <label key={mod} className={`flex items-center gap-1 px-3 py-1.5 rounded cursor-pointer border select-none transition-colors ${modifiers[mod] ? 'bg-blue-100 border-blue-400 text-blue-800' : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'}`}>
+                                        <input type="checkbox" checked={modifiers[mod]} onChange={() => handleModifierChange(mod)} className="hidden" />
+                                        <span className="capitalize">{mod === 'win' ? 'Windows' : mod}</span>
+                                    </label>
+                                    ))}
+                                    <span className="py-1.5 text-slate-400 font-bold">+</span>
+                                    <select 
+                                    value={trigger} 
+                                    onChange={(e) => setTrigger(e.target.value)}
+                                    className="p-1.5 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                    >
+                                    {Object.entries(keyGroups).map(([groupName, keys]) => (
+                                        <optgroup key={groupName} label={groupName}>
+                                        {keys.map(k => <option key={k} value={k}>{k}</option>)}
+                                        </optgroup>
+                                    ))}
+                                    </select>
+                                </div>
+                                </div>
+                            )}
+
+                            {/* Action Input */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">
+                                {ruleType === 'text' || ruleType === 'shortcut' 
+                                    ? '自動替換/輸出以下內容：' 
+                                    : ruleType === 'suspend_toggle'
+                                    ? '啟用時同時開啟的程式 (選填，例如 ZoomIt 路徑)：'
+                                    : '自動開啟 (網址或程式路徑)：'}
+                                </label>
+                                {ruleType === 'run' || ruleType === 'suspend_toggle' ? (
+                                <input 
+                                    type="text" 
+                                    value={action} 
+                                    onChange={(e) => setAction(e.target.value)}
+                                    placeholder={ruleType === 'suspend_toggle' ? "例如: C:\\...\\ZoomIt64.exe (不填則純切換狀態)" : "例如: https://google.com 或 notepad.exe"}
+                                    className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                                ) : (
+                                <textarea 
+                                    value={action} 
+                                    onChange={(e) => setAction(e.target.value)}
+                                    placeholder="請輸入要自動產生的長篇文字..."
+                                    rows="3"
+                                    className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none resize-y"
+                                ></textarea>
+                                )}
+                            </div>
+
+                            {/* Memo Input */}
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">備註說明 (選填，方便記憶)：</label>
+                                <input 
+                                type="text" 
+                                value={memo} 
+                                onChange={(e) => setMemo(e.target.value)}
+                                placeholder="例如: 啟動 ZoomIt 靜態放大"
+                                className="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 outline-none"
+                                />
+                            </div>
+
+                            <button 
+                                onClick={handleAddRule}
+                                disabled={!trigger || (!action && ruleType !== 'suspend_toggle')}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors"
+                            >
+                                <PlusIcon /> 加入清單
+                            </button>
+                            </div>
+
+                            {/* Added Rules List */}
+                            <div>
+                            <h3 className="text-sm font-semibold text-slate-700 mb-2 border-b pb-1">已建立的規則 ({rules.length})</h3>
+                            {rules.length === 0 ? (
+                                <p className="text-sm text-slate-500 italic py-4 text-center bg-slate-50 rounded border border-dashed border-slate-300">尚未建立任何規則</p>
+                            ) : (
+                                <ul className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                                {rules.map((rule) => {
+                                    let triggerText = rule.trigger;
+                                    if (rule.type !== 'text') {
+                                    triggerText = `${rule.modifiers.ctrl ? 'Ctrl+' : ''}${rule.modifiers.alt ? 'Alt+' : ''}${rule.modifiers.shift ? 'Shift+' : ''}${rule.modifiers.win ? 'Win+' : ''}${rule.trigger}`;
+                                    }
+                                    
+                                    return (
+                                    <li key={rule.id} className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg shadow-sm group hover:border-blue-300 transition-colors">
+                                        <div className="flex flex-col overflow-hidden mr-2">
+                                        <span className="text-xs font-bold text-blue-600 mb-1 uppercase tracking-wider">
+                                            {rule.type === 'text' ? '📝 縮寫' : rule.type === 'shortcut' ? '⚡ 快捷鍵' : rule.type === 'run' ? '🚀 開啟' : '🎛️ 模式切換'} : <span className="bg-blue-100 text-blue-800 px-1 rounded">{triggerText}</span>
+                                        </span>
+                                        {rule.memo && <span className="text-sm font-bold text-slate-700 mb-0.5">{rule.memo}</span>}
+                                        <span className="text-xs text-slate-500 truncate" title={rule.action}>{rule.action || '(僅切換狀態)'}</span>
+                                        </div>
+                                        <button 
+                                        onClick={() => handleDeleteRule(rule.id)}
+                                        className="text-slate-400 hover:text-red-500 p-1.5 rounded-md hover:bg-red-50 transition-colors"
+                                        title="刪除"
+                                        >
+                                        <TrashIcon />
+                                        </button>
+                                    </li>
+                                    );
+                                })}
+                                </ul>
+                            )}
+                            </div>
+
+                        </div>
+                        </div>
+
+                        {/* Right Column: Code Output */}
+                        <div className="bg-[#1e1e1e] rounded-xl shadow-lg border border-slate-700 overflow-hidden flex flex-col">
+                        <div className="bg-[#2d2d2d] border-b border-slate-700 p-4 font-semibold text-slate-200 flex justify-between items-center">
+                            <span>2. 產生的 AHK 腳本 <span className="text-xs font-normal text-yellow-400 ml-2">(v2.0 語法)</span></span>
+                            <div className="flex gap-2">
+                            <button 
+                                onClick={handleCopy}
+                                className="flex items-center gap-1.5 text-xs bg-[#3d3d3d] hover:bg-[#4d4d4d] text-white px-3 py-1.5 rounded transition-colors"
+                            >
+                                {copied ? <CheckIcon /> : <CopyIcon />}
+                                {copied ? '已複製!' : '複製代碼'}
+                            </button>
+                            <button 
+                                onClick={handleDownload}
+                                className="flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded transition-colors"
+                            >
+                                <DownloadIcon /> 下載 .ahk
+                            </button>
+                            </div>
+                        </div>
+                        
+                        <div className="flex-grow p-4 relative">
+                            <textarea
+                            readOnly
+                            value={generateScript()}
+                            className="w-full h-full min-h-[400px] bg-transparent text-[#d4d4d4] font-mono text-sm resize-none outline-none custom-scrollbar"
+                            style={{ fontFamily: "'Consolas', 'Courier New', monospace" }}
+                            />
+                        </div>
+                        
+                        <div className="bg-[#2d2d2d] text-slate-400 text-xs p-3 px-4 border-t border-slate-700 flex justify-between items-center">
+                            <span>💡 本代碼專為 <a href="https://www.autohotkey.com/" target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">AutoHotkey v2</a> 設計</span>
+                            <span>自動儲存為 UTF-8 BOM 編碼</span>
+                        </div>
+                        </div>
+                    </div>
+                    )}
+
+                    {/* --- Tab 2: Tutorial --- */}
+                    {activeTab === 'tutorial' && (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-10 space-y-10 text-slate-700 animate-fade-in">
+                        <section className="text-center max-w-3xl mx-auto space-y-4">
+                        <h2 className="text-3xl font-bold text-slate-800">認識 AutoHotkey 與 Puti-AI 產生器</h2>
+                        <p className="text-lg text-slate-600">
+                            鍵盤效率神器 ✕ 零程式碼門檻，讓您的教學與辦公如虎添翼！
+                        </p>
+                        </section>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="bg-blue-50 rounded-xl p-6 border border-blue-100">
+                            <h3 className="text-xl font-bold text-blue-800 mb-3 flex items-center gap-2">
+                            <span>🤔</span> 什麼是 AutoHotkey？
+                            </h3>
+                            <p className="leading-relaxed">
+                            AutoHotkey (簡稱 AHK) 是 Windows 系統上一款免費且強大的「鍵盤自動化軟體」。它可以讓您自訂任何快捷鍵、自動輸入長篇常用文字、甚至一鍵開啟網頁與程式。就像是幫您的電腦裝上了聽話的機器人管家！
+                            </p>
+                        </div>
+
+                        <div className="bg-indigo-50 rounded-xl p-6 border border-indigo-100">
+                            <h3 className="text-xl font-bold text-indigo-800 mb-3 flex items-center gap-2">
+                            <span>✨</span> 為什麼需要本產生器？
+                            </h3>
+                            <p className="leading-relaxed">
+                            AHK 雖然強大，但原本需要「手打程式碼」才能設定，對多數人來說門檻極高。<br/><br/>
+                            <strong>Puti-AI 產生器</strong> 將寫程式變成了「視覺化填空題」！您只需點選組合鍵、貼上文字，系統就會自動為您生成零錯誤的腳本，防呆防錯還有貼心備註。
+                            </p>
+                        </div>
+                        </div>
+
+                        <section className="space-y-6">
+                        <h3 className="text-2xl font-bold text-slate-800 border-b pb-2">新手起手式：安裝與使用 3 步驟</h3>
+                        <div className="space-y-6">
+                            <div className="flex gap-4">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl">1</div>
+                            <div>
+                                <h4 className="text-lg font-bold text-slate-800 mb-1">安裝 AutoHotkey 官方軟體 (只需一次)</h4>
+                                <p className="text-slate-600 mb-2">這是執行腳本的「引擎」。如果您的電腦尚未安裝，請前往官網下載並點擊安裝最新版 (v2.0 以上)。</p>
+                                <a href="https://www.autohotkey.com/" target="_blank" rel="noreferrer" className="inline-block bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium border border-slate-300 transition-colors">
+                                🔗 點此前往 AutoHotkey 官網下載
+                                </a>
+                            </div>
+                            </div>
+
+                            <div className="flex gap-4">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl">2</div>
+                            <div>
+                                <h4 className="text-lg font-bold text-slate-800 mb-1">使用產生器設定規則，並下載腳本</h4>
+                                <p className="text-slate-600">
+                                切換到「🚀 腳本產生器」分頁，根據您的需求設定快捷鍵或縮寫。完成後，點擊右側的 <strong>「下載 .ahk」</strong> 按鈕，將這份「劇本」存到您的電腦中 (建議放桌面)。
+                                </p>
+                            </div>
+                            </div>
+
+                            <div className="flex gap-4">
+                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl">3</div>
+                            <div>
+                                <h4 className="text-lg font-bold text-slate-800 mb-1">雙擊執行腳本，開始享受效率！</h4>
+                                <p className="text-slate-600">
+                                對著下載的 <code>.ahk</code> 檔案點擊兩下。接著看看您螢幕右下角的系統匣（時鐘旁邊），如果出現一個 <strong>綠底白字的「H」圖示</strong>，代表魔法已經在背景啟動待命囉！
+                                <br/>(若要關閉功能，對著「H」圖示按右鍵選 Exit 即可)
+                                </p>
+                            </div>
+                            </div>
+                        </div>
+                        </section>
+                    </div>
+                    )}
+
+                    {/* --- Tab 3: Share --- */}
+                    {activeTab === 'share' && (
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 md:p-10 space-y-8 text-slate-700 animate-fade-in">
+                        <section className="text-center max-w-3xl mx-auto space-y-4 mb-8">
+                        <h2 className="text-3xl font-bold text-slate-800">🎁 如何將腳本分享給其他老師？</h2>
+                        <p className="text-lg text-slate-600">
+                            Puti老師專屬三大分享心法，根據不同需求挑選最適合的傳遞方式！
+                        </p>
+                        </section>
+
+                        {/* Method 1 */}
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-6 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-2 h-full bg-blue-500"></div>
+                        <h3 className="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+                            <span className="text-2xl">🥇</span> 方案一：直接分享 <code>.ahk</code> 原始檔
+                        </h3>
+                        <p className="text-slate-600 mb-4 font-medium">適合對象：願意聽您教學，肯動手安裝軟體的老師。</p>
+                        <ul className="list-disc list-inside space-y-2 text-slate-600 ml-2">
+                            <li><strong>優點：</strong>最正統安全！保證<strong>絕對不會</strong>被任何防毒軟體或 Windows 系統阻擋。</li>
+                            <li><strong>缺點：</strong>接收者必須先自行前往官網下載並安裝 AutoHotkey v2.0 才能使用。</li>
+                            <li><strong>作法：</strong>直接將產生器下載出來的 <code>.ahk</code> 檔案透過 LINE 或雲端硬碟傳送給對方。</li>
+                        </ul>
+                        </div>
+
+                        {/* Method 2 */}
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-6 relative overflow-hidden shadow-sm">
+                        <div className="absolute top-0 right-0 w-2 h-full bg-indigo-500"></div>
+                        <div className="absolute -top-4 -right-4 bg-yellow-400 text-yellow-900 text-xs font-bold px-8 py-6 rotate-45 transform">極度推薦</div>
+                        
+                        <h3 className="text-xl font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                            <span className="text-2xl">🚀</span> 方案二：轉成獨立 <code>.exe</code> 執行檔
+                        </h3>
+                        <p className="text-slate-600 mb-4 font-medium">適合對象：不想安裝任何軟體，想要「點擊即用」的伸手牌老師。</p>
+                        <ul className="list-disc list-inside space-y-2 text-slate-600 ml-2 mb-4">
+                            <li><strong>優點：</strong>一鍵免安裝、隨插即用，使用者體驗最好，最容易大規模推廣！</li>
+                            <li><strong>作法：</strong>對著您電腦中的 <code>.ahk</code> 檔案點擊<strong>滑鼠右鍵</strong> ➔ 選擇 <strong>「Compile Script (編譯腳本)」</strong> ➔ 等待兩秒，旁邊就會自動產生一個同名的 <code>.exe</code> 檔，直接將這個檔分享出去即可。</li>
+                        </ul>
+                        
+                        <div className="bg-white p-4 rounded-lg border border-red-200 mt-4">
+                            <h4 className="font-bold text-red-600 mb-2 flex items-center gap-2">🛡️ 遇到 Win11 阻擋怎麼辦？</h4>
+                            <p className="text-sm text-slate-600 mb-2">由於這是您自行編譯的獨立軟體，少數電腦的 Windows SmartScreen 或防毒軟體可能會跳出「已保護您的電腦」藍色警告視窗。</p>
+                            <p className="text-sm font-semibold text-slate-800 bg-red-50 p-2 rounded">
+                            破解法：請告訴老師們不用害怕，只要點擊視窗上的 <span className="text-blue-600 underline cursor-pointer">「其他資訊」</span>，接著下方就會出現 <span className="text-blue-600 underline cursor-pointer">「仍要執行」</span> 的按鈕，點擊後即可安全啟動！
+                            </p>
+                        </div>
+                        </div>
+
+                        {/* Method 3 */}
+                        <div className="bg-slate-800 text-white rounded-xl p-6 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-2 h-full bg-yellow-500"></div>
+                        <h3 className="text-xl font-bold text-yellow-400 mb-2 flex items-center gap-2">
+                            <span className="text-2xl">🥷</span> 方案三：分離式組合包 (進階大師技)
+                        </h3>
+                        <p className="text-slate-300 mb-4 font-medium">適合對象：學校電腦被嚴格鎖死，連「仍要執行」都不給按的極端環境。</p>
+                        <ul className="list-disc list-inside space-y-2 text-slate-300 ml-2">
+                            <li><strong>原理：</strong>利用有微軟官方安全憑證的播放器(空殼) 來讀取您的腳本，完美繞過防毒偵測。</li>
+                            <li><strong>作法步驟：</strong>
+                            <ol className="list-decimal list-inside ml-6 mt-2 space-y-1 text-sm text-slate-400">
+                                <li>前往您安裝 AHK 的資料夾 (通常在 <code>C:\Program Files\AutoHotkey\v2</code>)</li>
+                                <li>將裡面的 <code>AutoHotkey64.exe</code> 複製出來。</li>
+                                <li>將這個 exe <strong>重新命名</strong>，改成跟您的腳本一模一樣的檔名！<br/>(例如腳本叫 <code>ZoomIt放大.ahk</code>，就把 exe 改成 <code>ZoomIt放大.exe</code>)</li>
+                                <li>把這兩個檔案放在「同一個資料夾」內打包分享。對方只要點擊該 exe 即可啟動！</li>
+                            </ol>
+                            </li>
+                        </ul>
+                        </div>
+
+                    </div>
+                    )}
+
+                </div>
+
+                {/* Footer */}
+                <footer className="bg-slate-800 text-slate-300 py-6 text-center text-sm mt-auto">
+                    <div className="max-w-4xl mx-auto px-4">
+                    <p className="mb-2">屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為</p>
+                    <p>更多 <span className="font-semibold text-yellow-400">Puti-AI</span> 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noreferrer" className="text-blue-400 hover:text-blue-300 underline">點此前往</a></p>
+                    </div>
+                </footer>
+                </div>
+            );
+        }
+
+        // 將 App 元件渲染到畫面上
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
