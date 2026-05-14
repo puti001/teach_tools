@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 技能教學卡片</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            /* 網頁整體底色，柔和的背景突顯馬卡龍卡片 */
+        }
+
+        .perspective {
+            perspective: 1000px;
+        }
+
+        .transform-style-3d {
+            transform-style: preserve-3d;
+        }
+
+        .backface-hidden {
+            backface-visibility: hidden;
+        }
+
+        .rotate-y-180 {
+            transform: rotateY(180deg);
+        }
+
+        /* 漸層標題文字 */
+        .gradient-text {
+            background: linear-gradient(135deg, #4f46e5 0%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* 卡片高度固定，確保排版整齊 */
+        .card-container {
+            height: 380px; 
+        }
+
+        /* 拖曳相關樣式 */
+        .drag-handle {
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        .sortable-ghost {
+            opacity: 0.3;
+            transform: scale(0.95);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="text-center py-10 mb-4 px-4">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-4 gradient-text pb-2">Puti-AI 的技能庫</h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto font-medium">點擊卡片翻轉查看提示詞。按住<span class="text-indigo-600 font-bold mx-1"><i class="fas fa-grip-lines"></i>右上角</span>可拖曳排序，網頁會自動記憶您的配置。</p>
+    </header>
+
+    <!-- 主要內容區：使用 CSS Grid 排列 10 張卡片 -->
+    <main id="grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 flex-grow max-w-[1800px] mx-auto w-full px-6 mb-12">
+        <!-- 卡片將由 JavaScript 動態生成注入此處 -->
+    </main>
+
+    <!-- 指定的版權宣告與教學連結 -->
+    <footer class="mt-auto py-10 bg-white border-t border-gray-200 text-center w-full shadow-inner">
+        <div class="max-w-4xl mx-auto px-4 flex flex-col items-center gap-4">
+            <h3 class="font-bold text-xl text-gray-800">
+                屏東縣後庄國小 黃朝榮老師 作品
+            </h3>
+            <p class="text-base text-gray-600 font-medium bg-red-50 text-red-600 px-4 py-2 rounded-lg">
+                免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為。
+            </p>
+            <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener noreferrer" 
+               class="mt-2 inline-flex items-center gap-3 px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full transition-all duration-300 font-bold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-1">
+                <i class="fas fa-external-link-alt"></i> 更多 Puti-AI 教學工具 點此前往
+            </a>
+            <p class="mt-4 text-sm text-gray-400 font-medium">&copy; 2026 Puti-AI. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- 複製成功提示框 (預設隱藏) -->
+    <div id="toast" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-8 py-4 rounded-full shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-3 font-bold text-lg">
+        <i class="fas fa-check-circle text-2xl"></i>
+        <span>提示詞已複製！</span>
+    </div>
+
+    <script>
+        let audioInitialized = false;
+        let flipSynth, successSynth;
+
+        // 音效初始化函數 (必須由使用者的點擊行為來觸發)
+        async function ensureAudio() {
+            if (!audioInitialized) {
+                await Tone.start();
+                
+                // 翻牌音效：模擬紙張翻動的短促沙沙聲
+                flipSynth = new Tone.NoiseSynth({
+                    noise: { type: 'pink' },
+                    envelope: { attack: 0.01, decay: 0.15, sustain: 0 }
+                }).toDestination();
+                flipSynth.volume.value = -15; // 降低音量
+
+                // 複製成功音效：輕快的多聲部和弦提示音
+                successSynth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.01, decay: 0.3, sustain: 0, release: 0.1 }
+                }).toDestination();
+                successSynth.volume.value = -10;
+
+                audioInitialized = true;
+            }
+        }
+
+        // 10 個技能的資料庫 (新增 id 屬性用於排序記憶)
+        const skillsData = [
+            { id: "s1", title: "⚡ 寫簡報", context: "需要將網頁或長篇資料快速轉換為教學簡報大綱時。", prompt: "受眾：[國中教師]，將 [當前網頁或來源資料] 其轉化為一份 [15-20] 頁 簡報大綱。注意：大綱就好", color: "bg-pink-100" },
+            { id: "s2", title: "⚡ 圖可愛", context: "想要生成帶有版權浮水印的可愛風格資訊圖表時。", prompt: "生圖，資訊圖表，可愛風格，4k，繁體中文字正確清晰。在圖片中巧妙嵌藏 2 個版權小字「©Puti-AI」。", color: "bg-green-100" },
+            { id: "s3", title: "⚡ 摘復盤", context: "對話結束前，需要總結對話歷史、整理網址與提示詞時。", prompt: "總結我們以上每一輪的對話歷史，要有：1.來源網頁網址 2.我的問題(或提示詞) 3.你的回答(重點、成果) 結束前，再次列出本次對話所有提示詞。", color: "bg-blue-100" },
+            { id: "s4", title: "🎬 摘影音", context: "觀看長影片或聆聽音檔，需要快速抓取帶時間戳記的重點時。", prompt: "請摘要這段影片或音檔的重點，並提供帶有時間戳記（Timestamp）的段落大綱。", color: "bg-yellow-100" },
+            { id: "s5", title: "🗓️ 加日曆", context: "網頁上看到研習或會議資訊，想要一鍵加入 Google 日曆時。", prompt: "根據這個分頁提到的研習或會議的主題、日期、時間、細節、會議網址、來源網址加到我的 Google 日曆中。", color: "bg-purple-100" },
+            { id: "s6", title: "👨‍🏫 轉教用", context: "看到有趣的功能或文章，想轉換成具體的教育應用情境時。", prompt: "以上所有功能，轉換成在教育上的應用，要有情境、方法、步驟、提示詞（如果需要）、避坑。", color: "bg-orange-100" },
+            { id: "s7", title: "📊 比分頁", context: "開啟了多個分頁收集資料，需要快速比較它們的優缺點與特色時。", prompt: "請比較我目前開啟的所有分頁，針對 [項目名稱] 製作一個包含特色、優缺點...說明的比較表格。", color: "bg-teal-100" },
+            { id: "s8", title: "📝 寫課程紀錄", context: "需要將網頁內容整理成結構完整、包含摘要與實例的課程紀錄時。", prompt: "請分析當前網頁內容，將其整理為一份完整且詳實的課程紀錄。請依照以下結構進行輸出：### 1. 核心內容摘要：簡述課程主題與目標。### 2. 實例應用：列出課程中提及的具體範例或案例分析。### 3. ...", color: "bg-red-100" },
+            { id: "s9", title: "🖋️ 圖仿圖", context: "看到喜歡的圖片風格，想要生成風格相似但替換特定元素的新圖時。", prompt: "請解釋當前網頁圖片中的場景背景和風格，並幫我生成一張風格相似但包含 [特定元素] 的新圖片。", color: "bg-indigo-100" },
+            { id: "s10", title: "⚡ 摘總結", context: "閱讀長篇文章，需要快速條列式抓取 3-5 個核心觀點時。", prompt: "請幫我摘要當前網頁的 3-5 個核心觀點，並以條列式呈現。", color: "bg-cyan-100" }
+        ];
+
+        const gridContainer = document.getElementById('grid-container');
+
+        // 讀取 localStorage 中儲存的排序 ID
+        const savedOrder = JSON.parse(localStorage.getItem('puti_skills_order'));
+        let renderArray = skillsData;
+
+        // 如果有儲存排序，且數量正確，則依據儲存順序重排資料
+        if (savedOrder && Array.isArray(savedOrder) && savedOrder.length === skillsData.length) {
+            renderArray = savedOrder.map(id => skillsData.find(s => s.id === id)).filter(Boolean);
+            if (renderArray.length !== skillsData.length) renderArray = skillsData; // 確保無損毀
+        }
+
+        // 動態生成卡片的 HTML 結構
+        renderArray.forEach((skill) => {
+            const borderColor = skill.color.replace('bg-', '').replace('-100', '-300');
+            const cardHTML = `
+                <div class="card-container perspective w-full" data-id="${skill.id}">
+                    <div class="card-inner relative w-full h-full transition-transform duration-500 transform-style-3d shadow-md hover:shadow-xl rounded-2xl">
+                        
+                        <!-- 正面 (使用時機) -->
+                        <div class="card-front absolute w-full h-full backface-hidden rounded-2xl flex flex-col p-6 ${skill.color} border-2 border-transparent cursor-pointer">
+                            <!-- 拖曳把手 -->
+                            <div class="drag-handle absolute top-4 right-4 text-gray-400 hover:text-gray-700 transition-colors z-20 px-2" title="按住拖曳排序">
+                                <i class="fas fa-grip-lines text-2xl"></i>
+                            </div>
+                            
+                            <div class="flex-grow flex flex-col justify-center items-center text-center mt-2">
+                                <h3 class="text-3xl font-bold mb-6 text-gray-800">${skill.title}</h3>
+                                <div class="w-16 h-1 bg-gray-800 opacity-20 mb-6 rounded-full"></div>
+                                <span class="block text-sm text-gray-600 mb-3 font-bold tracking-widest">【 使用時機 】</span>
+                                <p class="text-xl text-gray-800 font-medium leading-relaxed">${skill.context}</p>
+                            </div>
+                            <div class="text-center mt-4 text-sm text-gray-500 animate-pulse font-bold flex justify-center items-center gap-2">
+                                <i class="fas fa-undo"></i> 點擊翻面
+                            </div>
+                        </div>
+
+                        <!-- 背面 (提示詞) -->
+                        <div class="card-back absolute w-full h-full backface-hidden rotate-y-180 rounded-2xl bg-white border-4 flex flex-col p-6 cursor-pointer" style="border-color: var(--tw-color-${borderColor});">
+                            <!-- 拖曳把手 (背面) -->
+                            <div class="drag-handle absolute top-4 right-4 text-gray-300 hover:text-gray-600 transition-colors z-20 px-2" title="按住拖曳排序">
+                                <i class="fas fa-grip-lines text-2xl"></i>
+                            </div>
+
+                            <h3 class="text-xl font-bold mb-3 text-gray-800 border-b-2 border-gray-100 pb-3 flex items-center pr-10">
+                                <span>${skill.title}</span>
+                                <i class="fas fa-undo text-gray-400 text-sm ml-auto"></i>
+                            </h3>
+                            <div class="flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                                <p class="text-lg text-gray-700 leading-relaxed font-medium">${skill.prompt}</p>
+                            </div>
+                            <button data-prompt="${skill.prompt}" class="copy-btn mt-4 w-full py-3 bg-gray-800 hover:bg-black text-white rounded-xl font-bold text-lg shadow-sm transition-all transform active:scale-95 flex items-center justify-center gap-2 z-10">
+                                <i class="fas fa-copy"></i> 複製提示詞
+                            </button>
+                        </div>
+                        
+                    </div>
+                </div>
+            `;
+            gridContainer.innerHTML += cardHTML;
+        });
+
+        // 初始化 SortableJS (拖曳排序功能)
+        new Sortable(gridContainer, {
+            animation: 300,
+            handle: '.drag-handle', // 只有按住把手才能拖曳，避免和點擊翻面衝突
+            ghostClass: 'sortable-ghost',
+            onEnd: function () {
+                // 拖曳結束時，取得新順序的 ID 陣列
+                const currentOrder = Array.from(gridContainer.children).map(card => card.getAttribute('data-id'));
+                localStorage.setItem('puti_skills_order', JSON.stringify(currentOrder)); // 存入本機
+                
+                // 播放音效及震動回饋
+                ensureAudio().then(() => {
+                    if (audioInitialized) flipSynth.triggerAttackRelease("16n");
+                });
+                if (navigator.vibrate) navigator.vibrate(15);
+            }
+        });
+
+        // 綁定拖曳把手的事件：防止點擊把手時觸發卡片翻面
+        document.querySelectorAll('.drag-handle').forEach(handle => {
+            const stopPropagation = (e) => e.stopPropagation();
+            handle.addEventListener('click', stopPropagation);
+            handle.addEventListener('mousedown', stopPropagation);
+            handle.addEventListener('touchstart', stopPropagation, {passive: true});
+        });
+
+        // 綁定翻牌事件 (點擊卡片正面或背面都會翻轉)
+        document.querySelectorAll('.card-front, .card-back').forEach(cardFace => {
+            cardFace.addEventListener('click', async function(e) {
+                // 如果點擊的是複製按鈕，則不翻面 (交給複製邏輯處理)
+                if (e.target.closest('.copy-btn')) return;
+
+                // 確保音效庫已啟動並播放音效
+                await ensureAudio();
+                if (audioInitialized) {
+                    flipSynth.triggerAttackRelease("16n");
+                }
+
+                // 找到父層 .card-inner 並切換 class 來翻轉
+                const cardInner = this.closest('.card-inner');
+                cardInner.classList.toggle('rotate-y-180');
+                
+                // 手機震動回饋 (輕微)
+                if (navigator.vibrate) navigator.vibrate(30);
+            });
+        });
+
+        // 綁定複製按鈕事件
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', async function(e) {
+                e.stopPropagation(); // 阻止事件冒泡
+                
+                await ensureAudio();
+                if (audioInitialized) {
+                    const now = Tone.now();
+                    // 播放 C5, E5, G5 輕快琶音
+                    successSynth.triggerAttackRelease("C5", "16n", now);
+                    successSynth.triggerAttackRelease("E5", "16n", now + 0.1);
+                    successSynth.triggerAttackRelease("G5", "16n", now + 0.2);
+                }
+
+                const promptText = this.getAttribute('data-prompt');
+                
+                // 執行複製到剪貼簿
+                const textArea = document.createElement("textarea");
+                textArea.value = promptText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast(); // 顯示成功提示
+                    // 手機震動回饋 (強烈)
+                    if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+                } catch (err) {
+                    console.error('複製失敗', err);
+                    alert("複製失敗，請手動選取文字複製。");
+                }
+                document.body.removeChild(textArea);
+            });
+        });
+
+        // 顯示複製成功的 Toast 提示
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('opacity-0', 'translate-y-10');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-10');
+            }, 2500); // 2.5秒後自動隱藏
+        }
+    </script>
+</body>
+</html>
