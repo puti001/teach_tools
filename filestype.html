@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 檔案分類產生器 (綜合版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自訂滾動條 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        
+        /* 單選按鈕美化 */
+        .radio-label:has(input:checked) {
+            background-color: #3b82f6; /* bg-blue-500 */
+            border-color: #60a5fa; /* border-blue-400 */
+            color: white;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-200 min-h-screen flex items-center justify-center p-4 font-sans">
+
+    <div class="max-w-5xl w-full bg-slate-800/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700 overflow-hidden flex flex-col">
+        
+        <!-- Header -->
+        <div class="bg-slate-800 border-b border-slate-700 p-6 flex items-center gap-4 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div class="z-10">
+                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-400">Puti-AI 檔案分類產生器 (綜合版)</h1>
+                <p class="text-slate-400 text-sm mt-1">自由選擇依「檔案類型」或「修改時間」一鍵自動歸檔</p>
+            </div>
+        </div>
+
+        <div class="p-6 flex-grow flex flex-col gap-6">
+            
+            <!-- 使用指南 -->
+            <div class="bg-slate-700/30 border border-emerald-500/30 rounded-xl p-5 shadow-inner">
+                <h2 class="text-lg font-semibold text-emerald-400 flex items-center gap-2 mb-3">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    使用指南
+                </h2>
+                <ol class="list-decimal list-inside text-sm text-slate-300 space-y-2 ml-1">
+                    <li>選擇您想要的 <span class="text-emerald-400 font-medium">分類維度</span>（檔案類型、年份、月份、季度或確切日期）。</li>
+                    <li>確認下方生成的程式碼與檔案名稱。</li>
+                    <li>點擊 <span class="text-teal-400 font-medium">「產生並下載 .bat 檔案」</span>。</li>
+                    <li>將下載後的 .bat 檔放入需要整理的資料夾中，連點兩下執行即可！</li>
+                </ol>
+            </div>
+
+            <!-- 控制面板：選擇分類維度 -->
+            <div>
+                <label class="block text-sm font-medium text-slate-300 mb-3">選擇分類維度 (Sorting Mode)：</label>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <!-- 新增的「檔案類型」選項 -->
+                    <label class="radio-label cursor-pointer border border-slate-600 bg-slate-700/50 rounded-lg p-3 text-center transition-all hover:bg-slate-600">
+                        <input type="radio" name="sortMode" value="type" class="hidden" onchange="updateCode()" checked>
+                        <span class="font-medium">依檔案類型 (Type)</span>
+                        <div class="text-xs opacity-70 mt-1">圖片、影片、文件等</div>
+                    </label>
+                    <!-- 原本的「日期」選項 -->
+                    <label class="radio-label cursor-pointer border border-slate-600 bg-slate-700/50 rounded-lg p-3 text-center transition-all hover:bg-slate-600">
+                        <input type="radio" name="sortMode" value="year" class="hidden" onchange="updateCode()">
+                        <span class="font-medium">依年份 (Year)</span>
+                        <div class="text-xs opacity-70 mt-1">例: 2023, 2024</div>
+                    </label>
+                    <label class="radio-label cursor-pointer border border-slate-600 bg-slate-700/50 rounded-lg p-3 text-center transition-all hover:bg-slate-600">
+                        <input type="radio" name="sortMode" value="month" class="hidden" onchange="updateCode()">
+                        <span class="font-medium">依月份 (Month)</span>
+                        <div class="text-xs opacity-70 mt-1">例: 2024-01, 2024-02</div>
+                    </label>
+                    <label class="radio-label cursor-pointer border border-slate-600 bg-slate-700/50 rounded-lg p-3 text-center transition-all hover:bg-slate-600">
+                        <input type="radio" name="sortMode" value="quarter" class="hidden" onchange="updateCode()">
+                        <span class="font-medium">依季度 (Quarter)</span>
+                        <div class="text-xs opacity-70 mt-1">例: 2024-Q1, 2024-Q2</div>
+                    </label>
+                    <label class="radio-label cursor-pointer border border-slate-600 bg-slate-700/50 rounded-lg p-3 text-center transition-all hover:bg-slate-600">
+                        <input type="radio" name="sortMode" value="day" class="hidden" onchange="updateCode()">
+                        <span class="font-medium">依日期 (Day)</span>
+                        <div class="text-xs opacity-70 mt-1">例: 2024-05-19</div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- 檔名與程式碼顯示 -->
+            <div class="flex flex-col flex-grow">
+                <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-2">
+                    <div class="flex items-center gap-2 flex-grow">
+                        <label for="filenameInput" class="text-sm font-medium text-slate-300 whitespace-nowrap">儲存檔名：</label>
+                        <input type="text" id="filenameInput" value="Puti-AI 類型自動分類.bat" 
+                               class="bg-slate-700 border border-slate-600 text-white text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block w-full p-2.5 transition-colors" placeholder="輸入檔名 (例如: Puti-AI 分類工具.bat)">
+                    </div>
+                </div>
+                
+                <textarea id="codeEditor" spellcheck="false"
+                          class="w-full h-56 bg-[#0d1117] border border-slate-700 text-green-400 font-mono text-sm p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-y leading-relaxed"></textarea>
+            </div>
+
+            <!-- 下載按鈕 -->
+            <div class="flex justify-center mt-2">
+                <button onclick="generateBatchFile()" 
+                        class="group relative inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold rounded-xl shadow-lg shadow-teal-500/30 hover:shadow-teal-500/50 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    產生並下載 .bat 檔案
+                </button>
+            </div>
+        </div>
+        
+        <!-- Puti老師 版權宣告區 -->
+        <div class="mt-2 mb-6 text-center text-xs text-slate-500">
+            <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+            <p class="mt-1"><a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-teal-400 hover:text-teal-300 underline">更多 Puti-AI 教學工具 點此前往</a></p>
+        </div>
+    </div>
+
+    <!-- 隱藏的 Toast 提示容器 (整合進來) -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none transition-all duration-300"></div>
+
+    <script>
+        // 初始化載入預設程式碼
+        document.addEventListener('DOMContentLoaded', updateCode);
+
+        // 簡易 Toast 提示功能
+        function showToast(message) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border border-emerald-400 bg-emerald-500/90 text-white font-medium transition-all duration-300 transform translate-y-10 opacity-0`;
+            toast.innerHTML = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-10', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            });
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function updateCode() {
+            const mode = document.querySelector('input[name="sortMode"]:checked').value;
+            let modeName = "";
+            let psCommand = "";
+            let defaultFilename = ""; // 新增：用來存放對應的動態檔名
+
+            // 依據選擇設定 PowerShell 邏輯與檔名
+            if (mode === "type") {
+                modeName = "檔案類型 (圖片/影片/文件等)";
+                defaultFilename = "Puti-AI 類型自動分類.bat";
+                psCommand = `"$img='.jpg','.jpeg','.png','.gif','.bmp','.webp','.svg','.heic'; $vid='.mp4','.avi','.mkv','.mov','.wmv','.flv','.webm'; $aud='.mp3','.wav','.flac','.m4a','.ogg','.aac'; $doc='.doc','.docx','.pdf','.xls','.xlsx','.ppt','.pptx','.txt','.csv','.rtf'; Get-ChildItem -File | ForEach-Object { if ($_.Name -eq '%~nx0') { return }; $ext=$_.Extension.ToLower(); if ($img -contains $ext) { $folder='圖片' } elseif ($vid -contains $ext) { $folder='影片' } elseif ($aud -contains $ext) { $folder='音訊' } elseif ($doc -contains $ext) { $folder='文件' } else { $folder='其他' }; $target=New-Item -ItemType Directory -Force -Path $folder; Move-Item $_.FullName -Destination $target }"`;
+            } else {
+                let psLogic = "";
+                if (mode === "year") {
+                    modeName = "年份 (Year)";
+                    defaultFilename = "Puti-AI 年份自動分類.bat";
+                    psLogic = "$_.LastWriteTime.ToString('yyyy')";
+                } else if (mode === "month") {
+                    modeName = "月份 (Month)";
+                    defaultFilename = "Puti-AI 月份自動分類.bat";
+                    psLogic = "$_.LastWriteTime.ToString('yyyy-MM')";
+                } else if (mode === "quarter") {
+                    modeName = "季度 (Quarter)";
+                    defaultFilename = "Puti-AI 季度自動分類.bat";
+                    psLogic = "'{0}-Q{1}' -f $_.LastWriteTime.ToString('yyyy'), [math]::Ceiling($_.LastWriteTime.Month / 3)";
+                } else if (mode === "day") {
+                    modeName = "日期 (Day)";
+                    defaultFilename = "Puti-AI 日期自動分類.bat";
+                    psLogic = "$_.LastWriteTime.ToString('yyyy-MM-dd')";
+                }
+                psCommand = `"Get-ChildItem -File | ForEach-Object { if ($_.Name -eq '%~nx0') { return }; $folder = ${psLogic}; $target = New-Item -ItemType Directory -Force -Path $folder; Move-Item $_.FullName -Destination $target }"`;
+            }
+
+            // 動態更新畫面上的檔名輸入框
+            document.getElementById('filenameInput').value = defaultFilename;
+
+            const codeTemplate = `@echo off
+chcp 65001 > nul
+echo ==========================================
+echo   Puti-AI 檔案智慧分類工具 (綜合版)
+echo ==========================================
+echo.
+echo 正在依據「${modeName}」進行分類...
+echo 請稍候...
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command ${psCommand}
+
+echo.
+echo 分類完成！
+echo ==========================================
+pause`;
+
+            document.getElementById('codeEditor').value = codeTemplate;
+        }
+
+        function generateBatchFile() {
+            const code = document.getElementById('codeEditor').value;
+            let filename = document.getElementById('filenameInput').value.trim();
+
+            if (!code) {
+                alert("程式碼不能為空喔！");
+                return;
+            }
+
+            if (!filename) {
+                filename = "Puti-AI 自動分類工具.bat";
+            }
+            if (!filename.toLowerCase().endsWith('.bat')) {
+                filename += ".bat";
+            }
+
+            try {
+                // 將網頁的 LF (\n) 換行強制轉換為 Windows 標準的 CRLF (\r\n)
+                const formattedCode = code.replace(/\r?\n/g, '\r\n');
+                const finalCode = "\uFEFF\r\n" + formattedCode;
+                
+                // 【核心修復】不使用 TextEncoder 和 application/octet-stream
+                // 改用標準字串陣列結合 text/plain，防止瀏覽器外掛或 GitHub Pages 底層攔截觸發 fetch error
+                const blob = new Blob([finalCode], { type: 'text/plain;charset=utf-8' });
+                
+                // 產生下載連結
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                
+                // 清理資源
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+
+                showToast(`成功建立並下載 ${filename}！`);
+
+            } catch (error) {
+                console.error("產生檔案時發生錯誤:", error);
+                alert("產生檔案時發生錯誤，請稍後再試。");
+            }
+        }
+    </script>
+</body>
+</html>
