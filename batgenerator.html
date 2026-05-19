@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI 批次檔產生器</title>
+    <!-- 引入 Tailwind CSS 以進行快速且美觀的樣式設計 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Tailwind slate-900 */
+            color: #f8fafc; /* Tailwind slate-50 */
+        }
+        
+        /* 讓文字編輯器使用等寬字體 */
+        .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* 美化滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b; 
+        }
+
+        /* 提示通知 (Toast) 的動畫設定 */
+        .toast-enter {
+            transform: translateY(100%);
+            opacity: 0;
+        }
+        .toast-show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 sm:p-8 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950">
+
+    <div class="max-w-4xl w-full bg-slate-800/80 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-700/50 overflow-hidden flex flex-col">
+        
+        <!-- 標題列 -->
+        <div class="bg-slate-800 border-b border-slate-700 p-6 flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <!-- 終端機 Icon SVG -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">Puti-AI 批次檔產生器</h1>
+                <p class="text-slate-400 text-sm mt-1">貼上您的程式碼，一鍵封裝成可執行的 Windows .bat 檔案</p>
+            </div>
+        </div>
+
+        <div class="p-6 flex-grow flex flex-col gap-6">
+            
+            <!-- 檔名設定區塊 -->
+            <div class="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                <label for="filename" class="text-sm font-medium text-slate-300 whitespace-nowrap">檔案名稱：</label>
+                <div class="relative w-full sm:w-1/2">
+                    <input type="text" id="filename" placeholder="例如: 檔案自動分類工具" value="一鍵檔案分類" 
+                           class="w-full bg-slate-900 border border-slate-700 text-slate-100 rounded-lg pl-4 pr-16 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 font-mono pointer-events-none">.bat</span>
+                </div>
+            </div>
+
+            <!-- 程式碼輸入區塊 -->
+            <div class="flex flex-col flex-grow">
+                <div class="flex justify-between items-end mb-2">
+                    <label for="codeEditor" class="text-sm font-medium text-slate-300">批次檔程式碼 (Batch Script)：</label>
+                    <span class="text-xs text-slate-500 bg-slate-700/50 px-2 py-1 rounded">支援 UTF-8 編碼</span>
+                </div>
+                <!-- 提供預設的一鍵分類程式碼作為範例 -->
+                <textarea id="codeEditor" spellcheck="false" placeholder="在此貼上您的 .bat 程式碼..."
+                          class="w-full h-80 bg-[#0d1117] border border-slate-700 text-green-400 font-mono text-sm p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all resize-y leading-relaxed">
+@echo off
+chcp 65001 > nul
+echo ==========================================
+echo   Puti-AI 檔案智慧分類工具 (五大類別)
+echo ==========================================
+echo.
+echo 正在將檔案分類至：圖片、影片、音訊、文件、其他...
+echo 請稍候...
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$img='.jpg','.jpeg','.png','.gif','.bmp','.webp','.svg','.heic'; $vid='.mp4','.avi','.mkv','.mov','.wmv','.flv','.webm'; $aud='.mp3','.wav','.flac','.m4a','.ogg','.aac'; $doc='.doc','.docx','.pdf','.xls','.xlsx','.ppt','.pptx','.txt','.csv','.rtf'; Get-ChildItem -File | ForEach-Object { if ($_.Name -eq '%~nx0') { return }; $ext=$_.Extension.ToLower(); if ($img -contains $ext) { $folder='圖片' } elseif ($vid -contains $ext) { $folder='影片' } elseif ($aud -contains $ext) { $folder='音訊' } elseif ($doc -contains $ext) { $folder='文件' } else { $folder='其他' }; $target=New-Item -ItemType Directory -Force -Path $folder; Move-Item $_.FullName -Destination $target }"
+
+echo.
+echo 分類完成！
+echo ==========================================
+pause</textarea>
+                <p class="text-xs text-slate-500 mt-2 flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                    </svg>
+                    提示：若程式碼中包含中文，建議保留 <code class="bg-slate-700 px-1 rounded text-slate-300">chcp 65001 > nul</code> 以防止執行時出現亂碼。
+                </p>
+            </div>
+
+            <div class="flex justify-end pt-4 border-t border-slate-700/50">
+                <button id="downloadBtn" onclick="generateBatchFile()" 
+                        class="group relative inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform group-hover:scale-110" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    產生並下載 .bat 檔案
+                </button>
+            </div>
+        </div>
+        
+        <!-- Puti老師 版權宣告區 -->
+        <div class="mt-6 text-center text-xs text-slate-500">
+            <p>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+            <p class="mt-1"><a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" class="text-blue-400 hover:text-blue-300 underline">更多 Puti-AI 教學工具 點此前往</a></p>
+        </div>
+    </div>
+
+    <!-- 通知彈窗容器 (隱藏於畫面下方) -->
+    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script>
+        /**
+         * 顯示自訂訊息提示 (Toast)，取代原生的 alert()
+         * @param {string} message - 顯示的訊息內容
+         * @param {string} type - 'success' 或 'error'
+         */
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            
+            // 建立新的 toast 元素
+            const toast = document.createElement('div');
+            
+            // 根據類型決定顏色
+            const bgColors = type === 'success' ? 'bg-emerald-500/90 border-emerald-400' : 'bg-red-500/90 border-red-400';
+            const icon = type === 'success' 
+                ? `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`
+                : `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+
+            toast.className = `flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border backdrop-blur-sm text-white font-medium transition-all duration-300 toast-enter ${bgColors}`;
+            toast.innerHTML = `${icon} <span>${message}</span>`;
+            
+            // 加入容器中
+            container.appendChild(toast);
+            
+            // 觸發進場動畫
+            requestAnimationFrame(() => {
+                toast.classList.remove('toast-enter');
+                toast.classList.add('toast-show');
+            });
+
+            // 3秒後自動消失
+            setTimeout(() => {
+                toast.classList.remove('toast-show');
+                toast.classList.add('toast-enter');
+                // 等待動畫結束後移除 DOM 節點
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        /**
+         * 產生並下載 Batch 檔案的主要邏輯
+         */
+        function generateBatchFile() {
+            // 取得輸入值
+            let filename = document.getElementById('filename').value.trim();
+            const code = document.getElementById('codeEditor').value.trim();
+
+            // 1. 檢查程式碼是否為空
+            if (!code) {
+                showToast('請先貼上或輸入批次檔程式碼！', 'error');
+                return;
+            }
+
+            // 2. 處理檔名 (若空則給預設值，並確保結尾是 .bat)
+            if (!filename) {
+                filename = "script";
+            }
+            if (!filename.toLowerCase().endsWith('.bat')) {
+                filename += ".bat";
+            }
+
+            // 3. 建立 Blob 物件 (Blob 預設為 UTF-8 編碼，適合現今系統)
+            // Windows 執行時，只要腳本內有 chcp 65001，就能完美讀取 UTF-8 的中文
+            try {
+                // 【核心修復】解決 Windows CMD 亂碼與吃字問題
+                // 1. 將網頁的 LF (\n) 換行強制轉換為 Windows 標準的 CRLF (\r\n)
+                const formattedCode = code.replace(/\r?\n/g, '\r\n');
+                
+                // 2. 加入 UTF-8 BOM (\uFEFF) 與一個空行 (\r\n) 作為緩衝
+                // BOM 讓 Windows 知道這是 UTF-8；空行則防止 CMD 把 BOM 誤認為是指令的一部分
+                const finalCode = "\uFEFF\r\n" + formattedCode;
+                const blob = new Blob([finalCode], { type: 'application/octet-stream' });
+                
+                // 4. 產生下載連結
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                
+                // 5. 觸發下載
+                document.body.appendChild(a);
+                a.click();
+                
+                // 6. 清理記憶體與 DOM
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                // 顯示成功訊息
+                showToast(`成功建立並下載 ${filename}！`, 'success');
+                
+            } catch (error) {
+                console.error("產生檔案時發生錯誤:", error);
+                showToast('產生檔案失敗，請稍後再試。', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
