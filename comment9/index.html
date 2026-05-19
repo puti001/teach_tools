@@ -1,0 +1,98 @@
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI學生期末評語提示詞生成器 V8</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Puti-AI學生期末評語提示詞生成器 V8</h1>
+        <h2>貼切個別學生版</h2>
+
+        <div class="input-section">
+            <div class="grade-select">
+                <label for="grade">年級:</label>
+                <select id="grade">
+                    <option value="">請選擇</option>
+                    <option value="1">1年級</option>
+                    <option value="2">2年級</option>
+                    <option value="3">3年級</option>
+                    <option value="4">4年級</option>
+                    <option value="5">5年級</option>
+                    <option value="6">6年級</option>
+                    <option value="7">7年級</option>
+                    <option value="8">8年級</option>
+                    <option value="9">9年級</option>
+                    <option value="10">10年級</option>
+                    <option value="11">11年級</option>
+                    <option value="12">12年級</option>
+                </select>
+            </div>
+
+            <div class="word-count">
+                <label for="wordCount">評語字數:</label>
+                <input type="number" id="wordCount" min="50" max="500" value="100">
+            </div>
+
+            <div class="student-list">
+                <label for="studentNames">學生清單 (一行一名):</label>
+                <textarea id="studentNames" rows="5"></textarea>
+                <button id="generateButtons">確定</button>
+            </div>
+        </div>
+
+        <div id="studentButtons" class="student-buttons"></div>
+
+        <div class="traits-section">
+            <div class="trait-group ability">
+                <h3>資質與態度</h3>
+                <div class="buttons"></div>
+            </div>
+            <div class="trait-group personality">
+                <h3>個性與品德</h3>
+                <div class="buttons"></div>
+            </div>
+            <div class="trait-group social">
+                <h3>團體與人際</h3>
+                <div class="buttons"></div>
+            </div>
+            <div class="trait-group talent">
+                <h3>專長與才藝</h3>
+                <div class="buttons"></div>
+            </div>
+            <div class="trait-group custom">
+                <h3>自定義特質</h3>
+                <div class="custom-input-section">
+                    <textarea id="customTraitInput" placeholder="輸入自定義特質或評語詞彙 (一行一個)" rows="4"></textarea>
+                    <div class="custom-buttons">
+                        <button id="addCustomTraits">批量新增</button>
+                        <button id="clearCustomTraits">清空所有</button>
+                    </div>
+                </div>
+                <div class="buttons"></div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button id="generate">生成提示詞</button>
+            <button id="copy">複製提示詞</button>
+            <button id="openAI">貼到AI生成</button>
+            <button id="reset">重置提示詞 ⚠️</button>
+        </div>
+
+        <div class="preview">
+            <h3>提示詞預覽</h3>
+            <div id="promptPreview"></div>
+        </div>
+
+        <footer>
+            <p>屏東縣後庄國小黃朝榮老師作品</p>
+            <p>免費分享，歡迎擴散推廣</p>
+            <p>嚴禁商用與任何侵權、不尊重著作權的行為</p>
+            <p>更多 Puti-AI 教學工具 <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank">https://padlet.com/clongwh/puti_ai_tools</a></p>
+        </footer>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
