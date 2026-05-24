@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puti-AI ChatGPT Image 2.0 實用提示詞大庫</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #f0f4fd 0%, #e0e8f8 100%);
+            background-attachment: fixed;
+        }
+        /* 自訂捲軸樣式 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+        
+        /* Toast 動畫 */
+        @keyframes slideUpFade {
+            0% { opacity: 0; transform: translate(-50%, 20px); }
+            10% { opacity: 1; transform: translate(-50%, 0); }
+            90% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -20px); }
+        }
+        .toast-animate {
+            animation: slideUpFade 2.5s ease-in-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50 py-6 border-b border-white/50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 mb-2">
+                Puti-AI ChatGPT Image 2.0 提示詞大庫
+            </h1>
+            <p class="text-gray-600 font-medium">懸停卡片查看詳細內容，點擊即可一鍵複製提示詞 🚀</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-10" id="main-container">
+        <!-- 內容由 JS 動態生成 -->
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-300 py-8 mt-12">
+        <div class="container mx-auto px-4 text-center text-sm leading-relaxed">
+            <p class="mb-2">屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣。</p>
+            <p class="mb-2 text-red-400 font-medium">嚴禁商用與任何侵權、不尊重著作權的行為。</p>
+            <p class="mb-4 text-gray-400">資料來源：<a href="https://www.bnext.com.tw/article/90908/chatgpt-image-2-prompt-guide-complete" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-blue-300 hover:underline transition-colors">數位時代</a></p>
+            <a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener noreferrer" 
+               class="inline-block px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-full transition-colors duration-300 shadow-lg hover:shadow-blue-500/50">
+                更多 Puti-AI 教學工具 點此前往
+            </a>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-10 left-1/2 pointer-events-none z-50 hidden">
+        <div class="bg-gray-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-2 border border-gray-700">
+            <span class="text-green-400 text-lg">✓</span>
+            <span id="toast-message" class="font-bold tracking-wide">已複製提示詞！</span>
+        </div>
+    </div>
+
+    <script>
+        // 資料集：5 大類，共 50 組提示詞
+        const promptsData = [
+            {
+                category: "一、品牌社群類",
+                color: "from-pink-500 to-rose-500",
+                icon: "📱",
+                items: [
+                    { topic: "社群貼文圖片", prompt: "請幫我生成一張適合 Instagram 的社群圖片，主題為日常療癒生活，帶有奶油色調、文青風格與自然留白，畫面溫暖且適合搭配短文。" },
+                    { topic: "YouTube 縮圖", prompt: "請幫我設計一張資訊型 YouTube 縮圖，主題是 AI 提升工作效率，使用醒目的大字標題、強烈對比色與科技感背景，讓畫面在手機上也容易閱讀。" },
+                    { topic: "商品形象照", prompt: "請幫我把這個產品製作成高質感商品攝影風格，使用柔和自然光、乾淨背景與簡約構圖，畫面像保養品牌官網，帶有高級生活感與細膩陰影。" },
+                    { topic: "EDM 行銷主圖 / 廣告 Banner", prompt: "請幫我設計一張 EDM 主視覺，主題是會員限定優惠，畫面乾淨吸睛，適合品牌電子報使用。" },
+                    { topic: "品牌商品化形象", prompt: "請幫我把角色設計成品牌吉祥物商品，做成絨毛玩偶展示圖，風格溫暖可愛，像文創品牌商品頁會出現的形象照。" },
+                    { topic: "活動海報設計", prompt: "請幫我製作一張科技論壇活動海報，使用黑金色調與現代字體，畫面具有高級感與專業感。" },
+                    { topic: "社群輪播圖", prompt: "請幫我設計 Instagram 輪播封面圖，主題是「AI工具推薦」，使用現代感字體與簡潔版面。" },
+                    { topic: "教學資訊圖", prompt: "請幫我把 AI 工具使用方法做成教學型資訊圖，搭配流程箭頭與簡單 icon，適合社群分享。" },
+                    { topic: "品牌 Logo 概念圖", prompt: "請幫我生成三種不同風格的 Logo 概念圖，風格包含極簡、科技感與高級精品感。" },
+                    { topic: "品牌社群模板", prompt: "請幫我設計一套品牌社群模板，包含公告、活動、引用語錄與新品發布版型，風格統一且容易套用。" }
+                ]
+            },
+            {
+                category: "二、工作應用類",
+                color: "from-blue-500 to-cyan-500",
+                icon: "💼",
+                items: [
+                    { topic: "商業簡報封面", prompt: "請幫我製作一張專業簡報封面，主題是新服務提案，使用簡潔排版、企業感配色與現代曲線設計，畫面像顧問公司或科技企業簡報。" },
+                    { topic: "公司介紹圖卡", prompt: "請幫我製作一張公司介紹視覺，內容包含品牌理念、服務項目與核心特色，版面簡潔有專業感。" },
+                    { topic: "產品比較表", prompt: "請幫我把不同方案做成視覺化比較表，使用簡潔欄位設計、圖示與重點標示，讓資訊更容易閱讀與理解。" },
+                    { topic: "Q&A 問答圖卡", prompt: "請幫我設計一張 FAQ 問答卡片，把常見問題與回答整理成視覺化版面，讓內容更容易閱讀，適合品牌客服或網站使用。" },
+                    { topic: "App Icon 設計", prompt: "請幫我設計一款現代感 App icon，以簡約幾何風格呈現，使用柔和綠色與白色配色，適合寵物養成類型 App，呈現多種功能，寫出設計概念，具有辨識度。" },
+                    { topic: "操作流程圖解", prompt: "請幫我把「帳號註冊流程」做成步驟式圖解，使用 icon、箭頭與簡單文字說明，風格清楚、現代、容易閱讀。" },
+                    { topic: "數據資訊圖", prompt: "請幫我把市場調查數據做成視覺化資訊圖，版面清楚、數據重點明確，適合簡報使用。" },
+                    { topic: "工作 Checklist 清單", prompt: "請幫我設計一張工作用 Checklist 圖卡，主題是活動籌備確認事項，使用乾淨排版與勾選框設計，看起來專業又實用。" },
+                    { topic: "部落格文章首圖", prompt: "請幫我設計一張部落格文章首圖，主題圍繞生活風格與工作效率，版面乾淨、有閱讀感，搭配柔和配色與自然元素，風格像 Medium 或品牌內容網站首頁。" },
+                    { topic: "社群分享卡片", prompt: "請幫我製作一張適合 Instagram 分享的語錄卡片，風格簡約文青，搭配柔和背景與重點字體設計，適合創業或生活類內容。" }
+                ]
+            },
+            {
+                category: "三、生活實用類",
+                color: "from-green-500 to-emerald-500",
+                icon: "☕",
+                items: [
+                    { topic: "菜單設計", prompt: "請幫我製作一張文青風咖啡館菜單，版面包含飲品、甜點、價格與簡單插畫。使用奶油色背景、手寫字體、咖啡杯與植物元素，整體乾淨溫暖，像小型獨立咖啡店的紙本菜單。" },
+                    { topic: "季節月曆", prompt: "請幫我生成一張春季主題月曆設計，畫面包含月份日期排版、櫻花枝、柔和天空與可愛小插圖。整體使用粉色、米白與淺綠色，版面清楚好讀，適合做成手機桌布、桌曆或社群圖片。" },
+                    { topic: "旅遊行程規劃表", prompt: "先完整規劃「[填入城市] 4 天 3 夜自由行行程」，再將內容改寫成具畫面感的旅遊雜誌風格攻略文章，最後生成一張直式旅遊雜誌拼貼風海報。行程需考量人潮分布、交通順序、區域集中與旅行節奏；融合經典景點、海景療癒、韓系咖啡廳、美食、購物與夜景；先輸出完整日程規劃表；再改寫成具故事感與畫面感的旅遊雜誌文章；最後生成適合 AI 製圖的旅遊海報提示詞。" },
+                    { topic: "編織小人氣象圖", prompt: "主題：[填入城市] 編織小人氣象圖。中央是一個編織風格的氣象資訊牌，顯示城市名稱、日期、天氣狀況、溫度範圍與降雨機率。周圍是以毛線與鉤針材質打造的立體城市景觀。整個畫面像是微縮模型與編織玩偶結合的城市世界。畫面中有可愛編織小人正在旅行、拍照、散步、搭車、逛街或品嚐美食。街道、樹木、房屋、車輛、招牌、山丘、河流或海港都以毛線編織材質呈現。" },
+                    { topic: "讀書筆記風", prompt: "請將這張圖片或主題內容轉化為讀書筆記風。整體版面請像一本有質感的學習筆記頁，包含手寫感標題、重點底線、簡單框線、小箭頭、便利貼感區塊與清楚的段落分類。請讓內容看起來像真的有人閱讀後整理出的重點，而不是過度制式的簡報。文字排版請清楚、自然、有層次，適度保留留白。可以加入少量可愛小圖示、符號、標記或重點圈選，增加閱讀感與手作感。整體風格要有知識感、溫度感與收藏價值，像社群上會被存起來的讀書筆記頁。" },
+                    { topic: "時間管理規劃圖", prompt: "請幫我把一天 24 小時做成時間分配圖，區分工作、學習、運動、娛樂與休息時間。使用時間軸與色塊設計，像 productivity app 的介面。" },
+                    { topic: "美食插圖", prompt: "請幫我畫一張草莓鬆餅插畫，使用溫暖餐廳風格與細膩食物質感，擺盤乾淨精緻，看起來像餐廳菜單上的主視覺。" },
+                    { topic: "日系白邊手繪風", prompt: "請觀察照片中出現的元素，並為每個元素加入有意義的手繪註解。\n\n【畫面中的物件】※請在此填入照片中的項目※\n\n【描寫規則】・使用像白色筆畫出的細手繪線條 ・線條要有一筆畫風格，隨性、略帶不均勻感 ・沿著物件外輪廓加上描邊 ・用箭頭或虛線引導視線\n\n【文字規則】・使用日文手寫字風格（平假名約 7 成，簡單漢字約 3 成） ・文字要短，像自言自語一樣的註解 ・語氣偏向「日記感、短句、情緒感」\n\n【評論生成規則】・飲料 → 描述味道、溫度、心情 ・食物 → 描述口感、美味程度 ・空間 → 描述氛圍 ・整體 → 用一句話總結\n\n【裝飾】・可低調加入蒸氣、閃亮、小愛心、小顏文字等元素 ・不要太多，保留適度留白\n\n【成品風格】・像 Instagram 限時動態風格，也像雜誌上的隨手筆記風 ・整體要有時髦感，同時帶點輕鬆不費力的氛圍。" },
+                    { topic: "一週習慣追蹤表", prompt: "請幫我設計一張一週 habit tracker，包含運動、閱讀、喝水、冥想、早睡與學習等欄位。版面簡潔療癒，搭配小圖示與打勾區域，像文具品牌會推出的生活規劃模板。" },
+                    { topic: "電影觀後感筆記", prompt: "請幫我製作一張電影觀後感卡片，內容包含電影評分、角色分析、經典台詞與心得。畫面帶有電影感與文青風格，像影評帳號分享圖卡。" }
+                ]
+            },
+            {
+                category: "四、靈感點子類",
+                color: "from-amber-400 to-orange-500",
+                icon: "💡",
+                items: [
+                    { topic: "四格漫畫", prompt: "請幫我把「每天開會的崩潰日常」做成四格漫畫，用幽默方式呈現上班族心聲，角色可愛、節奏輕鬆、有日系漫畫感。" },
+                    { topic: "LINE 貼圖角色", prompt: "請幫我設計一組 Q 版角色貼圖，角色表情誇張可愛，包含開心、無奈、生氣與驚訝四種情緒，風格簡單乾淨，適合聊天使用。" },
+                    { topic: "旅行日記插畫", prompt: "請幫我生成一頁旅行日記風格插畫，包含地圖、車票、手寫字與沿途風景，像旅人隨身筆記本。" },
+                    { topic: "黑膠唱片封面", prompt: "請幫我設計一張獨立樂團風格黑膠唱片封面，畫面帶有情緒感、低飽和色調與文藝攝影氛圍，像 indie music 專輯。" },
+                    { topic: "漫畫封面設計", prompt: "請幫我製作一張冒險漫畫封面，主角站在壯闊山脈與天空前方，畫面中有標題區、集數編號與強烈動態構圖。風格熱血、有故事張力，像少年冒險漫畫第一集封面。" },
+                    { topic: "世界觀書封設計", prompt: "請幫我生成一本奇幻小說書封，畫面有巨大古城、夜空與神秘角色，整體像奇幻文學封面設計。" },
+                    { topic: "復古雜誌封面", prompt: "請幫我設計一張 90 年代日本生活風格雜誌封面，整體像日本 old school lifestyle magazine。使用大面積雜誌標題、復古排版、多欄文字設計與大量日文標題，畫面帶有懷舊感與生活氣息。" },
+                    { topic: "時尚雜誌封面", prompt: "日系時尚雜誌封面風格，一位有氣質的模特站在東京街頭，穿著簡約高級感穿搭，日系都會時尚風格，乾淨俐落髮型，自然神情，帶有 Men’s Non-no、POPEYE、UOMO、FINEBOYS 類型的日系雜誌氛圍。柔和自然光，低飽和色調，生活感街拍攝影，現代東京都市背景，真實雜誌封面排版，包含日文標題、封面文案與條碼，整體風格清新、時髦、成熟、有質感，超寫實攝影，高解析度。" },
+                    { topic: "寵物走出 IG 拍照框", prompt: "超可愛【寵物】從巨大 Instagram 拍照框中走出來，前腳超近距離伸向鏡頭，帶有強烈透視感與廣角效果，露出開心微笑與吐舌表情。背景是陽光燦爛的夢幻花園小徑，四周盛開大量粉色、橘色、黃色花朵，空中飛舞著蝴蝶，藍天白雲清晰明亮。畫面中央有大型白色 Instagram UI 相框，上面顯示帳號名稱、愛心、留言、收藏圖示與高按讚數。整體風格像高質感社群媒體廣告與 petstagram 視覺設計，色彩鮮豔，高彩度，超寫實毛髮細節，電影感光影，淺景深，夢幻春日氛圍，超精緻 3D 感，照片級 realism，8k。" },
+                    { topic: "黏土 Q 版角色", prompt: "Q版角色公仔從巨大手機螢幕中走出來，形成「踏出手機畫面」的立體效果，角色穿著符合主題風格的服裝，露出活潑可愛笑容，動作像正在向前奔跑或走向鏡頭。背景是與角色主題相關的迷你場景與日系街景，整體像超精緻黏土模型與收藏級公仔展示台。畫面周圍漂浮大量可愛立體小物件與貼圖元素，包括主題相關道具、愛心通知、like 圖示、對話框、旗幟、小圖標、社群媒體 icon。手機螢幕內能看到完整主題世界與藍天白雲背景。整體風格為日系 kawaii toy aesthetic、3D clay art、miniature diorama、collectible figurine style、超高細節、暖色陽光、柔和景深、療癒系色彩、高彩度、精緻材質紋理、社群媒體風格展示構圖、Instagram toy photography aesthetic、超可愛 Q 版公仔風格、8k、photorealistic clay render。" }
+                ]
+            },
+            {
+                category: "五、照片風格轉換類",
+                color: "from-purple-500 to-indigo-600",
+                icon: "🎨",
+                items: [
+                    { topic: "衝破手機螢幕", prompt: "創建一個高度擬真、具電影感的場景：我正從自己的社群貼文中走進現實世界。將我置於一支智慧型手機螢幕中，畫面顯示一個照片分享型社群貼文介面，並讓我從螢幕中突破出來。人物姿勢需重新設計為動態行走中，一腳向前跨出，並使用強烈3D透視前縮效果（foreshortening），讓腳朝向觀者延伸，呈現強烈臨場感與空間深度。整體動作自然、具有真實物理感，像是正從畫面中走出來。社群介面需為原創設計（不可模仿任何 brand），風格乾淨簡約，包含：上方標題列、個人頭像與使用者名稱【填入自己的社群帳號】、中央圓角貼文圖片區塊、下方互動圖示（按讚、留言、分享、收藏）、簡短貼文說明文字，以及底部導覽列。在人物突破螢幕的接觸點加入特效：玻璃破裂碎片、向外噴散的數位像素碎片、前景手腳帶有動態模糊拖影，以及螢幕邊界帶有微微發光的數位殘影效果。整體畫面需達電影級質感。構圖為 4:5 直式（1080×1350），畫面完整不裁切。" },
+                    { topic: "個人形象潑墨插圖", prompt: "以這張照片為基礎，將人物轉換為日系手繪插畫風，保留原本的臉部五官、髮型、表情與姿勢。半身構圖，人物動態自然，情緒表現自然柔和，角色特徵清晰且接近真人。整體風格為手繪塗鴉＋水彩速寫，使用隨性線條與鬆散墨線，帶有漫畫草稿質感與手繪筆觸。色彩以粉彩與淡墨色混合，加入水彩暈染與輕微潑墨效果，整體色調柔和。背景為白色簡約風，加入符號化塗鴉元素點綴，如小愛心、星星、簡單圖形與筆刷痕跡，營造手帳與插畫氛圍。" },
+                    { topic: "角色設定海報", prompt: "請根據我提供的照片，將人物轉換為日系寫實插畫風角色設定海報。保留人物原本的臉部特徵、髮型與整體氣質，轉為細緻的數位手繪插畫風格，線條乾淨但帶有手繪筆觸，質感介於寫實與插畫之間。整體版面設計為角色設定卡（character profile poster），畫面以人物半身或胸像為主視覺，搭配多個小場景插畫（如日常、工作或不同狀態的自己），呈現多面向形象。版面需包含結構化資訊區塊，例如：角色定位、性格特質、核心價值、能力優勢、生活風格等，以視覺化排版呈現（標題＋簡短文字）。畫面中可加入手寫字、箭頭標記、筆記感標註、墨點潑墨、線條草圖元素。" },
+                    { topic: "穿搭建議分析", prompt: "請根據我提供的人物照片，生成一張個人穿搭風格解析海報。分析必須明確根據此人物的臉型、膚色、身形比例與整體氣質進行，不可使用通用模板或固定風格分類。整體風格需呈現此人物的獨特性，風格命名需具個人特色，避免使用常見分類（如韓系、日系等泛用標籤）。每一項穿搭建議需說明與人物特徵的關聯，例如比例修飾、氣質強化或視覺平衡，而非一般化描述。穿搭內容需拆解為：上半身、下半身、整體比例、配色與配件，並提供具體且有差異的建議。版面仍為簡約資訊設計風。" },
+                    { topic: "復古電子寵物像素風", prompt: "請把原始圖片轉化為具有 90 年代虛擬寵物機風格的畫面，呈現像早期電子寵物液晶顯示器中的內容。在保留人物位置與場景互動關係的情況下，將整體視覺簡化為 8-bit 像素形式，角色與背景風格偏向柔軟、輕鬆，帶點慵懶與療癒感，表情可愛中帶一點呆萌氣息。畫面採用類似早期 LCD 的顯示質感，使用有限色彩（最多 4 色），並以柔和的粉彩配色為主，例如奶油白、淡粉紅、薄荷綠與淡紫色，搭配明顯的像素顆粒感與低解析度效果。同時加入復古數位介面元素。整個畫面需呈現為「液晶螢幕內容本身」，避免出現任何裝置外觀元素。" },
+                    { topic: "Q版3D小人風", prompt: "基於這張圖片，以照片中的人物為中心，請生成一張「迷你角色在周圍生動活動的感性合成圖片」。\n\n【核心概念】「日常中的小分身」，可愛又帶點玩心，同時具有感性的呈現；Instagram 風格＋具有故事感的圖片。\n\n【人物處理】原始人物必須去背使用（臉部／姿勢絕對不可更動），人物放在畫面中心或稍微偏前，加入自然陰影，外圍加上細白邊（貼紙感）。\n\n【迷你角色】生成 3～7 個以人物為基礎的迷你角色（手掌大小），風格為 3D 可愛 SD 角色（可帶 Roblox／像素風），臉部、髮型、服裝特徵完整保留，且每個角色都必須在動作中（如跳躍、揮手、爬肩等，禁止靜止）。\n\n【佈局與標題】自然配置在書本/包包/肩膀等處形成空間感。分析圖片氛圍自動生成 2～5 個單詞的簡短感性「韓文標題」（如：記錄這一刻、平凡的一天），字體柔和並形成前後景層次。加入 3～6 個手寫感細筆風塗鴉（箭頭、星星、愛心等）與小型貼紙文字（mini me, today 等）。明亮溫暖色調，避免過度 CG 感。" },
+                    { topic: "電影海報風", prompt: "請將這張圖片轉化為電影海報風格。讓畫面具有強烈敘事感、情緒張力與主視覺焦點，看起來像一部電影的正式海報。請強化光影對比、角色或物件的存在感，以及整體構圖的戲劇性。可以加入片名、大字標題、副標語、上映宣傳語或演員名單風格的小字排版。整體風格請有電影感、故事感與視覺衝擊力，像文藝片、愛情片、懸疑片或青春片海報。請依照原圖氛圍決定是溫柔、浪漫、神秘或帶點史詩感。" },
+                    { topic: "大尺寸與迷你版人物", prompt: "請使用我提供的照片作為角色參考。保留照片中人物原本的：臉型、五官、髮型、膚色、穿搭、身材比例、整體氣質。不要重新設計角色，也不要改變人物風格。大尺寸人物與迷你人物必須是同一個人，迷你角色是縮小版的自己。畫面是一個溫暖療癒的微縮夢境場景。\n\n【大型人物】照片中的人物以正常比例出現，位於溫暖的室內空間裡，露出溫柔自然的表情，正在照顧或觀察縮小版的自己。動作輕柔，有保護感與陪伴感。\n\n【迷你人物】尺寸約為正常人物的 1/6 至 1/8。迷你角色保留相同的特徵，可以安排：睡覺、搬東西、看書、工作、發呆、吃東西、縮在棉被裡、坐在桌上、躲進小空間。營造「現實中的自己照顧內心小小自己」的感覺。場景充滿生活感（溫暖桌燈、咖啡杯、微縮家具等）。\n\n【風格要求】cinematic photography, miniature world, emotional storytelling, cozy room, warm ambient lighting, giant and tiny self interaction, surreal scale contrast, ultra detailed, realistic skin texture, soft shadows, dreamy atmosphere, premium lifestyle photography, shallow depth of field, soft golden lighting, 8K。直式構圖。" },
+                    { topic: "日本極道千金 / 少爺風", prompt: "根據我提供的照片，請保留照片中人物原本的五官特徵、臉型輪廓、神情與辨識度，貼近原圖人物外貌。生成日本黑道電影風格，一位年輕的日本極道千金站在打開的黑色高級轎車車門前，保鑣替她拉開車門並撐著黑傘，黑色豪華轎車停靠在雨後潮濕的東京歌舞伎町街頭，車燈照亮積水地面與霓虹倒影。她穿著高級黑色和服，帶有金色刺繡、傳統花紋與低調奢華感，精緻華麗的和服腰帶，若隱若現的日式刺青，冷酷自信的眼神，慵懶且高傲的姿態，微濕髮絲與凌亂瀏海，身旁有穿黑色西裝的保鑣護送，歌舞伎町霓虹燈映照整條街道，充滿危險與權勢感。日本犯罪電影美學，電影級打光，強烈光影對比，黑金色調，低飽和電影色調，柔和光線攝影風格，高細節，電影海報構圖，時尚又帶有壓迫感，超高畫質，Netflix日劇電影海報風格，如龍系列氛圍，cinematic composition，shallow depth of field。" },
+                    { topic: "Y2K 四格大頭貼", prompt: "根據我提供的圖片，製作一張 2x2 四分格魚眼鏡頭拼貼大頭貼，畫面是在有鏡子的電梯裡自拍。整體構圖像早期日系拍貼機與 Y2K 網路自拍相簿風格，每格都是超近距離大頭貼視角。\n\n【左上分格】人物超近距離貼近魚眼鏡頭，戴著 oversized 半透明藍色墨鏡，點綴雙馬尾與空氣瀏海，具魚眼變形效果。\n\n【右上分格】雙手托著臉頰對鏡頭燦笑。\n\n【左下分格】超近距離靠近魚眼鏡頭眨眼、嘟嘴，輕扶墨鏡，帶有淡淡腮紅。\n\n【右下分格】歪頭對鏡頭比 YA 或愛心，具 CCD 柔焦感與輕微數位模糊。\n\n【裝飾與氛圍】周圍漂浮大量迷你貼紙元素（愛心、草莓、泰迪熊、閃粉等），加入小字（如 my baby、cutie me）。藍色環境光、夢幻 CCD 柔焦、復古底片顆粒、色差效果、閃光燈高光、低畫質數位相機瑕疵感、高彩度配色、Y2K 千禧辣妹自拍美學。" }
+                ]
+            }
+        ];
+
+        // Web Audio API 初始化 (用於播放點擊音效)
+        let audioCtx = null;
+        function playCopySound() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // 創建一組輕快的「叮叮」聲效
+            const playTone = (freq, startTime, duration, type='sine') => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, startTime);
+                
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.2, startTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            };
+
+            const now = audioCtx.currentTime;
+            playTone(880, now, 0.15);       // 第一聲 (A5)
+            playTone(1108.73, now + 0.1, 0.3); // 第二聲 (C#6)
+        }
+
+        // 顯示 Toast 動畫
+        function showToast() {
+            const toast = document.getElementById('toast-container');
+            // 移除舊的動畫 class
+            toast.classList.remove('toast-animate');
+            // 觸發重繪 (reflow) 以便重新播放動畫
+            void toast.offsetWidth; 
+            
+            toast.classList.remove('hidden');
+            toast.classList.add('toast-animate');
+            
+            // 動畫結束後隱藏
+            setTimeout(() => {
+                toast.classList.add('hidden');
+                toast.classList.remove('toast-animate');
+            }, 2500);
+        }
+
+        // 複製到剪貼簿功能
+        function copyText(text) {
+            // 使用 execCommand 作為安全備案，確保在 iFrame 或特殊環境中能運作
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'absolute';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                playCopySound();
+                showToast();
+            } catch (err) {
+                alert('複製失敗，請手動複製！');
+            } finally {
+                document.body.removeChild(textarea);
+            }
+        }
+
+        // 渲染畫面
+        const mainContainer = document.getElementById('main-container');
+
+        promptsData.forEach((section, index) => {
+            // 建立區塊標題
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'mb-16';
+            
+            const titleHtml = `
+                <div class="flex items-center mb-8 border-b-2 border-gray-200 pb-2">
+                    <span class="text-3xl mr-3">${section.icon}</span>
+                    <h2 class="text-2xl font-bold text-gray-800">${section.category}</h2>
+                </div>
+            `;
+            sectionDiv.innerHTML = titleHtml;
+
+            // 建立卡片網格
+            const gridDiv = document.createElement('div');
+            gridDiv.className = 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6';
+
+            section.items.forEach(item => {
+                const card = document.createElement('div');
+                // 卡片外觀：圓角、陰影、毛玻璃、懸停上浮
+                card.className = `group relative h-48 rounded-2xl overflow-hidden shadow-lg border border-white/40 bg-white/50 backdrop-blur-md cursor-pointer transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl`;
+                
+                // 卡片正面 (顯示主題)
+                const front = document.createElement('div');
+                front.className = `absolute inset-0 flex flex-col items-center justify-center p-4 transition-opacity duration-300 group-hover:opacity-0 bg-gradient-to-br from-white/80 to-white/30 z-10`;
+                front.innerHTML = `
+                    <div class="w-12 h-12 rounded-full bg-gradient-to-br ${section.color} opacity-20 absolute top-[-10px] right-[-10px] blur-xl"></div>
+                    <span class="text-3xl mb-3 drop-shadow-sm opacity-80">${section.icon}</span>
+                    <h3 class="text-lg font-bold text-gray-800 text-center leading-tight tracking-wide drop-shadow-sm">${item.topic}</h3>
+                `;
+
+                // 卡片背面 (顯示提示詞)
+                const back = document.createElement('div');
+                back.className = `absolute inset-0 p-5 bg-gradient-to-br ${section.color} text-white opacity-0 transition-all duration-300 group-hover:opacity-100 flex flex-col z-20`;
+                back.innerHTML = `
+                    <div class="flex-1 overflow-y-auto pr-2 custom-scrollbar text-sm font-medium leading-relaxed tracking-wide text-white/95 whitespace-pre-wrap">
+                        ${item.prompt}
+                    </div>
+                    <div class="mt-3 text-center text-xs font-bold bg-white/20 py-1.5 rounded-full backdrop-blur-sm tracking-widest shadow-inner">
+                        👆 點擊複製
+                    </div>
+                `;
+
+                // 綁定點擊事件
+                card.onclick = () => copyText(item.prompt);
+
+                card.appendChild(front);
+                card.appendChild(back);
+                gridDiv.appendChild(card);
+            });
+
+            sectionDiv.appendChild(gridDiv);
+            mainContainer.appendChild(sectionDiv);
+        });
+    </script>
+</body>
+</html>
