@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHistoryDropdown();
     renderPromptPreview();
     updateCombinedPromptDisplay();
+    
+    // 初始化拖曳分類生成器
+    initDragClassify();
 });
 
 function initializeTraitButtons() {
@@ -751,8 +754,443 @@ window.switchTab = function(tabId) {
     if (tabId === 'generator') {
         document.getElementById('generatorTab').classList.add('active');
         document.getElementById('tabBtnGenerator').classList.add('active');
+    } else if (tabId === 'dragclassify') {
+        document.getElementById('dragclassifyTab').classList.add('active');
+        document.getElementById('tabBtnDragClassify').classList.add('active');
     } else {
         document.getElementById('guideTab').classList.add('active');
         document.getElementById('tabBtnGuide').classList.add('active');
     }
 };
+
+// ==========================================
+// 快速分類（拖曳分類）生成器邏輯區
+// ==========================================
+let dragDraggingElement = null;
+let dragSelectedButtons = new Set();
+let dragClassification = {}; // { "studentKey": "typeZone" }
+let dragStudentsData = [];
+
+// 預設分類與描述
+const defaultDragTypeConfigs = {
+    'zone-excellent': { type: '品學兼優型', desc: '博學多才、德行兼備、勤學好問、穩重踏實' },
+    'zone-earnest': { type: '穩健認真型', desc: '踏實肯幹、專注投入、穩中求進、細心謹慎' },
+    'zone-responsible': { type: '負責服務型', desc: '樂於助人、盡心盡力、服務熱忱、團隊精神' },
+    'zone-friendly': { type: '合群友善型', desc: '親切友善、樂於分享、團結合作、互助互愛' },
+    'zone-creative': { type: '創意思維型', desc: '創意無限、思路敏捷、敢於突破、獨立思考' },
+    'zone-athletic': { type: '陽光體育型', desc: '活力四射、身心健全、熱愛運動、團隊合作' },
+    'zone-potential': { type: '潛力待發型', desc: '潛能無限、厚積薄發、靜水深流、自我激勵' },
+    'zone-unproductive': { type: '欠缺努力型', desc: '三心二意、漫不經心、心猿意馬、虎頭蛇尾' }
+};
+
+// 儲存目前分類與描述的設定，預設為 default
+let dragTypeConfigs = JSON.parse(JSON.stringify(defaultDragTypeConfigs));
+
+function initDragClassify() {
+    setupDragEventListeners();
+    setupEditableCardLabels();
+    loadDragStateFromLocalStorage();
+}
+
+function setupDragEventListeners() {
+    const confirmBtn = document.getElementById('dragConfirmStudents');
+    if (confirmBtn) {
+        confirmBtn.onclick = generateDragStudentButtons;
+    }
+
+    const generateBtn = document.getElementById('dragGenerate');
+    if (generateBtn) {
+        generateBtn.onclick = generateDragPrompts;
+    }
+
+    const copyBtn = document.getElementById('dragCopy');
+    if (copyBtn) {
+        copyBtn.onclick = copyDragPrompts;
+    }
+
+    const resetBtn = document.getElementById('dragReset');
+    if (resetBtn) {
+        resetBtn.onclick = confirmDragReset;
+    }
+
+    // 拖曳至待分類區（學生池）
+    const studentPool = document.getElementById('dragStudentButtons');
+    if (studentPool) {
+        studentPool.addEventListener('dragover', (e) => e.preventDefault());
+        studentPool.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (dragDraggingElement) {
+                studentPool.appendChild(dragDraggingElement);
+                const studentKey = dragDraggingElement.getAttribute('data-student-key');
+                delete dragClassification[studentKey];
+                saveDragStateToLocalStorage();
+            }
+        });
+    }
+
+    // 設置 8 個分類區的拖放與點擊事件
+    document.querySelectorAll('.drag-type-card').forEach(card => {
+        const dropZone = card.querySelector('.drag-drop-zone');
+
+        // HTML5 拖放事件
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const type = card.getAttribute('data-type');
+            if (dragDraggingElement) {
+                dropZone.appendChild(dragDraggingElement);
+                const studentKey = dragDraggingElement.getAttribute('data-student-key');
+                dragClassification[studentKey] = type;
+                saveDragStateToLocalStorage();
+            }
+        });
+
+        // 點擊移動事件（行動端 / 快速點擊）
+        card.addEventListener('click', (e) => {
+            // 如果點擊的是學生按鈕或正處於編輯狀態的文字，不觸發移入
+            if (e.target.classList.contains('student-button') || e.target.contentEditable === "true") {
+                return;
+            }
+            const type = card.getAttribute('data-type');
+            if (dragSelectedButtons.size > 0) {
+                dragSelectedButtons.forEach(btn => {
+                    dropZone.appendChild(btn);
+                    btn.classList.remove('active-drag');
+                    const studentKey = btn.getAttribute('data-student-key');
+                    dragClassification[studentKey] = type;
+                });
+                dragSelectedButtons.clear();
+                saveDragStateToLocalStorage();
+                showToast(`已將學生移入「${type}」`);
+            }
+        });
+    });
+}
+
+// 設置雙擊編輯卡片標題及描述
+function setupEditableCardLabels() {
+    document.querySelectorAll('.drag-type-card').forEach(card => {
+        const h3 = card.querySelector('h3');
+        const desc = card.querySelector('.drag-type-desc');
+        
+        // 取得該卡片的 class 來作為 config 索引
+        let slotClass = '';
+        card.classList.forEach(cls => {
+            if (cls.startsWith('zone-')) {
+                slotClass = cls;
+            }
+        });
+
+        if (!slotClass) return;
+
+        h3.addEventListener('dblclick', () => {
+            enterCardEditMode(h3, 'title', slotClass, card);
+        });
+
+        desc.addEventListener('dblclick', () => {
+            enterCardEditMode(desc, 'desc', slotClass, card);
+        });
+    });
+}
+
+function enterCardEditMode(el, fieldType, slotClass, card) {
+    el.contentEditable = "true";
+    el.focus();
+    el.classList.add('editing-active');
+
+    // 選取所有文字
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const keydownHandler = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            el.blur();
+        }
+    };
+
+    const blurHandler = () => {
+        el.contentEditable = "false";
+        el.classList.remove('editing-active');
+        el.removeEventListener('keydown', keydownHandler);
+        el.removeEventListener('blur', blurHandler);
+
+        const newValue = el.textContent.trim();
+        const oldType = card.getAttribute('data-type');
+
+        if (fieldType === 'title') {
+            if (!newValue) {
+                el.textContent = dragTypeConfigs[slotClass].type;
+                return;
+            }
+
+            // 更新 classification 裡舊類型的名稱對應
+            Object.keys(dragClassification).forEach(studentKey => {
+                if (dragClassification[studentKey] === oldType) {
+                    dragClassification[studentKey] = newValue;
+                }
+            });
+
+            // 更新設定檔與 DOM data-type 屬性
+            dragTypeConfigs[slotClass].type = newValue;
+            card.setAttribute('data-type', newValue);
+            
+            showToast(`分類標題已修改為：「${newValue}」`);
+        } else if (fieldType === 'desc') {
+            if (!newValue) {
+                el.textContent = dragTypeConfigs[slotClass].desc;
+                return;
+            }
+            dragTypeConfigs[slotClass].desc = newValue;
+            showToast(`評語描述已修改為：「${newValue}」`);
+        }
+
+        saveDragStateToLocalStorage();
+    };
+
+    el.addEventListener('keydown', keydownHandler);
+    el.addEventListener('blur', blurHandler);
+}
+
+function generateDragStudentButtons() {
+    const textarea = document.getElementById('dragStudentNames');
+    if (!textarea) return;
+
+    const names = textarea.value.split('\n')
+        .map(name => name.trim())
+        .filter(name => name);
+    
+    if (names.length === 0) {
+        alert('請輸入學生名單！');
+        return;
+    }
+
+    dragStudentsData = names.map((name, index) => {
+        let cleanName = name;
+        let idStr = String(index + 1).padStart(2, '0');
+        const match = name.match(/^(\d+)[.．、\s]+(.*)$/);
+        if (match) {
+            idStr = String(parseInt(match[1])).padStart(2, '0');
+            cleanName = match[2].trim();
+        }
+        return {
+            id: idStr,
+            name: cleanName
+        };
+    });
+
+    renderDragStudentButtons();
+    saveDragStateToLocalStorage();
+}
+
+function renderDragStudentButtons() {
+    const pool = document.getElementById('dragStudentButtons');
+    if (!pool) return;
+    pool.innerHTML = '';
+
+    // 清空所有分類區的 HTML
+    document.querySelectorAll('.drag-drop-zone').forEach(zone => zone.innerHTML = '');
+
+    dragStudentsData.forEach(student => {
+        const studentKey = `${student.id}.${student.name}`;
+        
+        const button = document.createElement('button');
+        button.className = 'student-button';
+        button.draggable = true;
+        button.textContent = studentKey;
+        button.setAttribute('data-student-key', studentKey);
+
+        button.addEventListener('dragstart', (e) => {
+            dragDraggingElement = button;
+            e.dataTransfer.setData('text/plain', '');
+        });
+
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            
+            const isUnclassified = button.parentElement.id === 'dragStudentButtons';
+            if (isUnclassified) {
+                if (dragSelectedButtons.has(button)) {
+                    dragSelectedButtons.delete(button);
+                    button.classList.remove('active-drag');
+                } else {
+                    dragSelectedButtons.add(button);
+                    button.classList.add('active-drag');
+                }
+            } else {
+                pool.appendChild(button);
+                button.classList.remove('active-drag');
+                dragSelectedButtons.delete(button);
+                delete dragClassification[studentKey];
+                saveDragStateToLocalStorage();
+                showToast(`已將 ${student.name} 移回待分類區`);
+            }
+        });
+
+        // 依據名稱匹配對應的 data-type 分類區
+        const assignedZoneType = dragClassification[studentKey];
+        if (assignedZoneType) {
+            const targetZone = document.querySelector(`.drag-type-card[data-type="${assignedZoneType}"] .drag-drop-zone`);
+            if (targetZone) {
+                targetZone.appendChild(button);
+                return;
+            }
+        }
+        pool.appendChild(button);
+    });
+}
+
+function generateDragPrompts() {
+    const grade = document.getElementById('dragGrade').value;
+    const wordCount = document.getElementById('dragWordCount').value;
+    const preview = document.getElementById('dragPromptPreview');
+    
+    if (!grade) {
+        alert('請選擇年級！');
+        return;
+    }
+
+    let classifiedStudents = [];
+
+    // 收集所有分類區的學生
+    document.querySelectorAll('.drag-type-card').forEach(card => {
+        const type = card.getAttribute('data-type');
+        const desc = card.querySelector('.drag-type-desc').textContent.trim();
+        const dropZone = card.querySelector('.drag-drop-zone');
+        const buttons = dropZone.querySelectorAll('.student-button');
+
+        buttons.forEach(btn => {
+            const studentKey = btn.getAttribute('data-student-key');
+            const [id, name] = studentKey.split('.');
+            classifiedStudents.push({
+                id: id,
+                name: name,
+                type: type,
+                desc: desc
+            });
+        });
+    });
+
+    if (classifiedStudents.length === 0) {
+        alert('請先將學生拖曳或點擊移入分類區！');
+        return;
+    }
+
+    // 排序學生：依座號
+    classifiedStudents.sort((a, b) => a.id.localeCompare(b.id));
+
+    // 生成提示詞
+    const prompts = classifiedStudents.map(student => 
+        `請為${grade}年級的學生「${student.id}.${student.name}」，根據他的特質「${student.type}：${student.desc}」，用「正面、溫慢、鼓勵」的評語風格，生成「${wordCount}字」有創意、不重複的期末評語。\n\n`
+    );
+
+    preview.value = prompts.join('');
+    saveDragStateToLocalStorage();
+    showToast('評語提示詞已成功生成！');
+}
+
+function copyDragPrompts() {
+    const preview = document.getElementById('dragPromptPreview');
+    if (!preview || !preview.value) {
+        alert('沒有可複製的提示詞！');
+        return;
+    }
+
+    navigator.clipboard.writeText(preview.value)
+        .then(() => showToast('提示詞已複製到剪貼簿！'))
+        .catch(() => alert('複製失敗，請手動複製。'));
+}
+
+function confirmDragReset() {
+    if (confirm('確定要重置快速分類資料嗎？此操作將會還原所有分類狀態、自訂卡片標籤與輸入名單！')) {
+        dragClassification = {};
+        dragStudentsData = [];
+        dragSelectedButtons.clear();
+        
+        // 還原卡片設定
+        dragTypeConfigs = JSON.parse(JSON.stringify(defaultDragTypeConfigs));
+        applyCardConfigsToDOM();
+
+        const pool = document.getElementById('dragStudentButtons');
+        if (pool) pool.innerHTML = '';
+        
+        document.querySelectorAll('.drag-drop-zone').forEach(zone => zone.innerHTML = '');
+        
+        document.getElementById('dragStudentNames').value = '';
+        document.getElementById('dragGrade').value = '';
+        document.getElementById('dragWordCount').value = '150';
+        document.getElementById('dragPromptPreview').value = '';
+        
+        localStorage.removeItem('dragPromptGeneratorState');
+        showToast('已重置快速分類所有資料與卡片設定');
+    }
+}
+
+function applyCardConfigsToDOM() {
+    Object.entries(dragTypeConfigs).forEach(([slotClass, config]) => {
+        const card = document.querySelector(`.drag-type-card.${slotClass}`);
+        if (card) {
+            card.setAttribute('data-type', config.type);
+            const h3 = card.querySelector('h3');
+            if (h3) h3.textContent = config.type;
+            const desc = card.querySelector('.drag-type-desc');
+            if (desc) desc.textContent = config.desc;
+        }
+    });
+}
+
+function saveDragStateToLocalStorage() {
+    const state = {
+        grade: document.getElementById('dragGrade').value,
+        wordCount: document.getElementById('dragWordCount').value,
+        studentNames: document.getElementById('dragStudentNames').value,
+        classification: dragClassification,
+        studentsData: dragStudentsData,
+        typeConfigs: dragTypeConfigs
+    };
+    localStorage.setItem('dragPromptGeneratorState', JSON.stringify(state));
+}
+
+function loadDragStateFromLocalStorage() {
+    const saved = localStorage.getItem('dragPromptGeneratorState');
+    if (saved) {
+        try {
+            const state = JSON.parse(saved);
+            document.getElementById('dragGrade').value = state.grade || '';
+            document.getElementById('dragWordCount').value = state.wordCount || '150';
+            document.getElementById('dragStudentNames').value = state.studentNames || '';
+            
+            // 載入自訂標題與說明
+            if (state.typeConfigs) {
+                dragTypeConfigs = state.typeConfigs;
+            } else {
+                dragTypeConfigs = JSON.parse(JSON.stringify(defaultDragTypeConfigs));
+            }
+            applyCardConfigsToDOM();
+
+            dragClassification = state.classification || {};
+            dragStudentsData = state.studentsData || [];
+
+            if (dragStudentsData.length > 0) {
+                renderDragStudentButtons();
+            }
+        } catch (e) {
+            console.error('載入快速分類快取失敗', e);
+        }
+    } else {
+        // 沒有存檔時，使用預設卡片設定
+        applyCardConfigsToDOM();
+    }
+}

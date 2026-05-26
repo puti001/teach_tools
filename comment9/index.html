@@ -23,7 +23,8 @@
 
         <!-- 頁籤導覽列 -->
         <div class="tab-bar">
-            <button id="tabBtnGenerator" class="tab-btn active" onclick="switchTab('generator')">生成器</button>
+            <button id="tabBtnGenerator" class="tab-btn active" onclick="switchTab('generator')">個別生成</button>
+            <button id="tabBtnDragClassify" class="tab-btn" onclick="switchTab('dragclassify')">快速分類</button>
             <button id="tabBtnGuide" class="tab-btn" onclick="switchTab('guide')">使用教學</button>
         </div>
 
@@ -129,6 +130,112 @@
                 
                 <h4 class="individual-header" style="margin-top: 20px; margin-bottom: 15px; color: #475569;">已排入的學生清單</h4>
                 <div id="promptPreview"></div>
+            </div>
+        </div>
+
+        <!-- 拖曳分類生成器分頁 -->
+        <div id="dragclassifyTab" class="tab-content">
+            <div class="input-section">
+                <div class="grade-select">
+                    <label for="dragGrade">年級:</label>
+                    <select id="dragGrade">
+                        <option value="">請選擇</option>
+                        <option value="1">1年級</option>
+                        <option value="2">2年級</option>
+                        <option value="3">3年級</option>
+                        <option value="4">4年級</option>
+                        <option value="5">5年級</option>
+                        <option value="6">6年級</option>
+                        <option value="7">7年級</option>
+                        <option value="8">8年級</option>
+                        <option value="9">9年級</option>
+                        <option value="10">10年級</option>
+                        <option value="11">11年級</option>
+                        <option value="12">12年級</option>
+                    </select>
+                </div>
+
+                <div class="word-count">
+                    <label for="dragWordCount">評語字數:</label>
+                    <input type="number" id="dragWordCount" min="50" max="500" value="150">
+                </div>
+
+                <div class="student-list">
+                    <label for="dragStudentNames">學生清單 (一行一名):</label>
+                    <textarea id="dragStudentNames" rows="5" placeholder="請輸入學號與姓名（例如：01.陳小明），或直接貼上學生名單"></textarea>
+                    <button id="dragConfirmStudents">確認學生名單</button>
+                </div>
+            </div>
+
+            <!-- 拖曳工作區 -->
+            <div class="drag-instructions" style="margin-bottom: 25px; padding: 15px; background: rgba(255, 255, 255, 0.5); border-radius: 12px; border: 1px solid var(--border-color); color: #475569; font-size: 14px; text-align: center; line-height: 1.6;">
+                <strong>💡 操作指引：</strong>電腦端可直接<strong>拖曳學生</strong>到下方分類區。<br>
+                在手機/平板或需要更快速的操作時，可使用<strong>點擊移動</strong>：先點擊選擇待分類學生（可多選），再點擊目標分類區即可移入；點擊分類區中的學生可將其移回待分類區。<br>
+                雙擊（連點兩下）分類卡片的<strong>標題</strong>或<strong>描述字句</strong>即可直接進行編輯修改。
+            </div>
+
+            <div class="drag-workspace-container" style="display: flex; flex-direction: column; gap: 25px; margin-bottom: 40px;">
+                <div class="student-pool-container" style="background: rgba(255, 255, 255, 0.5); padding: 20px; border-radius: 16px; border: 1px solid var(--border-color);">
+                    <h3 style="margin-top: 0; margin-bottom: 12px; color: #1e3a8a; font-size: 1.15em;">待分類學生</h3>
+                    <div id="dragStudentButtons" class="drag-student-buttons" style="display: flex; flex-wrap: wrap; gap: 10px; min-height: 60px; padding: 15px; border: 2px dashed #cbd5e1; border-radius: 12px; background: white; align-items: flex-start; align-content: flex-start;">
+                    </div>
+                </div>
+
+                <div class="drag-types-grid">
+                    <div class="drag-type-card zone-excellent" data-type="品學兼優型">
+                        <h3>1️⃣ 品學兼優型</h3>
+                        <div class="drag-type-desc">博學多才、德行兼備、勤學好問、穩重踏實</div>
+                        <div class="drag-drop-zone"></div>
+                    </div>
+                    <div class="drag-type-card zone-earnest" data-type="穩健認真型">
+                        <h3>2️⃣ 穩健認真型</h3>
+                        <div class="drag-type-desc">踏實肯幹、專注投入、穩中求進、細心謹慎</div>
+                        <div class="drag-drop-zone"></div>
+                    </div>
+                    <div class="drag-type-card zone-responsible" data-type="負責服務型">
+                        <h3>3️⃣ 負責服務型</h3>
+                        <div class="drag-type-desc">樂於助人、盡心盡力、服務熱忱、團隊精神</div>
+                        <div class="drag-drop-zone"></div>
+                    </div>
+                    <div class="drag-type-card zone-friendly" data-type="合群友善型">
+                        <h3>4️⃣ 合群友善型</h3>
+                        <div class="drag-type-desc">親切友善、樂於分享、團結合作、互助互愛</div>
+                        <div class="drag-drop-zone"></div>
+                    </div>
+                    <div class="drag-type-card zone-creative" data-type="創意思維型">
+                        <h3>5️⃣ 創意思維型</h3>
+                        <div class="drag-type-desc">創意無限、思路敏捷、敢於突破、獨立思考</div>
+                        <div class="drag-drop-zone"></div>
+                    </div>
+                    <div class="drag-type-card zone-athletic" data-type="陽光體育型">
+                        <h3>6️⃣ 陽光體育型</h3>
+                        <div class="drag-type-desc">活力四射、身心健全、熱愛運動、團隊合作</div>
+                        <div class="drag-drop-zone"></div>
+                    </div>
+                    <div class="drag-type-card zone-potential" data-type="潛力待發型">
+                        <h3>7️⃣ 潛力待發型</h3>
+                        <div class="drag-type-desc">潛能無限、厚積薄發、靜水深流、自我激勵</div>
+                        <div class="drag-drop-zone"></div>
+                    </div>
+                    <div class="drag-type-card zone-unproductive" data-type="欠缺努力型">
+                        <h3>8️⃣ 欠缺努力型</h3>
+                        <div class="drag-type-desc">三心二意、漫不經心、心猿意馬、虎頭蛇尾</div>
+                        <div class="drag-drop-zone"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="dragGenerate">生成評語提示詞</button>
+                <button id="dragCopy">複製提示詞</button>
+                <button id="dragReset" style="background: #ef4444;">重置分類 ⚠️</button>
+            </div>
+
+            <div class="preview">
+                <h3 style="margin-top: 0; margin-bottom: 15px; color: #1e3a8a;">提示詞預覽</h3>
+                <div class="combined-prompt-wrapper" style="margin-bottom: 25px;">
+                    <textarea id="dragPromptPreview" rows="8" readonly style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 14px; background: #f8fafc; border: 1px solid var(--border-color); resize: vertical; line-height: 1.6;" placeholder="生成提示詞後，此處將顯示生成的提示詞，可直接複製貼給 AI..."></textarea>
+                </div>
             </div>
         </div>
 
