@@ -1,89 +1,178 @@
+<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Puti-AI學生期末評語提示詞生成器 V8</title>
+    <title>Puti-AI學生期末評語提示詞生成器 V9</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Puti-AI學生期末評語提示詞生成器 V8</h1>
-        <h2>貼切個別學生版</h2>
-
-        <div class="input-section">
-            <div class="grade-select">
-                <label for="grade">年級:</label>
-                <select id="grade">
-                    <option value="">請選擇</option>
-                    <option value="1">1年級</option>
-                    <option value="2">2年級</option>
-                    <option value="3">3年級</option>
-                    <option value="4">4年級</option>
-                    <option value="5">5年級</option>
-                    <option value="6">6年級</option>
-                    <option value="7">7年級</option>
-                    <option value="8">8年級</option>
-                    <option value="9">9年級</option>
-                    <option value="10">10年級</option>
-                    <option value="11">11年級</option>
-                    <option value="12">12年級</option>
-                </select>
-            </div>
-
-            <div class="word-count">
-                <label for="wordCount">評語字數:</label>
-                <input type="number" id="wordCount" min="50" max="500" value="100">
-            </div>
-
-            <div class="student-list">
-                <label for="studentNames">學生清單 (一行一名):</label>
-                <textarea id="studentNames" rows="5"></textarea>
-                <button id="generateButtons">確定</button>
+        <h1>Puti-AI學生期末評語提示詞生成器 V9</h1>
+        
+        <div class="theme-selector-container">
+            <span class="theme-label">主題配色:</span>
+            <div class="theme-options">
+                <button class="theme-opt theme-blue active" data-theme="blue" title="晴空蔚藍"></button>
+                <button class="theme-opt theme-green" data-theme="green" title="春意盎然"></button>
+                <button class="theme-opt theme-purple" data-theme="purple" title="溫柔薰衣草"></button>
+                <button class="theme-opt theme-orange" data-theme="orange" title="夕陽暖橘"></button>
+                <button class="theme-opt theme-slate" data-theme="slate" title="摩登深灰"></button>
             </div>
         </div>
 
-        <div id="studentButtons" class="student-buttons"></div>
+        <!-- 頁籤導覽列 -->
+        <div class="tab-bar">
+            <button id="tabBtnGenerator" class="tab-btn active" onclick="switchTab('generator')">生成器</button>
+            <button id="tabBtnGuide" class="tab-btn" onclick="switchTab('guide')">使用教學</button>
+        </div>
 
-        <div class="traits-section">
-            <div class="trait-group ability">
-                <h3>資質與態度</h3>
-                <div class="buttons"></div>
-            </div>
-            <div class="trait-group personality">
-                <h3>個性與品德</h3>
-                <div class="buttons"></div>
-            </div>
-            <div class="trait-group social">
-                <h3>團體與人際</h3>
-                <div class="buttons"></div>
-            </div>
-            <div class="trait-group talent">
-                <h3>專長與才藝</h3>
-                <div class="buttons"></div>
-            </div>
-            <div class="trait-group custom">
-                <h3>自定義特質</h3>
-                <div class="custom-input-section">
-                    <textarea id="customTraitInput" placeholder="輸入自定義特質或評語詞彙 (一行一個)" rows="4"></textarea>
-                    <div class="custom-buttons">
-                        <button id="addCustomTraits">批量新增</button>
-                        <button id="clearCustomTraits">清空所有</button>
-                    </div>
+        <!-- 生成器主體分頁 -->
+        <div id="generatorTab" class="tab-content active">
+            <div class="input-section">
+                <div class="grade-select">
+                    <label for="grade">年級:</label>
+                    <select id="grade">
+                        <option value="">請選擇</option>
+                        <option value="1">1年級</option>
+                        <option value="2">2年級</option>
+                        <option value="3">3年級</option>
+                        <option value="4">4年級</option>
+                        <option value="5">5年級</option>
+                        <option value="6">6年級</option>
+                        <option value="7">7年級</option>
+                        <option value="8">8年級</option>
+                        <option value="9">9年級</option>
+                        <option value="10">10年級</option>
+                        <option value="11">11年級</option>
+                        <option value="12">12年級</option>
+                    </select>
                 </div>
-                <div class="buttons"></div>
+
+                <div class="word-count">
+                    <label for="wordCount">評語字數:</label>
+                    <input type="number" id="wordCount" min="50" max="500" value="100">
+                </div>
+
+                <div class="template-section">
+                    <label for="promptTemplate">提示詞模板設定:</label>
+                    <textarea id="promptTemplate" rows="2" placeholder="請為{grade}年級的學生{name}，以正向、溫暖、鼓勵的語氣，根據學生特質{{traits}}，生成{wordCount}字的期末評語。">請為{grade}年級的學生{name}，以正向、溫暖、鼓勵的語氣，根據學生特質{{traits}}，生成{wordCount}字的期末評語。</textarea>
+                    <span class="template-hint">變數支援: {grade} (年級)、{name} (學號姓名)、{traits} (特質)、{wordCount} (字數)</span>
+                </div>
+
+                <div class="student-list">
+                    <label for="studentNames">學生清單 (一行一名):</label>
+                    <textarea id="studentNames" rows="5"></textarea>
+                    <button id="generateButtons">確定</button>
+                </div>
+            </div>
+
+            <div id="studentButtons" class="student-buttons"></div>
+
+            <div class="traits-section">
+                <div class="trait-group ability">
+                    <h3>資質與態度</h3>
+                    <div class="buttons"></div>
+                </div>
+                <div class="trait-group personality">
+                    <h3>個性與品德</h3>
+                    <div class="buttons"></div>
+                </div>
+                <div class="trait-group social">
+                    <h3>團體與人際</h3>
+                    <div class="buttons"></div>
+                </div>
+                <div class="trait-group talent">
+                    <h3>專長與才藝</h3>
+                    <div class="buttons"></div>
+                </div>
+                <div class="trait-group custom">
+                    <h3>自定義特質</h3>
+                    <div class="custom-input-section">
+                        <textarea id="customTraitInput" placeholder="輸入自定義特質或評語詞彙 (一行一個)" rows="4"></textarea>
+                        <div class="custom-buttons">
+                            <button id="addCustomTraits">批量新增</button>
+                            <button id="clearCustomTraits">清空所有</button>
+                        </div>
+                    </div>
+                    <div class="buttons"></div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="generate">生成提示詞</button>
+                <button id="copy">複製提示詞</button>
+                <button id="reset">重置提示詞 ⚠️</button>
+            </div>
+
+            <div class="history-section" style="margin-bottom: 25px; padding: 20px; background: rgba(255,255,255,0.65); border-radius: 16px; border: 1px solid var(--border-color); display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <span style="font-weight: 700; font-size: 14.5px; color: #334155;">本機歷史紀錄:</span>
+                <select id="historySelect" style="flex: 1; min-width: 220px; padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+                    <option value="">-- 選擇載入歷史紀錄以進行編輯 --</option>
+                </select>
+                <button id="saveHistoryBtn" class="card-btn copy" style="background: #10b981; color: white; padding: 9px 18px; border-radius: 8px;">儲存此紀錄</button>
+                <button id="exportFileBtn" class="card-btn copy" style="background: #475569; color: white; padding: 9px 18px; border-radius: 8px;">匯出純文字 (.txt)</button>
+                <button id="exportJsonBtn" class="card-btn copy" style="background: #8b5cf6; color: white; padding: 9px 18px; border-radius: 8px;">匯出備份 (.json)</button>
+                <button id="importJsonBtn" class="card-btn copy" style="background: #f97316; color: white; padding: 9px 18px; border-radius: 8px;" onclick="document.getElementById('importFile').click()">匯入備份 (.json)</button>
+                <button id="deleteHistoryBtn" class="card-btn restore" style="padding: 9px 18px; border-radius: 8px;">刪除所選紀錄</button>
+                <input type="file" id="importFile" style="display: none;" accept=".json">
+            </div>
+
+            <div class="preview">
+                <div class="preview-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h3 style="margin: 0;">合併提示詞預覽 (全班一次複製)</h3>
+                    <button id="copyCombinedBtn" class="card-btn copy" style="padding: 8px 16px;">複製全班合併提示詞</button>
+                </div>
+                <div class="combined-prompt-wrapper" style="margin-bottom: 25px;">
+                    <textarea id="combinedPromptText" rows="6" readonly style="width: 100%; box-sizing: border-box; font-family: monospace; font-size: 14px; background: #f8fafc; border: 1px solid var(--border-color); resize: vertical; line-height: 1.6;" placeholder="生成提示詞後，此處將顯示合併後的提示詞，可直接一鍵複製貼給 AI..."></textarea>
+                </div>
+                
+                <h4 class="individual-header" style="margin-top: 20px; margin-bottom: 15px; color: #475569;">已排入的學生清單</h4>
+                <div id="promptPreview"></div>
             </div>
         </div>
 
-        <div class="action-buttons">
-            <button id="generate">生成提示詞</button>
-            <button id="copy">複製提示詞</button>
-            <button id="openAI">貼到AI生成</button>
-            <button id="reset">重置提示詞 ⚠️</button>
-        </div>
+        <!-- 使用教學分頁 -->
+        <div id="guideTab" class="tab-content">
+            <div class="guide-container">
+                <div class="guide-step">
+                    <h3>步驟 1：輸入學生名單與設定</h3>
+                    <p>在畫面上方選取您班級的<strong>年級</strong>，並設定<strong>評語字數</strong>（預設 100 字）。您可以視需要修改提示詞模板來調整語氣。接著，在「學生清單」輸入框內<strong>每行輸入一名學生的名字</strong>，完成後點擊<strong>「確定」</strong>以在下方產生對應的學生按鈕。</p>
+                    <img src="./step1_students.png" alt="步驟 1：輸入名單">
+                </div>
 
-        <div class="preview">
-            <h3>提示詞預覽</h3>
-            <div id="promptPreview"></div>
+                <div class="guide-step">
+                    <h3>步驟 2：選取特質並排入清單</h3>
+                    <p>選取一位或多位要套用相同特質的學生，接著點擊下方<strong>「資質態度」</strong>、<strong>「個性品德」</strong>、<strong>「團體人際」</strong>與<strong>「專長才藝」</strong>中的評語按鈕。
+                    <br>
+                    評語已依據<strong>「優質 (Good)」</strong>、<strong>「中等 (Middle)」</strong>與<strong>「待加強 (Needs Improvement)」</strong>分成三排，並以綠、黃、紅色邊框提示，方便您快速快選。選定後點擊<strong>「生成提示詞」</strong>，該批學生的特質便會加入清單。</p>
+                    <img src="./step2_traits.png" alt="步驟 2：選取特質">
+                </div>
+
+                <div class="guide-step">
+                    <h3>步驟 3：自定義特質（補強專屬評語）</h3>
+                    <p>如果現成按鈕不符合特定學生，您可以在最下方的<strong>「自定義特質」</strong>區塊手動補充。
+                    <ul>
+                        <li>在文字框中輸入新的特質詞彙，<strong>一行輸入一個</strong>。</li>
+                        <li>點擊<strong>「批量新增」</strong>或在框內按下 <strong>`Ctrl+Enter`</strong>，按鈕便會即時加入自定義清單。</li>
+                        <li>自定義按鈕可以跟一般按鈕一樣點擊選取。</li>
+                        <li>需要刪除時，點擊自定義按鈕右側的 <strong>`×`</strong> 可以單獨移除；點擊<strong>「清空所有」</strong>則可一鍵重設。</li>
+                    </ul>
+                    </p>
+                </div>
+
+                <div class="guide-step">
+                    <h3>步驟 4：一鍵複製合併提示詞與備份</h3>
+                    <p>底部的預覽框會將所有已產生的學生整合成精簡的清單。點擊<strong>「複製全班合併提示詞」</strong>，即可一次複製整班的評語指令，直接貼給 ChatGPT 或 Claude。
+                    <br>
+                    此外，您也可以透過「本機歷史紀錄」來<strong>儲存目前進度</strong>（會自動依 民國年月{年級} 命名並加入流水號），或者匯出為 <strong>`.txt`</strong> 文字檔及 <strong>`.json`</strong> 備份檔，隨時叫出重新修改或還原！</p>
+                    <img src="./step3_copy.png" alt="步驟 3：複製與歷史管理">
+                </div>
+
+                <div class="guide-note">
+                    <strong>💡 修改秘訣：</strong>若要修改某個學生的特質，只需要在底部的「已排入學生清單」點選<strong>「復原」</strong>，學生按鈕便會返回上方，讓您重新挑選，非常方便！
+                </div>
+            </div>
         </div>
 
         <footer>
