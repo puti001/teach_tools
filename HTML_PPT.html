@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Agent 時代：HTML 簡報完全體</title>
+    
+    <!-- Reveal.js 核心與主題 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/night.min.css">
+    <!-- FontAwesome 圖示 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --accent: #f093fb;
+            --bg-glass: rgba(255, 255, 255, 0.05);
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .reveal .slides section {
+            padding: 20px;
+        }
+
+        h1, h2, h3, h4 {
+            background: -webkit-linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold !important;
+            text-shadow: 0 0 20px rgba(0, 242, 254, 0.2);
+        }
+
+        /* 毛玻璃卡片設計 */
+        .glass-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px auto;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(0, 242, 254, 0.2);
+            border-color: rgba(0, 242, 254, 0.3);
+        }
+
+        /* 比較區塊 */
+        .comparison-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .comparison-item {
+            flex: 1;
+            font-size: 0.8em;
+        }
+
+        .comparison-item i {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+
+        /* 互動滑桿 UI */
+        .interactive-slider-box {
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 30px;
+            width: 30px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            margin-top: -12px;
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.2);
+            border-radius: 5px;
+        }
+
+        #data-viz-bar {
+            height: 30px;
+            width: 10%;
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            border-radius: 15px;
+            margin: 20px 0;
+            transition: width 0.1s;
+        }
+
+        /* 測驗按鈕 */
+        .quiz-btn {
+            display: block;
+            width: 80%;
+            margin: 15px auto;
+            padding: 15px;
+            background: var(--bg-glass);
+            border: 2px solid rgba(255,255,255,0.2);
+            color: white;
+            font-size: 0.9em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-btn:hover {
+            background: rgba(0, 242, 254, 0.2);
+            border-color: var(--primary);
+        }
+
+        .quiz-btn.correct {
+            background: rgba(46, 204, 113, 0.3);
+            border-color: #2ecc71;
+            color: #2ecc71;
+            animation: pulse 0.5s ease;
+        }
+
+        .quiz-btn.wrong {
+            background: rgba(231, 76, 60, 0.3);
+            border-color: #e74c3c;
+            color: #e74c3c;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* 按鈕共用 */
+        .action-btn {
+            background: linear-gradient(45deg, var(--secondary), var(--primary));
+            border: none;
+            padding: 15px 30px;
+            color: #000;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(0, 242, 254, 0.4);
+            transition: transform 0.2s;
+        }
+        
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* AI 魔法優化對比 */
+        .magic-container {
+            transition: all 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        .before-magic {
+            font-family: serif;
+            color: #ccc;
+            text-align: left;
+            border: 1px solid #444;
+            padding: 20px;
+        }
+        
+        .after-magic {
+            display: none;
+            flex-direction: row;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .after-magic .glass-card {
+            margin: 0;
+            flex: 1;
+        }
+
+        .icon-box {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: -webkit-linear-gradient(45deg, var(--accent), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            display: none;
+        }
+
+        /* RWD 微調 */
+        @media (max-width: 768px) {
+            .comparison-container {
+                flex-direction: column;
+            }
+            .after-magic {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="reveal">
+        <div class="slides">
+            
+            <!-- 幻燈片 1：封面 -->
+            <section data-transition="zoom">
+                <i class="fa-solid fa-microchip icon-box" style="font-size: 5rem;"></i>
+                <h1>HTML 簡報</h1>
+                <h3>AI Agent 時代的「完全體」</h3>
+                <p style="color: #aaa; font-size: 0.8em; margin-top: 30px;">
+                    最大程度客製化 × AI 快速迭代 × 高資訊密度
+                </p>
+                <button class="action-btn" onclick="nextSlide(true)">
+                    <i class="fa-solid fa-play"></i> 啟動沉浸體驗
+                </button>
+            </section>
+
+            <!-- 幻燈片 2：MD 與 HTML 對比 -->
+            <section data-transition="slide">
+                <h2>格式對決：給誰讀？</h2>
+                <div class="comparison-container">
+                    <div class="glass-card comparison-item" onclick="playSound(200, 'square'); vibrate(50);">
+                        <i class="fa-solid fa-robot"></i>
+                        <h3>Markdown (MD)</h3>
+                        <p><strong>對象：</strong> AI</p>
+                        <p style="color:#aaa;">語法簡潔，節省算力。但人類閱讀長篇易吃力，視覺單調，增加認知負擔。</p>
+                    </div>
+                    <div class="glass-card comparison-item" onclick="playSound(600, 'sine'); vibrate([50, 50, 50]);" style="border-color: var(--primary);">
+                        <i class="fa-solid fa-user-astronaut"></i>
+                        <h3>HTML 網頁</h3>
+                        <p><strong>對象：</strong> 人類</p>
+                        <p style="color:#00f2fe;">高資訊密度、豐富視覺與多維度互動，大幅降低大腦負擔，協助快速決策。</p>
+                    </div>
+                </div>
+                <p style="font-size: 0.6em; color: gray; margin-top: 20px;">💡 點擊上方卡片體驗音效與震動回饋</p>
+                <button class="action-btn" onclick="nextSlide(true)" style="font-size: 0.8em; padding: 10px 20px; margin-top: 20px;">
+                    下一頁 <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </section>
+
+            <!-- 幻燈片 3：核心優勢 (互動實作) -->
+            <section data-transition="convex">
+                <h2>核心優勢：極致互動</h2>
+                <p style="font-size: 0.8em;">傳統簡報做不到的事：即時手動控制視覺化變數</p>
+                
+                <div class="interactive-slider-box">
+                    <h4><i class="fa-solid fa-sliders"></i> 數據可視化互動模擬</h4>
+                    <p id="slider-value" style="font-size: 2em; font-weight: bold; color: var(--primary); margin: 10px 0;">10%</p>
+                    <div id="data-viz-bar"></div>
+                    <input type="range" min="10" max="100" value="10" id="interactive-slider" 
+                           oninput="updateViz(this.value)">
+                </div>
+                <button class="action-btn" onclick="nextSlide(true)" style="font-size: 0.8em; padding: 10px 20px; margin-top: 20px;">
+                    下一頁 <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </section>
+
+            <!-- 幻燈片 4：AI 質感提升 -->
+            <section data-transition="fade">
+                <h2>結合 AI 提升質感</h2>
+                <p style="font-size: 0.8em;">一鍵替換陽春 Emoji，自動生成排版與精美圖示</p>
+                
+                <div id="magic-box" class="magic-container before-magic">
+                    📁 傳統 HTML 簡報<br><br>
+                    ⭐ 第一點：內容很單調<br>
+                    📊 第二點：只有文字跟預設圖形<br>
+                    😐 第三點：缺乏設計感
+                </div>
+
+                <div id="magic-result" class="after-magic">
+                    <div class="glass-card">
+                        <i class="fa-solid fa-palette icon-box"></i>
+                        <h4>AI 配色</h4>
+                    </div>
+                    <div class="glass-card">
+                        <i class="fa-solid fa-vector-square icon-box"></i>
+                        <h4>精美圖示</h4>
+                    </div>
+                    <div class="glass-card">
+                        <i class="fa-solid fa-layer-group icon-box"></i>
+                        <h4>動態排版</h4>
+                    </div>
+                </div>
+
+                <button class="action-btn" id="magic-btn" onclick="doMagic()" style="margin-top: 30px;">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> 執行 AI 技能 (Skill) 打包優化
+                </button>
+                <br>
+                <button class="action-btn" onclick="nextSlide(true)" style="font-size: 0.8em; padding: 10px 20px; margin-top: 20px;">
+                    下一頁 <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </section>
+
+            <!-- 幻燈片 5：隨堂測驗 -->
+            <section data-transition="concave">
+                <h2><i class="fa-solid fa-gamepad"></i> 隨堂測驗</h2>
+                <p style="margin-bottom: 30px;">在 AI Agent 時代，哪種格式被認為是教學簡報的「完全體」？</p>
+                
+                <div id="quiz-container">
+                    <button class="quiz-btn" onclick="checkAnswer(this, false)">A. 靜態 PDF 檔案</button>
+                    <button class="quiz-btn" onclick="checkAnswer(this, false)">B. 純文字 Markdown</button>
+                    <button class="quiz-btn" onclick="checkAnswer(this, true)">C. 高互動 HTML 網頁</button>
+                </div>
+                <p id="quiz-feedback" style="margin-top: 20px; font-weight: bold; min-height: 1.5em;"></p>
+                
+                <button class="action-btn" onclick="nextSlide(true)" style="font-size: 0.8em; padding: 10px 20px; margin-top: 10px;">
+                    前往結尾 <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </section>
+
+            <!-- 幻燈片 6：結尾 -->
+            <section data-transition="zoom">
+                <i class="fa-solid fa-share-nodes icon-box" style="font-size: 4rem;"></i>
+                <h2>極致的分享便利性</h2>
+                <p>完成的簡報可一鍵部署至 GitHub</p>
+                <div class="glass-card" style="display: inline-block; padding: 15px 30px;">
+                    <code>https://your-domain.com/ai-html-slide</code>
+                </div>
+                <p style="font-size: 0.8em; color: var(--secondary);">人類一鍵開啟，AI 爬蟲直接讀取分析！</p>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- 腳本引入與邏輯 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script>
+        // 初始化 Reveal.js
+        Reveal.initialize({
+            hash: false,
+            controls: true,
+            progress: true,
+            center: true,
+            transition: 'slide',
+            mouseWheel: true, // 啟用滑鼠滾輪切換上下頁
+            touch: true       // 確保支援手機觸控滑動
+        });
+
+        // ----------------------------------------------------
+        // Web Audio API 音效生成器 (多感官回饋 - 聽覺)
+        // ----------------------------------------------------
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(freq, type = 'sine', duration = 0.1) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        // ----------------------------------------------------
+        // Web Vibration API (多感官回饋 - 觸覺)
+        // ----------------------------------------------------
+        function vibrate(pattern) {
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        // ----------------------------------------------------
+        // 頁面特定互動邏輯
+        // ----------------------------------------------------
+
+        // 首頁啟動
+        function nextSlide(withSound) {
+            if(withSound) {
+                playSound(880, 'sine', 0.2);
+                vibrate(100);
+            }
+            Reveal.next();
+        }
+
+        // 滑桿數據可視化
+        let lastSliderTick = 0;
+        function updateViz(val) {
+            document.getElementById('slider-value').innerText = val + '%';
+            document.getElementById('data-viz-bar').style.width = val + '%';
+            
+            // 根據數值改變顏色
+            const hue = 200 + (val * 1.5); // 從藍色系漸變
+            document.getElementById('data-viz-bar').style.background = `hsl(${hue}, 100%, 50%)`;
+            document.getElementById('slider-value').style.color = `hsl(${hue}, 100%, 50%)`;
+
+            // 產生齒輪/刻度音效 (避免太頻繁)
+            const now = Date.now();
+            if (now - lastSliderTick > 50) {
+                playSound(100 + parseInt(val), 'triangle', 0.05);
+                vibrate(10);
+                lastSliderTick = now;
+            }
+        }
+
+        // AI 魔法轉換
+        let isMagicDone = false;
+        function doMagic() {
+            if(isMagicDone) return;
+            
+            playSound(400, 'sine', 0.1);
+            setTimeout(() => playSound(600, 'sine', 0.1), 100);
+            setTimeout(() => playSound(800, 'sine', 0.3), 200);
+            vibrate([50, 50, 100]);
+
+            const box = document.getElementById('magic-box');
+            const result = document.getElementById('magic-result');
+            const btn = document.getElementById('magic-btn');
+
+            box.style.display = 'none';
+            result.style.display = 'flex';
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> 優化完成';
+            btn.style.background = 'linear-gradient(45deg, #11998e, #38ef7d)';
+            isMagicDone = true;
+        }
+
+        // 隨堂測驗邏輯
+        function checkAnswer(btn, isCorrect) {
+            const feedback = document.getElementById('quiz-feedback');
+            // 重置其他按鈕
+            const buttons = document.querySelectorAll('.quiz-btn');
+            buttons.forEach(b => {
+                b.classList.remove('correct', 'wrong');
+                b.disabled = true; // 答題後鎖定
+            });
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                feedback.innerHTML = '<span style="color:#2ecc71"><i class="fa-solid fa-circle-check"></i> 答對了！HTML 具備高互動性與資訊密度。</span>';
+                
+                // 成功音效 (和弦效果)
+                initAudio();
+                playSound(440, 'sine', 0.3); // A4
+                setTimeout(() => playSound(554.37, 'sine', 0.3), 100); // C#5
+                setTimeout(() => playSound(659.25, 'sine', 0.5), 200); // E5
+                
+                vibrate([100, 50, 100]);
+                triggerConfetti();
+            } else {
+                btn.classList.add('wrong');
+                feedback.innerHTML = '<span style="color:#e74c3c"><i class="fa-solid fa-circle-xmark"></i> 答錯了，再想想看這份簡報的格式？</span>';
+                playSound(200, 'sawtooth', 0.3);
+                vibrate(200);
+                
+                // 允許重新作答
+                setTimeout(() => {
+                    buttons.forEach(b => b.disabled = false);
+                    btn.classList.remove('wrong');
+                    feedback.innerHTML = '';
+                }, 1500);
+            }
+        }
+
+        // 簡易彩帶動畫 (Confetti)
+        function triggerConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.style.display = 'block';
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const pieces = [];
+            const colors = ['#f093fb', '#f5576c', '#4facfe', '#00f2fe', '#ffe259'];
+
+            for (let i = 0; i < 100; i++) {
+                pieces.push({
+                    x: canvas.width / 2,
+                    y: canvas.height / 2 + 100,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 1) * 20,
+                    size: Math.random() * 10 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    rotSpeed: (Math.random() - 0.5) * 10
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let active = false;
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.5; // 重力
+                    p.rot += p.rotSpeed;
+                    
+                    if (p.y < canvas.height) active = true;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                if (active) {
+                    requestAnimationFrame(animate);
+                } else {
+                    canvas.style.display = 'none';
+                }
+            }
+            animate();
+        }
+    </script>
+</body>
+</html>
