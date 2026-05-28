@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>ZoomPen - 放大</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+      cursor: none;
+    }
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    /* Custom crosshair cursor */
+    .cursor-nav, .cursor-draw {
+      position: fixed;
+      pointer-events: none;
+      z-index: 999;
+    }
+    .cursor-nav {
+      width: 24px; height: 24px;
+      border: 2px solid rgba(255,255,255,0.7);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    }
+    .cursor-draw {
+      width: 8px; height: 8px;
+      background: #ff4444;
+      border: 1px solid #fff;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 6px rgba(255,68,68,0.6);
+    }
+    /* Zoom level indicator */
+    .zoom-hud {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      padding: 6px 14px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(12px);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.8);
+      font: 600 13px/1 'Segoe UI', system-ui, sans-serif;
+      z-index: 999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .zoom-hud.visible { opacity: 1; }
+    /* ─── Canvas Text Input ────────────────── */
+    .canvas-text-input {
+      background: transparent;
+      border: 1px dashed rgba(255, 255, 255, 0.4);
+      outline: none;
+      resize: none;
+      overflow: hidden;
+      white-space: pre;
+      padding: 2px;
+      margin: 0;
+      z-index: 1000;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas"></canvas>
+  <div class="cursor-nav" id="cursor"></div>
+  <div class="zoom-hud" id="zoom-hud">2.0x</div>
+  <script src="zoom.js"></script>
+</body>
+</html>

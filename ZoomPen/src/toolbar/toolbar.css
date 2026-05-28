@@ -1,0 +1,137 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: transparent;
+  overflow: hidden;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  -webkit-app-region: no-drag;
+  user-select: none;
+}
+
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: rgba(22, 22, 32, 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Drag Handle ───────────────────────── */
+.drag-handle {
+  width: 100%;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  color: rgba(255, 255, 255, 0.25);
+  transition: color 0.2s;
+  -webkit-app-region: drag;
+}
+
+.drag-handle:hover {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ─── Branding ──────────────────────────── */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0px;
+  margin: -2px 0 4px;
+  pointer-events: none;
+}
+
+.brand-label {
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 1.8px;
+  color: rgba(165, 180, 252, 0.45);
+  text-transform: uppercase;
+}
+
+.brand-name {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: rgba(165, 180, 252, 0.7);
+  text-transform: uppercase;
+}
+
+/* ─── Tool Buttons ──────────────────────── */
+.tool-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  transition: all 0.18s ease;
+  position: relative;
+}
+
+.tool-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tool-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.95);
+  transform: scale(1.08);
+}
+
+.tool-btn:active {
+  transform: scale(0.94);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.tool-btn.active {
+  background: rgba(99, 102, 241, 0.25);
+  color: #a5b4fc;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.15);
+}
+
+.tool-btn.active:hover {
+  background: rgba(99, 102, 241, 0.35);
+}
+
+/* ─── Close Button ──────────────────────── */
+.tool-btn--close {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.tool-btn--close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+.tool-btn--close:active {
+  background: rgba(239, 68, 68, 0.35);
+}
+
+/* ─── Separator ─────────────────────────── */
+.separator {
+  width: 28px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 2px 0;
+}

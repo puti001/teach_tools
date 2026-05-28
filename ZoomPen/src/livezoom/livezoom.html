@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>ZoomPen - 即時放大</title>
+  <style>
+    * { margin: 0; padding: 0; }
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: transparent;
+      cursor: none;
+    }
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .livezoom-hud {
+      position: fixed;
+      top: 16px;
+      right: 20px;
+      padding: 6px 14px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(12px);
+      border-radius: 8px;
+      color: rgba(255,255,255,0.8);
+      font: 600 13px/1 'Segoe UI', system-ui, sans-serif;
+      z-index: 999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .livezoom-hud.visible { opacity: 1; }
+  </style>
+</head>
+<body>
+  <video id="video" style="display:none" muted></video>
+  <canvas id="canvas"></canvas>
+  <div class="livezoom-hud" id="hud">2.0x</div>
+  <script src="livezoom.js"></script>
+</body>
+</html>

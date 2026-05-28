@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>ZoomPen - 畫筆</title>
+  <link rel="stylesheet" href="draw.css">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <canvas id="draw-canvas"></canvas>
+
+  <!-- Floating draw toolbar -->
+  <div class="draw-toolbar" id="draw-toolbar">
+    <!-- Drag handle -->
+    <div class="dt-drag" id="dt-drag" title="拖曳移動工具列">
+      <svg viewBox="0 0 6 24" width="6" height="20">
+        <circle cx="3" cy="4" r="1.5" fill="currentColor"/>
+        <circle cx="3" cy="12" r="1.5" fill="currentColor"/>
+        <circle cx="3" cy="20" r="1.5" fill="currentColor"/>
+      </svg>
+    </div>
+
+    <div class="dt-sep"></div>
+
+    <!-- Tools -->
+    <div class="tool-group">
+      <button class="dtool-btn active" data-tool="pen" title="自由畫筆 (P)">
+        <svg viewBox="0 0 24 24"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+      </button>
+      <button class="dtool-btn" data-tool="line" title="直線 (L)">
+        <svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"/></svg>
+      </button>
+      <button class="dtool-btn" data-tool="rect" title="矩形 (R)">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/></svg>
+      </button>
+      <button class="dtool-btn" data-tool="ellipse" title="橢圓 (O)">
+        <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="7"/></svg>
+      </button>
+      <button class="dtool-btn" data-tool="arrow" title="箭頭 (A)">
+        <svg viewBox="0 0 24 24"><line x1="5" y1="19" x2="19" y2="5"/><polyline points="10 5 19 5 19 14"/></svg>
+      </button>
+      <button class="dtool-btn" data-tool="eraser" title="橡皮擦 (E)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16l8-8 9 9-2 3z"/><path d="M18 12.5 13 7.5"/></svg>
+      </button>
+    </div>
+
+    <div class="dt-sep"></div>
+
+    <!-- Colors -->
+    <div class="color-group">
+      <button class="color-btn active" data-color="#ff4444" title="紅色">
+        <span style="background:#ff4444"></span>
+      </button>
+      <button class="color-btn" data-color="#44ff44" title="綠色">
+        <span style="background:#44ff44"></span>
+      </button>
+      <button class="color-btn" data-color="#4488ff" title="藍色">
+        <span style="background:#4488ff"></span>
+      </button>
+      <button class="color-btn" data-color="#ffdd00" title="黃色">
+        <span style="background:#ffdd00"></span>
+      </button>
+      <button class="color-btn" data-color="#ff8800" title="橘色 (O)">
+        <span style="background:#ff8800"></span>
+      </button>
+      <button class="color-btn" data-color="#ff44bb" title="粉紅色 (P)">
+        <span style="background:#ff44bb"></span>
+      </button>
+      <button class="color-btn" data-color="#ffffff" title="白色">
+        <span style="background:#ffffff"></span>
+      </button>
+    </div>
+
+    <div class="dt-sep"></div>
+
+    <!-- Width -->
+    <div class="width-group">
+      <button class="width-btn" data-width="2" title="細">
+        <span class="width-line" style="height:2px"></span>
+      </button>
+      <button class="width-btn active" data-width="4" title="中">
+        <span class="width-line" style="height:4px"></span>
+      </button>
+      <button class="width-btn" data-width="8" title="粗">
+        <span class="width-line" style="height:8px"></span>
+      </button>
+    </div>
+
+    <div class="dt-sep"></div>
+
+    <!-- Actions -->
+    <div class="action-group">
+      <button class="dtool-btn" id="btn-undo" title="復原 (Ctrl+Z)">
+        <svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+      </button>
+      <button class="dtool-btn" id="btn-clear" title="清除全部 (C)">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <script src="draw.js"></script>
+</body>
+</html>

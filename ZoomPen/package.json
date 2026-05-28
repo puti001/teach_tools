@@ -1,0 +1,40 @@
+{
+  "name": "puti-ai-zpen",
+  "version": "1.0.0",
+  "description": "Puti-AI Z-Pen - 螢幕放大與畫筆工具",
+  "main": "main.js",
+  "author": "Puti-AI",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "build:portable": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.puti-ai.zpen",
+    "productName": "Puti-AI Z-Pen",
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": null
+    },
+    "portable": {
+      "artifactName": "Puti-AI-Z-Pen.exe"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    }
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^26.0.0"
+  }
+}
