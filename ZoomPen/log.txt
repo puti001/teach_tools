@@ -1,0 +1,204 @@
+﻿2026-05-29T22:27:22.8783730Z Current runner version: '2.334.0'
+2026-05-29T22:27:22.8800080Z ##[group]Runner Image Provisioner
+2026-05-29T22:27:22.8800690Z Hosted Compute Agent
+2026-05-29T22:27:22.8801050Z Version: 20260520.533
+2026-05-29T22:27:22.8801440Z Commit: 189110e25284a9812c124fd27b339e2fb4f2f9db
+2026-05-29T22:27:22.8801910Z Build Date: 2026-05-20T17:44:04Z
+2026-05-29T22:27:22.8802350Z Worker ID: {98ceb3f3-b0c2-4bb0-9c47-953217348e7b}
+2026-05-29T22:27:22.8802810Z Azure Region: westus
+2026-05-29T22:27:22.8803160Z ##[endgroup]
+2026-05-29T22:27:22.8804150Z ##[group]Operating System
+2026-05-29T22:27:22.8804540Z macOS
+2026-05-29T22:27:22.8804860Z 15.7.7
+2026-05-29T22:27:22.8805180Z 24G720
+2026-05-29T22:27:22.8805500Z ##[endgroup]
+2026-05-29T22:27:22.8805850Z ##[group]Runner Image
+2026-05-29T22:27:22.8806220Z Image: macos-15-arm64
+2026-05-29T22:27:22.8806580Z Version: 20260527.0100.1
+2026-05-29T22:27:22.8807470Z Included Software: https://github.com/actions/runner-images/blob/macos-15-arm64/20260527.0100/images/macos/macos-15-arm64-Readme.md
+2026-05-29T22:27:22.8808480Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15-arm64%2F20260527.0100
+2026-05-29T22:27:22.8809110Z ##[endgroup]
+2026-05-29T22:27:22.8809960Z ##[group]GITHUB_TOKEN Permissions
+2026-05-29T22:27:22.8811410Z Contents: read
+2026-05-29T22:27:22.8812600Z Metadata: read
+2026-05-29T22:27:22.8813140Z Packages: read
+2026-05-29T22:27:22.8813510Z ##[endgroup]
+2026-05-29T22:27:22.8815830Z Secret source: Actions
+2026-05-29T22:27:22.8816370Z Prepare workflow directory
+2026-05-29T22:27:22.9122880Z Prepare all required actions
+2026-05-29T22:27:22.9156560Z Getting action download info
+2026-05-29T22:27:23.4693070Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-05-29T22:27:23.6669830Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-05-29T22:27:23.7701940Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-05-29T22:27:23.9502030Z Complete job name: build
+2026-05-29T22:27:23.9938750Z ##[group]Run actions/checkout@v4
+2026-05-29T22:27:23.9939400Z with:
+2026-05-29T22:27:23.9939730Z   repository: puti001/teach_tools
+2026-05-29T22:27:23.9942910Z   token: ***
+2026-05-29T22:27:23.9943220Z   ssh-strict: true
+2026-05-29T22:27:23.9943530Z   ssh-user: git
+2026-05-29T22:27:23.9943860Z   persist-credentials: true
+2026-05-29T22:27:23.9944250Z   clean: true
+2026-05-29T22:27:23.9944570Z   sparse-checkout-cone-mode: true
+2026-05-29T22:27:23.9944940Z   fetch-depth: 1
+2026-05-29T22:27:23.9945250Z   fetch-tags: false
+2026-05-29T22:27:23.9945570Z   show-progress: true
+2026-05-29T22:27:23.9945890Z   lfs: false
+2026-05-29T22:27:23.9946200Z   submodules: false
+2026-05-29T22:27:23.9946520Z   set-safe-directory: true
+2026-05-29T22:27:23.9947000Z ##[endgroup]
+2026-05-29T22:27:24.3393790Z Syncing repository: puti001/teach_tools
+2026-05-29T22:27:24.3395370Z ##[group]Getting Git version info
+2026-05-29T22:27:24.3396070Z Working directory is '/Users/runner/work/teach_tools/teach_tools'
+2026-05-29T22:27:24.3397050Z [command]/opt/homebrew/bin/git version
+2026-05-29T22:27:24.3664980Z git version 2.54.0
+2026-05-29T22:27:24.3807800Z ##[endgroup]
+2026-05-29T22:27:24.3815660Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/516e4fb3-bcee-45b5-9d66-ea318b58d8af/.gitconfig'
+2026-05-29T22:27:24.3816950Z Temporarily overriding HOME='/Users/runner/work/_temp/516e4fb3-bcee-45b5-9d66-ea318b58d8af' before making global git config changes
+2026-05-29T22:27:24.3818130Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-29T22:27:24.3819210Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/teach_tools/teach_tools
+2026-05-29T22:27:24.3876900Z Deleting the contents of '/Users/runner/work/teach_tools/teach_tools'
+2026-05-29T22:27:24.3878950Z ##[group]Initializing the repository
+2026-05-29T22:27:24.3883540Z [command]/opt/homebrew/bin/git init /Users/runner/work/teach_tools/teach_tools
+2026-05-29T22:27:24.4101740Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-05-29T22:27:24.4102910Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-05-29T22:27:24.4103750Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-05-29T22:27:24.4104400Z hint: call:
+2026-05-29T22:27:24.4104790Z hint:
+2026-05-29T22:27:24.4105240Z hint: 	git config --global init.defaultBranch <name>
+2026-05-29T22:27:24.4105730Z hint:
+2026-05-29T22:27:24.4106190Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-05-29T22:27:24.4106930Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-05-29T22:27:24.4107520Z hint:
+2026-05-29T22:27:24.4107870Z hint: 	git branch -m <name>
+2026-05-29T22:27:24.4108340Z hint:
+2026-05-29T22:27:24.4108870Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-05-29T22:27:24.4109780Z Initialized empty Git repository in /Users/runner/work/teach_tools/teach_tools/.git/
+2026-05-29T22:27:24.4114420Z [command]/opt/homebrew/bin/git remote add origin https://github.com/puti001/teach_tools
+2026-05-29T22:27:24.4202180Z ##[endgroup]
+2026-05-29T22:27:24.4202970Z ##[group]Disabling automatic garbage collection
+2026-05-29T22:27:24.4207510Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-05-29T22:27:24.4293090Z ##[endgroup]
+2026-05-29T22:27:24.4293820Z ##[group]Setting up auth
+2026-05-29T22:27:24.4294610Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-29T22:27:24.4353760Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-29T22:27:24.5614370Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-29T22:27:24.5679950Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-29T22:27:24.6623880Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-29T22:27:24.6692500Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-29T22:27:24.7560080Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-05-29T22:27:24.7636550Z ##[endgroup]
+2026-05-29T22:27:24.7637410Z ##[group]Fetching the repository
+2026-05-29T22:27:24.7643340Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +3d2ecdb9647c1034e85f3cd475f01ee422d56328:refs/remotes/origin/main
+2026-05-29T22:27:31.5909650Z From https://github.com/puti001/teach_tools
+2026-05-29T22:27:31.5912450Z  * [new ref]         3d2ecdb9647c1034e85f3cd475f01ee422d56328 -> origin/main
+2026-05-29T22:27:31.5995690Z ##[endgroup]
+2026-05-29T22:27:31.5997610Z ##[group]Determining the checkout info
+2026-05-29T22:27:31.5998410Z ##[endgroup]
+2026-05-29T22:27:31.6003280Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-05-29T22:27:31.6131860Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-05-29T22:27:31.6219710Z ##[group]Checking out the ref
+2026-05-29T22:27:31.6225100Z [command]/opt/homebrew/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-05-29T22:27:32.2225400Z Switched to a new branch 'main'
+2026-05-29T22:27:32.2255590Z branch 'main' set up to track 'origin/main'.
+2026-05-29T22:27:32.2299830Z ##[endgroup]
+2026-05-29T22:27:32.2503510Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-05-29T22:27:32.2616980Z 3d2ecdb9647c1034e85f3cd475f01ee422d56328
+2026-05-29T22:27:32.2999050Z ##[group]Run actions/setup-node@v4
+2026-05-29T22:27:32.3007960Z with:
+2026-05-29T22:27:32.3008130Z   node-version: 20
+2026-05-29T22:27:32.3008290Z   always-auth: false
+2026-05-29T22:27:32.3008470Z   check-latest: false
+2026-05-29T22:27:32.3011430Z   token: ***
+2026-05-29T22:27:32.3012910Z ##[endgroup]
+2026-05-29T22:27:32.5588740Z Attempting to download 20...
+2026-05-29T22:27:33.5208150Z Acquiring 20.20.2 - arm64 from https://github.com/actions/node-versions/releases/download/20.20.2-23521894959/node-20.20.2-darwin-arm64.tar.gz
+2026-05-29T22:27:34.1011840Z Extracting ...
+2026-05-29T22:27:34.1320210Z [command]/usr/bin/tar xz --strip 1 -C /Users/runner/work/_temp/eb9fa8ff-e496-4552-891e-f19b7fd38360 -f /Users/runner/work/_temp/ce10889f-8ad0-4a3b-81ea-66c3a42e1a98
+2026-05-29T22:27:35.2580590Z Adding to the cache ...
+2026-05-29T22:27:37.0523990Z ##[group]Environment details
+2026-05-29T22:27:37.3862430Z node: v20.20.2
+2026-05-29T22:27:37.3863000Z npm: 10.8.2
+2026-05-29T22:27:37.3863640Z yarn: 1.22.22
+2026-05-29T22:27:37.3864290Z ##[endgroup]
+2026-05-29T22:27:37.4165240Z ##[group]Run npm ci
+2026-05-29T22:27:37.4165480Z [36;1mnpm ci[0m
+2026-05-29T22:27:37.4231380Z shell: /bin/bash -e {0}
+2026-05-29T22:27:37.4231660Z ##[endgroup]
+2026-05-29T22:27:37.8894940Z npm warn EBADENGINE Unsupported engine {
+2026-05-29T22:27:37.8904980Z npm warn EBADENGINE   package: '@electron/rebuild@4.0.4',
+2026-05-29T22:27:37.8906980Z npm warn EBADENGINE   required: { node: '>=22.12.0' },
+2026-05-29T22:27:37.8907730Z npm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }
+2026-05-29T22:27:37.8908180Z npm warn EBADENGINE }
+2026-05-29T22:27:37.8908710Z npm warn EBADENGINE Unsupported engine {
+2026-05-29T22:27:37.8911380Z npm warn EBADENGINE   package: 'node-abi@4.31.0',
+2026-05-29T22:27:37.8911900Z npm warn EBADENGINE   required: { node: '>=22.12.0' },
+2026-05-29T22:27:37.8912430Z npm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }
+2026-05-29T22:27:37.8912860Z npm warn EBADENGINE }
+2026-05-29T22:27:39.1611300Z npm warn deprecated rimraf@2.6.3: Rimraf versions prior to v4 are no longer supported
+2026-05-29T22:27:39.3171770Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-05-29T22:27:39.3631730Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-05-29T22:27:39.7716670Z npm warn deprecated boolean@3.2.0: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+2026-05-29T22:27:45.6242730Z 
+2026-05-29T22:27:45.6244120Z added 315 packages, and audited 316 packages in 8s
+2026-05-29T22:27:45.6244530Z 
+2026-05-29T22:27:45.6244800Z 47 packages are looking for funding
+2026-05-29T22:27:45.6245420Z   run `npm fund` for details
+2026-05-29T22:27:45.6662440Z 
+2026-05-29T22:27:45.6662940Z 1 high severity vulnerability
+2026-05-29T22:27:45.6663230Z 
+2026-05-29T22:27:45.6663450Z To address all issues (including breaking changes), run:
+2026-05-29T22:27:45.6663850Z   npm audit fix --force
+2026-05-29T22:27:45.6664080Z 
+2026-05-29T22:27:45.6664260Z Run `npm audit` for details.
+2026-05-29T22:27:45.6782200Z ##[group]Run npx electron-builder --mac
+2026-05-29T22:27:45.6782750Z [36;1mnpx electron-builder --mac[0m
+2026-05-29T22:27:45.6822270Z shell: /bin/bash -e {0}
+2026-05-29T22:27:45.6822590Z env:
+2026-05-29T22:27:45.6825390Z   GH_TOKEN: ***
+2026-05-29T22:27:45.6825710Z ##[endgroup]
+2026-05-29T22:27:46.7022140Z   • electron-builder  version=26.8.1 os=24.6.0
+2026-05-29T22:27:46.7023470Z   • Implicit publishing triggered by CI detection. This behavior will be disabled in electron-builder v27. Please use --publish explicitly.
+2026-05-29T22:27:46.7050880Z   • loaded configuration  file=package.json ("build" field)
+2026-05-29T22:27:46.9665780Z   • executing @electron/rebuild  electronVersion=35.7.5 arch=arm64 buildFromSource=false workspaceRoot=/Users/runner/work/teach_tools/teach_tools/ZoomPen projectDir=./ appDir=./
+2026-05-29T22:27:46.9666640Z   • installing native dependencies  arch=arm64
+2026-05-29T22:27:47.1127180Z   • completed installing native dependencies
+2026-05-29T22:27:47.1151660Z   • packaging       platform=darwin arch=arm64 electron=35.7.5 appOutDir=dist/mac-arm64
+2026-05-29T22:27:47.3032380Z   • downloading     url=https://github.com/electron/electron/releases/download/v35.7.5/electron-v35.7.5-darwin-arm64.zip size=107 MB parts=6
+2026-05-29T22:27:47.6871310Z   • downloaded      url=https://github.com/electron/electron/releases/download/v35.7.5/electron-v35.7.5-darwin-arm64.zip duration=511ms
+2026-05-29T22:27:49.2196490Z   • searching for node modules  pm=npm searchDir=/Users/runner/work/teach_tools/teach_tools/ZoomPen
+2026-05-29T22:27:49.5516710Z   • searching for node modules  pm=traversal searchDir=/Users/runner/work/teach_tools/teach_tools/ZoomPen
+2026-05-29T22:27:49.5524370Z   • using manual traversal of node_modules to build dependency tree
+2026-05-29T22:27:49.5526590Z   • no node modules returned while searching directories  searchDirectories=[""]
+2026-05-29T22:27:49.5894010Z   • default Electron icon is used  reason=application icon is not set
+2026-05-29T22:27:49.6208340Z   ⨯ Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).
+2026-05-29T22:27:49.6210100Z Please see https://electron.build/publish  failedTask=build stackTrace=Error: Cannot detect repository by .git/config. Please specify "repository" in the package.json (https://docs.npmjs.com/files/package.json#repository).
+2026-05-29T22:27:49.6211180Z Please see https://electron.build/publish
+2026-05-29T22:27:49.6211920Z     at getInfo (/Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/publish/PublishManager.ts:582:13)
+2026-05-29T22:27:49.6213180Z     at getResolvedPublishConfig (/Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/publish/PublishManager.ts:591:18)
+2026-05-29T22:27:49.6214530Z     at resolvePublishConfigurations (/Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/publish/PublishManager.ts:474:16)
+2026-05-29T22:27:49.6217280Z     at getPublishConfigs (/Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/publish/PublishManager.ts:446:10)
+2026-05-29T22:27:49.6219210Z     at getAppUpdatePublishConfiguration (/Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/publish/PublishManager.ts:265:73)
+2026-05-29T22:27:49.6220370Z     at /Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/publish/PublishManager.ts:130:29
+2026-05-29T22:27:49.6221270Z     at emitInternal (/Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/util/asyncEventEmitter.ts:61:9)
+2026-05-29T22:27:49.6222790Z     at AsyncEventEmitter.emit (/Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/util/asyncEventEmitter.ts:66:28)
+2026-05-29T22:27:49.6223800Z     at Packager.emitAfterPack (/Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/packager.ts:347:5)
+2026-05-29T22:27:49.6225500Z     at MacPackager.doPack (/Users/runner/work/teach_tools/teach_tools/ZoomPen/node_modules/app-builder-lib/src/platformPackager.ts:344:5)
+2026-05-29T22:27:49.6311940Z ##[error]Process completed with exit code 1.
+2026-05-29T22:27:49.6436410Z Post job cleanup.
+2026-05-29T22:27:49.7473570Z [command]/opt/homebrew/bin/git version
+2026-05-29T22:27:49.8113440Z git version 2.54.0
+2026-05-29T22:27:49.8145750Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/76e17357-e97c-4d1c-a751-b08e5ea481c2/.gitconfig'
+2026-05-29T22:27:49.8153840Z Temporarily overriding HOME='/Users/runner/work/_temp/76e17357-e97c-4d1c-a751-b08e5ea481c2' before making global git config changes
+2026-05-29T22:27:49.8160770Z Adding repository directory to the temporary git global config as a safe directory
+2026-05-29T22:27:49.8161580Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/teach_tools/teach_tools
+2026-05-29T22:27:49.8302550Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-05-29T22:27:49.8371810Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-05-29T22:27:49.9323150Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-05-29T22:27:49.9378370Z http.https://github.com/.extraheader
+2026-05-29T22:27:49.9388780Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-05-29T22:27:49.9460750Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-05-29T22:27:50.1028480Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-05-29T22:27:50.1354610Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-05-29T22:27:50.2910610Z Cleaning up orphan processes
+2026-05-29T22:27:50.8527940Z ##[warning]Node.js 20 actions are deprecated. The following actions are running on Node.js 20 and may not work as expected: actions/checkout@v4, actions/setup-node@v4. Actions will be forced to run with Node.js 24 by default starting June 16th, 2026. Node.js 20 will be removed from the runner on September 16th, 2026. Please check if updated versions of these actions are available that support Node.js 24. To opt into Node.js 24 now, set the FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true environment variable on the runner or in your workflow file. Once Node.js 24 becomes the default, you can temporarily opt out by setting ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

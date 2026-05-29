@@ -4,6 +4,10 @@
   "description": "Puti-AI Z-Pen - 螢幕放大與畫筆工具",
   "main": "main.js",
   "author": "Puti-AI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/puti001/teach_tools.git"
+  },
   "scripts": {
     "start": "electron .",
     "build": "electron-builder --win",
