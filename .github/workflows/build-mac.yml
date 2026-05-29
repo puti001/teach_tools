@@ -20,9 +20,11 @@ jobs:
 
       - name: Install Dependencies
         run: npm ci
+        working-directory: ./ZoomPen
 
       - name: Build macOS Application
         run: npx electron-builder --mac
+        working-directory: ./ZoomPen
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -31,5 +33,5 @@ jobs:
         with:
           name: ZoomPen-macOS
           path: |
-            dist/*.dmg
-            dist/*.zip
+            ZoomPen/dist/*.dmg
+            ZoomPen/dist/*.zip
