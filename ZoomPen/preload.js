@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('zoompen', {
+  isMac: process.platform === 'darwin',
   // Invoke (returns Promise)
   captureScreen: () => ipcRenderer.invoke('zoompen:capture-screen'),
   getScreenSourceId: () => ipcRenderer.invoke('zoompen:get-source-id'),

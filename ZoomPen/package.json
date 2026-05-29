@@ -12,6 +12,13 @@
   "build": {
     "appId": "com.puti-ai.zpen",
     "productName": "Puti-AI Z-Pen",
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.utilities"
+    },
     "win": {
       "target": [
         {

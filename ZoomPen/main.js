@@ -5,6 +5,8 @@ const {
   desktopCapturer,
   screen,
   ipcMain,
+  systemPreferences,
+  dialog,
 } = require('electron');
 const path = require('path');
 const { spawn, spawnSync } = require('child_process');
@@ -16,10 +18,39 @@ let currentMode = 'IDLE'; // IDLE | ZOOM | DRAW | LIVEZOOM
 
 // ─── Helpers ───────────────────────────────────────────────
 
+const isMac = process.platform === 'darwin';
+const shortcutModifier = isMac ? 'Cmd' : 'Ctrl';
+
+const keyZoom = `${shortcutModifier}+1`;
+const keyDraw = `${shortcutModifier}+2`;
+const keyLiveZoom = `${shortcutModifier}+4`;
+const keyZoomIn = `${shortcutModifier}+Up`;
+const keyZoomOut = `${shortcutModifier}+Down`;
+
+function checkMacScreenPermission() {
+  if (!isMac) return true;
+  try {
+    const status = systemPreferences.getMediaAccessStatus('screen');
+    if (status === 'denied') {
+      dialog.showMessageBoxSync({
+        type: 'warning',
+        title: '需要螢幕錄製權限',
+        message: 'ZoomPen 需要螢幕錄製權限才能進行畫面放大與畫筆標記。\n\n請前往「系統設定」->「隱私權與安全性」->「螢幕錄製」，將「Puti-AI Z-Pen」勾選啟用，並重新啟動應用程式。',
+        buttons: ['確定']
+      });
+      return false;
+    }
+  } catch (e) {
+    console.error('Failed to check screen media access status:', e);
+  }
+  return true;
+}
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 
 async function captureScreen() {
+  if (!checkMacScreenPermission()) return null;
   const { size, scaleFactor } = screen.getPrimaryDisplay();
   const sources = await desktopCapturer.getSources({
     types: ['screen'],
@@ -32,6 +63,7 @@ async function captureScreen() {
 }
 
 async function getScreenSourceId() {
+  if (!checkMacScreenPermission()) return null;
   const sources = await desktopCapturer.getSources({ types: ['screen'] });
   return sources.length > 0 ? sources[0].id : null;
 }
@@ -44,7 +76,8 @@ function createModeWindow(opts = {}) {
     x: 0,
     y: 0,
     frame: false,
-    fullscreen: true,
+    fullscreen: !isMac,
+    enableLargerThanScreen: isMac,
     alwaysOnTop: true,
     skipTaskbar: true,
     transparent: !!opts.transparent,
@@ -56,6 +89,9 @@ function createModeWindow(opts = {}) {
     },
   });
   win.setAlwaysOnTop(true, 'screen-saver');
+  if (isMac) {
+    win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
   return win;
 }
 
@@ -88,6 +124,9 @@ function createToolbar() {
   });
 
   toolbarWin.setAlwaysOnTop(true, 'screen-saver');
+  if (isMac) {
+    toolbarWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  }
   toolbarWin.loadFile(path.join(__dirname, 'src', 'toolbar', 'toolbar.html'));
   toolbarWin.on('closed', () => {
     toolbarWin = null;
@@ -114,10 +153,10 @@ function exitCurrentMode() {
   } catch (_) {}
   if (wasLiveZoom) {
     try {
-      globalShortcut.unregister('Ctrl+Up');
+      globalShortcut.unregister(keyZoomIn);
     } catch (_) {}
     try {
-      globalShortcut.unregister('Ctrl+Down');
+      globalShortcut.unregister(keyZoomOut);
     } catch (_) {}
   }
 
@@ -205,11 +244,11 @@ async function enterLiveZoom() {
   currentMode = 'LIVEZOOM';
 
   globalShortcut.register('Escape', exitCurrentMode);
-  globalShortcut.register('Ctrl+Up', () => {
+  globalShortcut.register(keyZoomIn, () => {
     if (modeWin && !modeWin.isDestroyed())
       modeWin.webContents.send('zoompen:zoom-change', 'in');
   });
-  globalShortcut.register('Ctrl+Down', () => {
+  globalShortcut.register(keyZoomOut, () => {
     if (modeWin && !modeWin.isDestroyed())
       modeWin.webContents.send('zoompen:zoom-change', 'out');
   });
@@ -268,13 +307,13 @@ ipcMain.on('zoompen:quit', () => app.quit());
 app.whenReady().then(() => {
   createToolbar();
 
-  globalShortcut.register('Ctrl+1', () => {
+  globalShortcut.register(keyZoom, () => {
     currentMode === 'ZOOM' ? exitCurrentMode() : enterZoom();
   });
-  globalShortcut.register('Ctrl+2', () => {
+  globalShortcut.register(keyDraw, () => {
     currentMode === 'DRAW' ? exitCurrentMode() : enterDraw();
   });
-  globalShortcut.register('Ctrl+4', () => {
+  globalShortcut.register(keyLiveZoom, () => {
     currentMode === 'LIVEZOOM' ? exitCurrentMode() : enterLiveZoom();
   });
 });
