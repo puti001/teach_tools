@@ -27,6 +27,7 @@
           "arch": ["x64", "arm64"]
         }
       ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
       "category": "public.app-category.utilities",
       "identity": null,
       "hardenedRuntime": false
