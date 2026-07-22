@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puti-AI 滑鼠小勇士｜滑鼠練習遊戲</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;}
+  html,body{height:100%;overflow:hidden;}
+  body{
+    font-family:"Microsoft JhengHei","PingFang TC","Comic Sans MS",sans-serif;
+    background:linear-gradient(160deg,#aee7ff 0%,#d9f3ff 45%,#ffe9f3 100%);
+  }
+  #app{height:100vh;width:100vw;position:relative;}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .hidden{display:none !important;}
+  button{font-family:inherit;}
+
+  /* ---------- 開始畫面 ---------- */
+  .mascot{font-size:84px;animation:bob 2s ease-in-out infinite;filter:drop-shadow(0 6px 8px rgba(0,0,0,.15));}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}
+  .title{
+    font-size:58px;font-weight:900;letter-spacing:4px;margin:8px 0 4px;
+    background:linear-gradient(90deg,#ff5d8f,#ff9f43,#4fc3f7);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 3px 0 rgba(255,255,255,.6);
+  }
+  .subtitle{font-size:22px;color:#5a6b8c;font-weight:bold;margin-bottom:18px;}
+  .skills{display:flex;gap:14px;margin-bottom:26px;}
+  .skill{
+    background:#fff;border-radius:18px;padding:10px 16px;font-size:17px;font-weight:bold;color:#5a6b8c;
+    box-shadow:0 4px 10px rgba(90,120,180,.18);display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .skill span{font-size:34px;}
+  .note{margin-top:20px;font-size:14px;color:#8aa0c8;}
+
+  .big-btn{
+    font-size:26px;font-weight:bold;color:#fff;border:none;border-radius:999px;padding:16px 56px;cursor:pointer;
+    background:linear-gradient(135deg,#ff9f43,#ff5d8f);
+    box-shadow:0 6px 0 #d14f7c,0 10px 18px rgba(0,0,0,.15);
+    transition:transform .12s,box-shadow .12s;
+  }
+  .big-btn:hover{transform:translateY(-2px) scale(1.03);}
+  .big-btn:active{transform:translateY(3px);box-shadow:0 2px 0 #d14f7c;}
+
+  /* ---------- 遊戲畫面 ---------- */
+  #game-screen{justify-content:flex-start;}
+  #topbar{
+    width:100%;height:64px;display:flex;align-items:center;gap:16px;padding:0 18px;
+    background:rgba(255,255,255,.78);backdrop-filter:blur(6px);box-shadow:0 2px 10px rgba(90,120,180,.15);z-index:10;
+  }
+  #mute-btn{width:44px;height:44px;border:none;border-radius:50%;background:#fff;font-size:22px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+  #level-label{font-size:20px;font-weight:bold;color:#44546f;white-space:nowrap;}
+  #progress-wrap{flex:1;max-width:460px;height:24px;background:#e6e9f5;border-radius:999px;position:relative;overflow:hidden;}
+  #progress-bar{height:100%;width:0;background:linear-gradient(90deg,#7bd88f,#43b581);border-radius:999px;transition:width .3s;}
+  #progress-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:bold;color:#44546f;}
+  #star-counter{font-size:20px;font-weight:bold;color:#e0a800;white-space:nowrap;display:inline-block;}
+  #star-counter.pulse{animation:pulseS .35s;}
+  @keyframes pulseS{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+
+  #hint{
+    width:100%;height:44px;display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:bold;color:#5a6b8c;background:rgba(255,255,255,.5);
+  }
+  #play-area{flex:1;width:100%;position:relative;overflow:hidden;cursor:default;touch-action:none;}
+  #play-area.night{background:linear-gradient(180deg,#16213e,#1f2f5e);}
+  #play-area.night .cloud{display:none;}
+
+  .cloud{position:absolute;font-size:54px;opacity:.7;pointer-events:none;z-index:0;animation:drift 18s ease-in-out infinite alternate;}
+  @keyframes drift{from{transform:translateX(0)}to{transform:translateX(60px)}}
+
+  /* 游標小尾巴：幫助孩子追蹤游標 */
+  .trail{
+    position:absolute;color:#ffcf3f;font-size:11px;pointer-events:none;z-index:1;
+    transform:translate(-50%,-50%);text-shadow:0 0 6px #fff;animation:trailFade .55s forwards;
+  }
+  @keyframes trailFade{to{opacity:0;transform:translate(-50%,-50%) scale(.3);}}
+
+  /* ---------- 第一關：泡泡 ---------- */
+  .bubble{
+    position:absolute;width:78px;height:78px;border-radius:50%;cursor:pointer;z-index:2;
+    background:radial-gradient(circle at 32% 30%,rgba(255,255,255,.95) 0%,rgba(255,255,255,.35) 25%,var(--c) 78%);
+    border:2px solid rgba(255,255,255,.85);opacity:.92;
+    animation:floaty var(--d) ease-in-out infinite alternate;
+  }
+  @keyframes floaty{from{transform:translateY(0)}to{transform:translateY(-20px)}}
+  .bubble.pop{animation:popA .22s forwards;}
+  @keyframes popA{to{transform:scale(1.7);opacity:0;}}
+
+  /* ---------- 第二關：星星 ---------- */
+  .star{
+    position:absolute;font-size:62px;cursor:pointer;z-index:2;line-height:1;padding:6px;
+    animation:wig 1.1s ease-in-out infinite;filter:drop-shadow(0 0 10px rgba(255,215,0,.85));
+  }
+  @keyframes wig{0%,100%{transform:rotate(-9deg) scale(1)}50%{transform:rotate(9deg) scale(1.1)}}
+  .star.got{animation:gotA .3s forwards;}
+  @keyframes gotA{to{transform:scale(1.9) rotate(25deg);opacity:0;}}
+
+  /* ---------- 第三關：蛋蛋 ---------- */
+  .eggwrap{position:absolute;text-align:center;cursor:pointer;padding:8px;z-index:2;}
+  .egg{font-size:70px;line-height:1;transition:transform .15s;}
+  .eggwrap:hover .egg{transform:scale(1.07);}
+  .wob .egg{animation:wobA .35s;}
+  @keyframes wobA{0%,100%{transform:rotate(0)}25%{transform:rotate(-13deg)}75%{transform:rotate(13deg)}}
+  .egg.born{animation:bornA .6s;}
+  @keyframes bornA{0%{transform:scale(.3) rotate(-15deg)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+  .dots{margin-top:8px;transition:opacity .3s;}
+  .dots span{display:inline-block;width:13px;height:13px;border-radius:50%;background:#e2e2ec;margin:0 4px;border:2px solid #b9b9cc;}
+  .dots span.on{background:#ffd93d;border-color:#e0a800;}
+  .minihint{height:24px;font-size:16px;font-weight:bold;color:#ff5d8f;opacity:0;}
+  .minihint.show{animation:hintPop 1.2s forwards;}
+  @keyframes hintPop{0%{opacity:0;transform:translateY(6px)}20%{opacity:1;transform:translateY(0)}80%{opacity:1}100%{opacity:0}}
+
+  /* ---------- 第四關：拖曳 ---------- */
+  #animal-row{position:absolute;top:56px;left:0;right:0;display:flex;justify-content:center;gap:6vw;z-index:2;}
+  .animal{
+    position:relative;background:#fff;border:4px dashed #ffb6c1;border-radius:26px;
+    padding:14px 26px 8px;text-align:center;transition:transform .2s,border-color .2s,background .2s;
+  }
+  .a-face{font-size:64px;line-height:1;}
+  .a-name{display:block;font-weight:bold;color:#666;margin-top:4px;font-size:16px;}
+  .want{
+    position:absolute;top:-18px;right:-16px;background:#fffef0;border:3px solid #ffd93d;border-radius:50%;
+    width:48px;height:48px;display:flex;align-items:center;justify-content:center;font-size:26px;
+    box-shadow:0 2px 6px rgba(0,0,0,.15);
+  }
+  .animal.highlight{border-color:#58cc58;background:#eaffe0;border-style:solid;transform:scale(1.08);}
+  .animal.happy{animation:happyA .5s;}
+  @keyframes happyA{0%,100%{transform:scale(1)}30%{transform:scale(1.18) rotate(-4deg)}60%{transform:scale(1.18) rotate(4deg)}}
+  .animal.shake{animation:shakeA .45s;}
+  @keyframes shakeA{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-9px)}40%,80%{transform:translateX(9px)}}
+  .food{
+    position:absolute;font-size:54px;cursor:grab;z-index:5;touch-action:none;line-height:1;padding:8px;
+    transition:left .35s ease,top .35s ease,transform .15s;
+  }
+  .food.dragging{cursor:grabbing;transition:transform .15s;transform:scale(1.2);z-index:60;filter:drop-shadow(0 10px 10px rgba(0,0,0,.3));}
+
+  /* ---------- 特效 ---------- */
+  .particle{
+    position:absolute;width:var(--s);height:var(--s);background:var(--c);border-radius:50%;
+    pointer-events:none;z-index:70;animation:fly .75s ease-out forwards;
+  }
+  .particle.e{background:none;border-radius:0;font-size:var(--s);width:auto;height:auto;line-height:1;}
+  @keyframes fly{to{transform:translate(var(--dx),var(--dy)) scale(.25);opacity:0;}}
+  .floater{
+    position:absolute;font-size:21px;font-weight:bold;pointer-events:none;z-index:70;
+    transform:translate(-50%,-50%);animation:floatUp .9s ease-out forwards;text-shadow:0 1px 0 #fff;
+  }
+  @keyframes floatUp{to{transform:translate(-50%,-160%);opacity:0;}}
+
+  /* ---------- 關卡說明 ---------- */
+  #intro-modal{background:rgba(255,255,255,.62);backdrop-filter:blur(6px);z-index:90;}
+  .card{
+    background:#fff;border-radius:30px;padding:34px 44px;text-align:center;max-width:520px;width:92%;
+    box-shadow:0 18px 50px rgba(90,120,180,.3);
+  }
+  #intro-icon{font-size:56px;}
+  #intro-title{font-size:32px;font-weight:900;color:#44546f;margin:6px 0;}
+  #intro-skill{
+    display:inline-block;background:#fff3d6;color:#b07d10;font-weight:bold;font-size:17px;
+    border-radius:999px;padding:5px 18px;margin-bottom:12px;border:2px solid #ffd93d;
+  }
+  #intro-demo{position:relative;height:120px;display:flex;align-items:center;justify-content:center;gap:80px;margin-bottom:8px;}
+  #intro-text{font-size:21px;color:#5a6b8c;font-weight:bold;line-height:1.6;margin-bottom:22px;}
+  .d-cursor{font-size:46px;animation:slideX 1.6s ease-in-out infinite;}
+  @keyframes slideX{0%,100%{transform:translateX(-52px)}50%{transform:translateX(46px)}}
+  .d-bubble{font-size:54px;animation:pulseT 1.6s infinite;}
+  .d-star{font-size:56px;}
+  @keyframes pulseT{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+  .ring{
+    position:absolute;left:50%;top:50%;width:74px;height:74px;margin-left:-37px;margin-top:-37px;
+    border:5px solid #ff9f43;border-radius:50%;animation:ping 1.2s ease-out infinite;pointer-events:none;
+  }
+  .ring.r2{animation-delay:.28s;}
+  @keyframes ping{0%{transform:scale(.45);opacity:.95}60%{transform:scale(1.35);opacity:0}100%{opacity:0}}
+  .d-food{font-size:50px;animation:dragMove 2.1s ease-in-out infinite;}
+  @keyframes dragMove{0%{transform:translate(-30px,22px)}55%{transform:translate(42px,-14px)}75%{transform:translate(42px,-14px)}100%{transform:translate(-30px,22px)}}
+
+  /* ---------- 過關提示 ---------- */
+  #toast{
+    position:fixed;left:50%;top:40%;transform:translate(-50%,-50%) scale(0);z-index:95;
+    background:#fff;border-radius:26px;padding:24px 52px;font-size:36px;font-weight:900;color:#44546f;
+    box-shadow:0 16px 44px rgba(90,120,180,.35);transition:transform .3s;
+  }
+  #toast.show{transform:translate(-50%,-50%) scale(1);}
+
+  /* ---------- 結束畫面 ---------- */
+  #end-screen .trophy{font-size:96px;animation:bob 2s ease-in-out infinite;}
+  #end-stars{font-size:26px;font-weight:bold;color:#e0a800;margin:10px 0 16px;}
+  .learned{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;justify-content:center;}
+  .learned div{background:#fff;border-radius:16px;padding:10px 18px;font-size:18px;font-weight:bold;color:#43b581;box-shadow:0 4px 10px rgba(90,120,180,.18);}
+  #end-msg{font-size:20px;color:#5a6b8c;font-weight:bold;margin-bottom:24px;}
+
+  /* ---------- 品牌與頁尾 ---------- */
+  .title .brand{
+    -webkit-text-fill-color:#fff;color:#fff;background:#44546f;
+    font-size:.42em;border-radius:12px;padding:6px 14px;vertical-align:middle;margin-right:12px;letter-spacing:1px;
+  }
+  .screen{padding-bottom:36px;}
+  #footer{
+    position:absolute;left:0;right:0;bottom:0;min-height:30px;z-index:80;
+    display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+    font-size:12.5px;color:#7d8fb3;background:rgba(255,255,255,.7);padding:3px 10px;text-align:center;
+  }
+  #footer a{color:#5b7fd4;text-decoration:none;font-weight:bold;}
+  #footer a:hover{text-decoration:underline;}
+
+  /* ---------- 自由選關 ---------- */
+  .sel-title{font-size:38px;font-weight:900;color:#44546f;}
+  #level-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:860px;margin:22px 0;}
+  .lv-card{
+    background:#fff;border:none;border-radius:20px;padding:18px 20px;width:172px;cursor:pointer;text-align:center;
+    box-shadow:0 6px 14px rgba(90,120,180,.18);transition:transform .15s,box-shadow .15s;font-family:inherit;
+  }
+  .lv-card:hover{transform:translateY(-4px) scale(1.04);box-shadow:0 10px 20px rgba(90,120,180,.25);}
+  .lv-card .ic{font-size:44px;}
+  .lv-card .nm{font-size:20px;font-weight:900;color:#44546f;margin:6px 0 2px;}
+  .lv-card .sk{font-size:14px;color:#8aa0c8;font-weight:bold;}
+  .btn-row{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+  .big-btn.small{font-size:20px;padding:13px 36px;}
+  #home-btn{width:44px;height:44px;border:none;border-radius:50%;background:#fff;font-size:22px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+
+  /* ---------- 右鍵關：禮物 ---------- */
+  .present{
+    position:absolute;font-size:64px;cursor:pointer;z-index:2;line-height:1;padding:6px;
+    animation:wig 1.4s ease-in-out infinite;filter:drop-shadow(0 4px 6px rgba(0,0,0,.15));
+  }
+  .present.opened{animation:bornA .6s;}
+
+  /* ---------- 滾輪關：火箭 ---------- */
+  .moon{position:absolute;top:36px;left:50%;transform:translateX(-50%);font-size:74px;z-index:2;}
+  .moon.happy{animation:happyA .6s;}
+  .rocket{position:absolute;left:50%;transform:translateX(-50%);font-size:78px;bottom:30px;transition:bottom .35s ease;z-index:2;}
+
+  /* ---------- 說明卡新動畫 ---------- */
+  .d-mouse{font-size:54px;}
+  .d-badge{background:#ff5d8f;color:#fff;border-radius:10px;padding:5px 12px;font-weight:bold;font-size:20px;animation:pulseT 1s infinite;}
+  .d-arrow{font-size:34px;animation:arrowUp 1.1s ease-out infinite;}
+  @keyframes arrowUp{0%{transform:translateY(12px);opacity:0}35%{opacity:1}100%{transform:translateY(-16px);opacity:0}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 開始畫面 -->
+  <div id="start-screen" class="screen">
+    <div class="mascot">🦉</div>
+    <h1 class="title"><span class="brand">Puti-AI</span>滑鼠小勇士</h1>
+    <p class="subtitle">跟著歐歐老師，一起玩中學會滑鼠！</p>
+    <div class="skills">
+      <div class="skill"><span>🫧</span>移動</div>
+      <div class="skill"><span>⭐</span>點擊</div>
+      <div class="skill"><span>🥚</span>雙擊</div>
+      <div class="skill"><span>🎁</span>右鍵</div>
+      <div class="skill"><span>🚀</span>滾輪</div>
+      <div class="skill"><span>🍌</span>拖曳</div>
+      <div class="skill"><span>🎆</span>慶典</div>
+    </div>
+    <div class="btn-row">
+      <button id="start-btn" class="big-btn">▶ 開始遊戲</button>
+      <button id="select-btn" class="big-btn">🗺️ 自由選關</button>
+    </div>
+    <p class="note">適合電腦初學者（建議家長或老師陪同）・免安裝，用瀏覽器就能玩</p>
+  </div>
+
+  <!-- 遊戲畫面 -->
+  <div id="game-screen" class="screen hidden">
+    <div id="topbar">
+      <button id="home-btn" title="回首頁">🏠</button>
+      <button id="mute-btn" title="聲音開關">🔊</button>
+      <div id="level-label">第1關・🫧 泡泡冒險</div>
+      <div id="progress-wrap">
+        <div id="progress-bar"></div>
+        <span id="progress-text">0/14</span>
+      </div>
+      <div id="star-counter">⭐ <span id="star-num">0</span></div>
+    </div>
+    <div id="hint"></div>
+    <div id="play-area"></div>
+  </div>
+
+  <!-- 自由選關 -->
+  <div id="select-screen" class="screen hidden">
+    <h2 class="sel-title">🗺️ 自由選關</h2>
+    <div id="level-grid"></div>
+    <button id="sel-back" class="big-btn small">🏠 回首頁</button>
+  </div>
+
+  <!-- 關卡說明 -->
+  <div id="intro-modal" class="screen hidden">
+    <div class="card">
+      <div id="intro-icon"></div>
+      <h2 id="intro-title"></h2>
+      <div id="intro-skill"></div>
+      <div id="intro-demo"></div>
+      <p id="intro-text"></p>
+      <button id="go-btn" class="big-btn">出發！</button>
+    </div>
+  </div>
+
+  <!-- 過關提示 -->
+  <div id="toast" class="hidden">🎉 過關！</div>
+
+  <!-- 結束畫面 -->
+  <div id="end-screen" class="screen hidden">
+    <div class="trophy">🏆</div>
+    <h1 class="title">太棒了！你就是滑鼠小勇士！</h1>
+    <div id="end-stars"></div>
+    <div class="learned">
+      <div>🫧 移動滑鼠 ✅</div>
+      <div>⭐ 按一下左鍵 ✅</div>
+      <div>🥚 快速按兩下 ✅</div>
+      <div>🎁 按右鍵 ✅</div>
+      <div>🚀 滾動滾輪 ✅</div>
+      <div>🍌 按住拖曳 ✅</div>
+    </div>
+    <p id="end-msg"></p>
+    <div class="btn-row">
+      <button id="again-btn" class="big-btn">🔁 再玩一次</button>
+      <button id="end-select-btn" class="big-btn">🗺️ 自由選關</button>
+    </div>
+  </div>
+
+  <!-- 版權聲明 -->
+  <div id="footer">
+    屏東縣後庄國小黃朝榮老師作品・免費分享，歡迎擴散推廣・嚴禁商用與任何侵權、不尊重著作權的行為・
+    更多 Puti-AI 教學工具：<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener">https://padlet.com/clongwh/puti_ai_tools</a>
+  </div>
+
+</div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const playArea = $("#play-area"), hintEl = $("#hint"), endScreen = $("#end-screen");
+
+/* ================= 音效（Web Audio，免外部檔案） ================= */
+let actx = null, muted = false;
+function ac(){
+  if(!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+  if(actx.state === "suspended") actx.resume();
+  return actx;
+}
+function tone(f, d, type, v, t){
+  if(muted) return;
+  d = d || 0.12; type = type || "sine"; v = v || 0.18; t = t || 0;
+  const a = ac(), o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(v, a.currentTime + t);
+  g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + t + d);
+  o.connect(g); g.connect(a.destination);
+  o.start(a.currentTime + t); o.stop(a.currentTime + t + d + 0.02);
+}
+const sPop    = () => { tone(700 + Math.random()*400, .1, "sine", .2); tone(1500, .05, "triangle", .08, .02); };
+const sStar   = () => { tone(880, .09, "triangle", .2); tone(1320, .12, "triangle", .18, .07); };
+const sClick  = () => tone(500, .06, "square", .08);
+const sHatch  = () => { tone(523,.1,"triangle",.2); tone(659,.1,"triangle",.2,.09); tone(784,.16,"triangle",.2,.18); };
+const sWrong  = () => { tone(220,.15,"sawtooth",.06); tone(180,.2,"sawtooth",.05,.1); };
+const sPickup = () => tone(600,.05,"sine",.12);
+const sDrop   = () => { tone(500,.07,"sine",.15); tone(750,.09,"sine",.15,.06); };
+const sGift   = () => { tone(660,.08,"triangle",.2); tone(880,.08,"triangle",.2,.08); tone(1100,.14,"triangle",.2,.16); };
+const sBoom   = () => { tone(150,.3,"sawtooth",.12); tone(90,.4,"triangle",.12,.05);
+                        for(let i=0;i<4;i++) tone(1200+Math.random()*800,.08,"triangle",.06,.1+i*.05); };
+const sFanfare= () => { [523,659,784,1047].forEach((f,i)=>tone(f,.15,"triangle",.2,i*.12)); tone(1319,.4,"triangle",.2,.5); };
+
+/* ================= 全域狀態 ================= */
+const state = { level:0, stars:0, progress:0, misses:0, active:false, inGame:false, mode:"story" };
+let levelAC = null; // 每關的 AbortController，方便整批移除事件
+let session = 0;    // 回首頁後作廢未完成的過關排程
+
+const LEVELS = [
+  { name:"泡泡冒險", icon:"🫧", goal:14, start:startBubbles,
+    intro:{ title:"第一關：泡泡冒險", skill:"練習：移動滑鼠", demo:"hover",
+            text:"移動滑鼠，讓指標「碰到」泡泡，泡泡就會破掉喔！還不用按按鍵。" } },
+  { name:"星星點點名", icon:"⭐", goal:12, start:startStars,
+    intro:{ title:"第二關：星星點點名", skill:"練習：按一下左鍵", demo:"click",
+            text:"看準星星，「按一下」滑鼠左鍵，就能把星星收集起來！" } },
+  { name:"神奇蛋蛋", icon:"🥚", goal:8, start:startEggs,
+    intro:{ title:"第三關：神奇蛋蛋", skill:"練習：快速按兩下", demo:"dbl",
+            text:"對著蛋蛋「快速按兩下」左鍵，小動物就會孵出來！" } },
+  { name:"神秘禮物", icon:"🎁", goal:8, start:startGifts,
+    intro:{ title:"第四關：神秘禮物", skill:"練習：按一下右鍵", demo:"rclick",
+            text:"對著禮物「按一下右鍵」，就能把禮物打開囉！" } },
+  { name:"火箭升空", icon:"🚀", goal:18, start:startRocket,
+    intro:{ title:"第五關：火箭升空", skill:"練習：滾動滾輪", demo:"wheel",
+            text:"把手指放在滾輪上「往上滾」，火箭就會往月球飛去！" } },
+  { name:"餵小動物", icon:"🍌", goal:6, start:startFeed,
+    intro:{ title:"第六關：餵小動物", skill:"練習：按住拖曳", demo:"drag",
+            text:"「按住左鍵不要放」，把食物拖給想吃它的動物，再放手！" } },
+  { name:"煙火慶典", icon:"🎆", goal:8, start:startFireworks,
+    intro:{ title:"最終關：煙火慶典", skill:"獎勵時間", demo:"click",
+            text:"太棒了！在夜空任何地方「按一下」，放出美麗的煙火吧！" } },
+];
+
+const demos = {
+  hover:'<span class="d-cursor">👆</span><span class="d-bubble">🫧</span>',
+  click:'<span class="d-star">⭐</span><span class="ring"></span>',
+  dbl:'<span class="d-star">🥚</span><span class="ring"></span><span class="ring r2"></span>',
+  rclick:'<span class="d-mouse">🖱️</span><span class="d-badge">右鍵</span><span class="d-star">🎁</span>',
+  wheel:'<span class="d-mouse">🖱️</span><span class="d-arrow">⬆️</span><span class="d-star">🚀</span>',
+  drag:'<span class="d-food">🍌</span><span class="d-star">🐵</span>'
+};
+
+/* ================= 小工具 ================= */
+function praise(){ return ["好棒！","厲害！","哇～","做得好！","你真行！"][Math.floor(Math.random()*5)]; }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function setHint(t){ hintEl.textContent = t; }
+function setProgress(n, goal){
+  state.progress = n;
+  $("#progress-bar").style.width = (n/goal*100) + "%";
+  $("#progress-text").textContent = n + "/" + goal;
+}
+function addStar(){
+  state.stars++;
+  $("#star-num").textContent = state.stars;
+  const c = $("#star-counter");
+  c.classList.remove("pulse"); void c.offsetWidth; c.classList.add("pulse");
+}
+function randPos(w, h, pad){
+  return { x: pad + Math.random()*Math.max(60, w - pad*2 - 90),
+           y: pad + 10 + Math.random()*Math.max(60, h - pad*2 - 120) };
+}
+function spawnBurst(x, y, n, chars, container){
+  container = container || playArea;
+  const colors = ["#ff5d8f","#ffd93d","#6bcbef","#95e06c","#c792ea","#ff9f43"];
+  for(let i=0;i<n;i++){
+    const s = document.createElement("span");
+    const ang = Math.random()*Math.PI*2, d = 40 + Math.random()*70;
+    s.className = "particle" + (chars ? " e" : "");
+    if(chars){
+      s.textContent = chars[Math.floor(Math.random()*chars.length)];
+      s.style.setProperty("--s", (16 + Math.random()*14) + "px");
+    } else {
+      s.style.setProperty("--c", colors[Math.floor(Math.random()*colors.length)]);
+      s.style.setProperty("--s", (6 + Math.random()*7) + "px");
+    }
+    s.style.setProperty("--dx", Math.cos(ang)*d + "px");
+    s.style.setProperty("--dy", Math.sin(ang)*d + "px");
+    s.style.left = x + "px"; s.style.top = y + "px";
+    container.appendChild(s);
+    s.addEventListener("animationend", () => s.remove());
+  }
+}
+function floater(x, y, text, color){
+  const f = document.createElement("div");
+  f.className = "floater"; f.textContent = text;
+  f.style.left = x + "px"; f.style.top = y + "px";
+  f.style.color = color || "#ff5d8f";
+  playArea.appendChild(f);
+  f.addEventListener("animationend", () => f.remove());
+}
+
+/* ================= 關卡流程 ================= */
+function addClouds(){
+  for(let i=0;i<3;i++){
+    const c = document.createElement("div");
+    c.className = "cloud"; c.textContent = "☁️";
+    c.style.left = (8 + i*33 + Math.random()*10) + "%";
+    c.style.top = (5 + Math.random()*45) + "%";
+    c.style.animationDuration = (14 + Math.random()*10) + "s";
+    playArea.appendChild(c);
+  }
+}
+function cleanupLevel(){
+  if(levelAC){ levelAC.abort(); levelAC = null; }
+  playArea.classList.remove("night");
+  playArea.innerHTML = "";
+  addClouds();
+}
+function beginLevel(i){
+  cleanupLevel();
+  levelAC = new AbortController();
+  session++;
+  state.active = true;
+  state.inGame = true;
+  $("#level-label").textContent = "第" + (i+1) + "關・" + LEVELS[i].icon + " " + LEVELS[i].name;
+  LEVELS[i].start(LEVELS[i]);
+}
+function completeLevel(){
+  if(!state.inGame) return;   // 已回首頁或選關畫面，忽略遲來的過關
+  state.active = false;
+  sFanfare();
+  const t = $("#toast");
+  t.textContent = "🎉 第" + (state.level+1) + "關 過關！";
+  t.classList.remove("hidden"); t.classList.add("show");
+  const s = session;
+  setTimeout(() => {
+    if(s !== session) return; // 期間已回首頁，取消後續動作
+    t.classList.add("hidden"); t.classList.remove("show");
+    if(state.mode === "single"){
+      state.inGame = false;
+      $("#game-screen").classList.add("hidden");
+      showSelect();
+    } else {
+      state.level++;
+      if(state.level < LEVELS.length) showIntro(state.level);
+      else showEnd();
+    }
+  }, 1400);
+}
+function resetProgress(){
+  state.level = 0; state.stars = 0; state.misses = 0;
+  $("#star-num").textContent = "0";
+}
+function showSelect(){
+  state.inGame = false;
+  const grid = $("#level-grid");
+  grid.innerHTML = "";
+  LEVELS.forEach((L, i) => {
+    const b = document.createElement("button");
+    b.className = "lv-card";
+    b.innerHTML = '<div class="ic">' + L.icon + '</div><div class="nm">' + L.name + '</div><div class="sk">' + L.intro.skill + '</div>';
+    b.addEventListener("click", () => {
+      sClick();
+      state.mode = "single";
+      state.level = i;
+      $("#select-screen").classList.add("hidden");
+      $("#start-screen").classList.add("hidden");
+      $("#end-screen").classList.add("hidden");
+      $("#game-screen").classList.remove("hidden");
+      showIntro(i);
+    });
+    grid.appendChild(b);
+  });
+  $("#start-screen").classList.add("hidden");
+  $("#end-screen").classList.add("hidden");
+  $("#select-screen").classList.remove("hidden");
+}
+function goHome(){
+  session++;
+  state.active = false;
+  state.inGame = false;
+  state.mode = "story";
+  cleanupLevel();
+  resetProgress();
+  $("#intro-modal").classList.add("hidden");
+  $("#end-screen").classList.add("hidden");
+  $("#select-screen").classList.add("hidden");
+  $("#game-screen").classList.add("hidden");
+  $("#start-screen").classList.remove("hidden");
+}
+function showIntro(i){
+  const L = LEVELS[i];
+  $("#intro-icon").textContent = L.icon;
+  $("#intro-title").textContent = L.intro.title;
+  $("#intro-skill").textContent = L.intro.skill;
+  $("#intro-text").textContent = L.intro.text;
+  $("#intro-demo").innerHTML = demos[L.intro.demo];
+  $("#intro-modal").classList.remove("hidden");
+}
+function showEnd(){
+  cleanupLevel();
+  state.active = false;
+  state.inGame = false;
+  $("#game-screen").classList.add("hidden");
+  endScreen.classList.remove("hidden");
+  $("#end-stars").textContent = "⭐ 一共收集了 " + state.stars + " 顆星星！";
+  $("#end-msg").textContent = state.misses <= 5
+    ? "你的瞄準超級準，太厲害了！"
+    : "再多練習瞄準，下次一定會更準喔！";
+  sFanfare();
+  for(let i=0;i<8;i++){
+    setTimeout(() => {
+      spawnBurst(Math.random()*endScreen.clientWidth, Math.random()*endScreen.clientHeight*0.7,
+                 14, ["🎉","⭐","✨","🎊"], endScreen);
+    }, i*300);
+  }
+}
+
+/* ================= 第一關：泡泡冒險（移動） ================= */
+function startBubbles(L){
+  const goal = L.goal;
+  let done = 0;
+  const onScreen = new Set();
+  const hues = ["#7fd8ff","#ffb3d1","#c0f0a5","#ffd97f","#d3b8ff"];
+  setHint("移動滑鼠，讓指標碰到泡泡！");
+  setProgress(0, goal);
+
+  function spawn(){
+    if(!state.active) return;
+    while(onScreen.size < 4 && done + onScreen.size < goal){
+      const r = playArea.getBoundingClientRect();
+      let pos, tries = 0;
+      do { pos = randPos(r.width, r.height, 50); tries++; }
+      while(tries < 12 && [...onScreen].some(o => Math.hypot(o._x - pos.x, o._y - pos.y) < 110));
+      const b = document.createElement("div");
+      b.className = "bubble";
+      b.style.setProperty("--c", hues[Math.floor(Math.random()*hues.length)]);
+      b.style.setProperty("--d", (2 + Math.random()*2) + "s");
+      b.style.left = pos.x + "px"; b.style.top = pos.y + "px";
+      b._x = pos.x; b._y = pos.y; b._popped = false;
+      b.addEventListener("pointerenter", () => pop(b), { signal: levelAC.signal });
+      playArea.appendChild(b);
+      onScreen.add(b);
+    }
+  }
+  function pop(b){
+    if(!state.active || b._popped) return;
+    b._popped = true;
+    onScreen.delete(b);
+    const r = playArea.getBoundingClientRect(), br = b.getBoundingClientRect();
+    spawnBurst(br.left - r.left + br.width/2, br.top - r.top + br.height/2, 8);
+    sPop();
+    b.classList.add("pop");
+    setTimeout(() => b.remove(), 220);
+    done++; addStar(); setProgress(done, goal);
+    if(Math.random() < .35) floater(br.left - r.left + br.width/2, br.top - r.top, praise(), "#4fc3f7");
+    if(done >= goal) setTimeout(completeLevel, 500);
+    else setTimeout(spawn, 120);
+  }
+  spawn();
+}
+
+/* ================= 第二關：星星點點名（單擊） ================= */
+function startStars(L){
+  const goal = L.goal;
+  let done = 0;
+  const onScreen = new Set();
+  const starEmo = ["⭐","🌟","💫","✨"];
+  setHint("看準星星，按一下滑鼠左鍵！");
+  setProgress(0, goal);
+
+  function spawn(){
+    if(!state.active) return;
+    while(onScreen.size < 3 && done + onScreen.size < goal){
+      const r = playArea.getBoundingClientRect();
+      let pos, tries = 0;
+      do { pos = randPos(r.width, r.height, 60); tries++; }
+      while(tries < 12 && [...onScreen].some(o => Math.hypot(o._x - pos.x, o._y - pos.y) < 130));
+      const s = document.createElement("div");
+      s.className = "star";
+      s.textContent = starEmo[Math.floor(Math.random()*starEmo.length)];
+      s.style.left = pos.x + "px"; s.style.top = pos.y + "px";
+      s._x = pos.x; s._y = pos.y; s._got = false;
+      s.addEventListener("click", () => collect(s), { signal: levelAC.signal });
+      playArea.appendChild(s);
+      onScreen.add(s);
+    }
+  }
+  function collect(s){
+    if(!state.active || s._got) return;
+    s._got = true;
+    onScreen.delete(s);
+    const r = playArea.getBoundingClientRect(), br = s.getBoundingClientRect();
+    spawnBurst(br.left - r.left + br.width/2, br.top - r.top + br.height/2, 8);
+    sStar();
+    s.classList.add("got");
+    setTimeout(() => s.remove(), 280);
+    done++; addStar(); setProgress(done, goal);
+    if(Math.random() < .4) floater(br.left - r.left + br.width/2, br.top - r.top, praise(), "#ff9f43");
+    if(done >= goal) setTimeout(completeLevel, 500);
+    else setTimeout(spawn, 150);
+  }
+  // 點到空白處：溫柔鼓勵，不扣分
+  playArea.addEventListener("click", e => {
+    if(!state.active || e.target !== playArea) return;
+    state.misses++;
+    sWrong();
+    if(state.misses % 3 === 1){
+      const r = playArea.getBoundingClientRect();
+      floater(e.clientX - r.left, e.clientY - r.top, "差一點點，瞄準星星喔！", "#7aa7ff");
+    }
+  }, { signal: levelAC.signal });
+  spawn();
+}
+
+/* ================= 第三關：神奇蛋蛋（雙擊） ================= */
+function startEggs(L){
+  const goal = L.goal;
+  let done = 0;
+  const onScreen = new Set();
+  const babies = ["🐥","🐣","🦆","🐸","🐢"];
+  setHint("對著蛋蛋「快速按兩下」！");
+  setProgress(0, goal);
+
+  function spawn(){
+    if(!state.active) return;
+    while(onScreen.size < 2 && done + onScreen.size < goal){
+      const r = playArea.getBoundingClientRect();
+      let pos, tries = 0;
+      do { pos = randPos(r.width, r.height, 70); tries++; }
+      while(tries < 12 && [...onScreen].some(o => Math.hypot(o._x - pos.x, o._y - pos.y) < 200));
+      const w = document.createElement("div");
+      w.className = "eggwrap";
+      w.style.left = pos.x + "px"; w.style.top = pos.y + "px";
+      w._x = pos.x; w._y = pos.y;
+      w.innerHTML = '<div class="minihint"></div><div class="egg">🥚</div><div class="dots"><span></span><span></span></div>';
+      const egg = { last:0, hatched:false };
+      w.addEventListener("pointerdown", () => {
+        if(!state.active || egg.hatched) return;
+        const now = performance.now();
+        if(egg.last && now - egg.last <= 700){   // 寬容的雙擊判定
+          egg.hatched = true;
+          onScreen.delete(w);
+          w.style.pointerEvents = "none";
+          const e = w.querySelector(".egg");
+          e.textContent = babies[Math.floor(Math.random()*babies.length)];
+          e.classList.add("born");
+          w.querySelector(".dots").style.opacity = 0;
+          w.querySelector(".minihint").textContent = "";
+          const r2 = playArea.getBoundingClientRect(), br = w.getBoundingClientRect();
+          spawnBurst(br.left - r2.left + br.width/2, br.top - r2.top + br.height/2, 10);
+          sHatch();
+          done++; addStar(); setProgress(done, goal);
+          // 小動物停留一下後淡出，避免佔住畫面
+          setTimeout(() => {
+            w.style.transition = "opacity .6s";
+            w.style.opacity = 0;
+            setTimeout(() => w.remove(), 650);
+          }, 1200);
+          if(done >= goal) setTimeout(completeLevel, 700);
+          else setTimeout(spawn, 250);
+        } else {
+          egg.last = now;
+          w.querySelector(".dots span").classList.add("on");
+          const h = w.querySelector(".minihint");
+          h.textContent = "再按一下！";
+          h.classList.remove("show"); void h.offsetWidth; h.classList.add("show");
+          w.classList.remove("wob"); void w.offsetWidth; w.classList.add("wob");
+          sClick();
+        }
+      }, { signal: levelAC.signal });
+      playArea.appendChild(w);
+      onScreen.add(w);
+    }
+  }
+  spawn();
+}
+
+/* ================= 第四關：神秘禮物（右鍵） ================= */
+function startGifts(L){
+  const goal = L.goal;
+  let done = 0;
+  const onScreen = new Set();
+  const toys = ["🧸","⚽","🚗","🪁","🎮","🦖","🎺","🪀"];
+  setHint("對著禮物按「滑鼠右鍵」，打開禮物！");
+  setProgress(0, goal);
+
+  function spawn(){
+    if(!state.active) return;
+    while(onScreen.size < 3 && done + onScreen.size < goal){
+      const r = playArea.getBoundingClientRect();
+      let pos, tries = 0;
+      do { pos = randPos(r.width, r.height, 60); tries++; }
+      while(tries < 12 && [...onScreen].some(o => Math.hypot(o._x - pos.x, o._y - pos.y) < 150));
+      const g = document.createElement("div");
+      g.className = "present";
+      g.textContent = "🎁";
+      g.style.left = pos.x + "px"; g.style.top = pos.y + "px";
+      g._x = pos.x; g._y = pos.y;
+      const st = { opened:false };
+
+      g.addEventListener("contextmenu", e => {
+        e.preventDefault();
+        if(!state.active || st.opened) return;
+        st.opened = true;
+        onScreen.delete(g);
+        g.style.pointerEvents = "none";
+        g.textContent = toys[Math.floor(Math.random()*toys.length)];
+        g.classList.add("opened");
+        const r2 = playArea.getBoundingClientRect(), br = g.getBoundingClientRect();
+        spawnBurst(br.left - r2.left + br.width/2, br.top - r2.top + br.height/2, 10);
+        sGift();
+        done++; addStar(); setProgress(done, goal);
+        if(Math.random() < .4) floater(br.left - r2.left + br.width/2, br.top - r2.top, praise(), "#c792ea");
+        // 玩具停留一下後淡出
+        setTimeout(() => {
+          g.style.transition = "opacity .6s";
+          g.style.opacity = 0;
+          setTimeout(() => g.remove(), 650);
+        }, 1200);
+        if(done >= goal) setTimeout(completeLevel, 700);
+        else setTimeout(spawn, 200);
+      }, { signal: levelAC.signal });
+
+      // 按到左鍵：溫柔提醒要用右鍵
+      g.addEventListener("pointerdown", e => {
+        if(e.button !== 0 || st.opened || !state.active) return;
+        g.classList.remove("wob"); void g.offsetWidth; g.classList.add("wob");
+        setHint("這個要用「右鍵」打開喔！");
+        sClick();
+      }, { signal: levelAC.signal });
+
+      playArea.appendChild(g);
+      onScreen.add(g);
+    }
+  }
+  spawn();
+}
+
+/* ================= 第五關：火箭升空（滾輪） ================= */
+function startRocket(L){
+  const goal = L.goal;
+  let done = 0;
+  setHint("向上「滾動滾輪」，送火箭去月球！");
+  setProgress(0, goal);
+
+  const moon = document.createElement("div");
+  moon.className = "moon"; moon.textContent = "🌕";
+  playArea.appendChild(moon);
+  const rk = document.createElement("div");
+  rk.className = "rocket"; rk.textContent = "🚀";
+  playArea.appendChild(rk);
+
+  const pr = playArea.getBoundingClientRect();
+  const maxH = pr.height - 235;
+  function place(){ rk.style.bottom = (30 + (done/goal)*maxH) + "px"; }
+  place();
+
+  playArea.addEventListener("wheel", e => {
+    if(!state.active || done >= goal) return;
+    e.preventDefault();
+    if(e.deltaY < 0){
+      done++; addStar(); setProgress(done, goal);
+      place();
+      tone(300 + done*28, .09, "triangle", .16);
+      const b = rk.getBoundingClientRect(), p = playArea.getBoundingClientRect();
+      spawnBurst(b.left - p.left + b.width/2, b.top - p.top + b.height, 3, ["✨","⭐"]);
+      if(done >= goal){
+        setHint("🚀 火箭抵達月球！");
+        moon.classList.add("happy");
+        const m = moon.getBoundingClientRect();
+        spawnBurst(m.left - p.left + m.width/2, m.top - p.top + m.height/2, 16);
+        setTimeout(completeLevel, 900);
+      } else if(done === 1){
+        setHint("很好！繼續往上滾～");
+      }
+    } else if(e.deltaY > 0){
+      setHint("方向反囉～請「向上」滾動滾輪！");
+      sClick();
+    }
+  }, { signal: levelAC.signal, passive: false });
+}
+
+/* ================= 第六關：餵小動物（拖曳） ================= */
+function startFeed(L){
+  const goal = L.goal;
+  let done = 0;
+  setHint("按住左鍵，把食物拖給想吃它的動物！");
+  setProgress(0, goal);
+
+  const pairs = [["🥕","🐰","兔子"],["🐟","🐱","小貓"],["🍌","🐵","猴子"]];
+  const animals = [];
+
+  const row = document.createElement("div");
+  row.id = "animal-row";
+  pairs.forEach(p => {
+    const a = document.createElement("div");
+    a.className = "animal";
+    a.dataset.want = p[0];
+    a.innerHTML = '<span class="a-face">' + p[1] + '</span><span class="want">' + p[0] + '</span><span class="a-name">' + p[2] + '</span>';
+    row.appendChild(a);
+    animals.push(a);
+  });
+  playArea.appendChild(row);
+
+  const foods = shuffle(["🥕","🥕","🐟","🐟","🍌","🍌"]);
+  const r = playArea.getBoundingClientRect();
+  foods.forEach((f, i) => {
+    const el = document.createElement("div");
+    el.className = "food";
+    el.textContent = f;
+    el.draggable = false;
+    const home = { x: r.width*0.08 + i*(r.width*0.84)/5 - 30, y: r.height - 150 };
+    el.style.left = home.x + "px"; el.style.top = home.y + "px";
+    el._home = home; el._type = f; el._done = false;
+    makeDraggable(el);
+    playArea.appendChild(el);
+  });
+
+  function animalAt(cx, cy){
+    const pr = playArea.getBoundingClientRect();
+    for(const a of animals){
+      const ar = a.getBoundingClientRect();
+      if(cx > ar.left - pr.left - 25 && cx < ar.right - pr.left + 25 &&
+         cy > ar.top - pr.top - 25 && cy < ar.bottom - pr.top + 25) return a;
+    }
+    return null;
+  }
+
+  function makeDraggable(el){
+    let dragging = false, offX = 0, offY = 0, startX = 0, startY = 0;
+
+    el.addEventListener("pointerdown", e => {
+      if(!state.active || el._done) return;
+      e.preventDefault();
+      dragging = true;
+      el.setPointerCapture(e.pointerId);
+      const fr = el.getBoundingClientRect();
+      offX = e.clientX - fr.left; offY = e.clientY - fr.top;
+      startX = e.clientX; startY = e.clientY;
+      el.classList.add("dragging");
+      sPickup();
+    }, { signal: levelAC.signal });
+
+    el.addEventListener("pointermove", e => {
+      if(!dragging) return;
+      const pr = playArea.getBoundingClientRect();
+      let x = e.clientX - pr.left - offX;
+      let y = e.clientY - pr.top - offY;
+      x = Math.max(0, Math.min(pr.width - 72, x));
+      y = Math.max(0, Math.min(pr.height - 84, y));
+      el.style.left = x + "px"; el.style.top = y + "px";
+      const hit = animalAt(x + 36, y + 36);
+      animals.forEach(a => a.classList.toggle("highlight", a === hit));
+    }, { signal: levelAC.signal });
+
+    const finish = e => {
+      if(!dragging) return;
+      dragging = false;
+      el.classList.remove("dragging");
+      animals.forEach(a => a.classList.remove("highlight"));
+      const pr = playArea.getBoundingClientRect(), fr = el.getBoundingClientRect();
+      const hit = animalAt(fr.left - pr.left + fr.width/2, fr.top - pr.top + fr.height/2);
+      const moved = Math.hypot(e.clientX - startX, e.clientY - startY);
+
+      if(hit && hit.dataset.want === el._type){
+        el._done = true;
+        sDrop();
+        const ar = hit.getBoundingClientRect();
+        spawnBurst(ar.left - pr.left + ar.width/2, ar.top - pr.top + ar.height/2, 10, ["❤️","⭐","✨"]);
+        hit.classList.add("happy");
+        setTimeout(() => hit.classList.remove("happy"), 500);
+        el.remove();
+        done++; addStar(); setProgress(done, goal);
+        setHint(praise() + (done < goal ? " 還有 " + (goal - done) + " 個食物！" : ""));
+        if(done >= goal) setTimeout(completeLevel, 700);
+      } else {
+        if(hit){
+          sWrong();
+          hit.classList.add("shake");
+          setTimeout(() => hit.classList.remove("shake"), 450);
+          setHint("它不吃這個喔，想想看牠喜歡吃什麼？");
+        } else if(moved < 10){
+          sClick();
+          setHint("按住左鍵「不要放」，把食物拖過去再鬆手！");
+        }
+        el.style.left = el._home.x + "px";
+        el.style.top = el._home.y + "px";
+      }
+    };
+    el.addEventListener("pointerup", finish, { signal: levelAC.signal });
+    el.addEventListener("pointercancel", finish, { signal: levelAC.signal });
+  }
+}
+
+/* ================= 最終關：煙火慶典（獎勵） ================= */
+function startFireworks(L){
+  const goal = L.goal;
+  let done = 0;
+  playArea.classList.add("night");
+  setHint("在夜空中任何地方「按一下」，放煙火吧！");
+  setProgress(0, goal);
+
+  playArea.addEventListener("click", e => {
+    if(!state.active || e.target !== playArea) return;
+    const pr = playArea.getBoundingClientRect();
+    const x = e.clientX - pr.left, y = e.clientY - pr.top;
+    spawnBurst(x, y, 20);
+    spawnBurst(x, y, 6, ["✨","⭐"]);
+    sBoom();
+    done++; addStar(); setProgress(done, goal);
+    if(done >= goal){
+      setHint("🎆 好美的煙火！");
+      setTimeout(completeLevel, 900);
+    } else if(done === goal - 1){
+      setHint("最後一發！");
+    }
+  }, { signal: levelAC.signal });
+}
+
+/* ================= 游標小尾巴（幫助孩子追蹤游標位置） ================= */
+let lastTrail = 0;
+playArea.addEventListener("pointermove", e => {
+  const now = performance.now();
+  if(now - lastTrail < 45) return;
+  lastTrail = now;
+  const r = playArea.getBoundingClientRect();
+  const s = document.createElement("span");
+  s.className = "trail";
+  s.textContent = "✦";
+  s.style.left = (e.clientX - r.left) + "px";
+  s.style.top = (e.clientY - r.top) + "px";
+  playArea.appendChild(s);
+  s.addEventListener("animationend", () => s.remove());
+});
+
+/* ================= 全域事件 ================= */
+document.addEventListener("contextmenu", e => e.preventDefault());
+document.addEventListener("dragstart", e => e.preventDefault());
+
+$("#mute-btn").addEventListener("click", () => {
+  muted = !muted;
+  $("#mute-btn").textContent = muted ? "🔇" : "🔊";
+});
+$("#start-btn").addEventListener("click", () => {
+  ac();   // 需要使用者手勢後才能建立 AudioContext
+  sFanfare();
+  state.mode = "story";
+  $("#start-screen").classList.add("hidden");
+  $("#game-screen").classList.remove("hidden");
+  showIntro(0);
+});
+$("#select-btn").addEventListener("click", () => { sClick(); showSelect(); });
+$("#sel-back").addEventListener("click", () => {
+  sClick();
+  $("#select-screen").classList.add("hidden");
+  $("#start-screen").classList.remove("hidden");
+});
+$("#end-select-btn").addEventListener("click", () => {
+  sClick();
+  resetProgress();
+  $("#end-screen").classList.add("hidden");
+  showSelect();
+});
+$("#home-btn").addEventListener("click", () => { sClick(); goHome(); });
+$("#go-btn").addEventListener("click", () => {
+  sClick();
+  $("#intro-modal").classList.add("hidden");
+  beginLevel(state.level);
+});
+$("#again-btn").addEventListener("click", () => location.reload());
+
+addClouds();
+</script>
+</body>
+</html>
