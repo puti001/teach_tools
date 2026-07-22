@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Puti-AI｜滑鼠小勇士</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="game-additions.css" />
+  </head>
+  <body>
+    <main class="game-shell">
+      <header>
+        <div class="brand"><span class="brand-star">★</span><span>Puti-AI｜滑鼠小勇士</span></div>
+        <div class="progress" aria-label="關卡進度"><span id="stage-label">第 1 關 / 4</span><div class="dots"><i class="active"></i><i></i><i></i><i></i></div></div>
+        <div class="score" aria-label="星星數"><span>★</span><strong id="score">0</strong></div>
+        <button id="sound-toggle" class="sound-toggle" aria-label="開啟或關閉音效">🔊 音效</button>
+        <button id="home-button" class="home-button" aria-label="回到遊戲首頁">⌂ 首頁</button>
+      </header>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">今天一起來練習滑鼠！</p>
+          <h1 id="title">第一關：找找亮星星</h1>
+          <p id="instruction">把滑鼠移到天空中的星星上，再按一下左鍵！</p>
+        </div>
+        <div class="mascot" aria-hidden="true"><span class="ear left"></span><span class="ear right"></span><span class="face">•ᴗ•</span><span class="hand">☝</span></div>
+      </section>
+
+      <section id="play-area" class="play-area stage-1" aria-live="polite">
+        <div class="cloud cloud-a">☁</div><div class="cloud cloud-b">☁</div>
+        <button class="star target" data-star="1" aria-label="點擊星星">★</button>
+        <button class="star target" data-star="2" aria-label="點擊星星">★</button>
+        <button class="star target" data-star="3" aria-label="點擊星星">★</button>
+        <div id="stage-content"></div>
+      </section>
+
+      <section class="game-stats"><div>⏱ <strong id="timer">35</strong> 秒</div><div>🔥 連擊 <strong id="combo">0</strong></div><div>🏅 最高分 <strong id="record">0</strong></div></section>
+      <section class="coach" id="coach"><span class="coach-icon">💡</span><span id="coach-text">小提醒：食指輕輕按一下左鍵，就是「點擊」！</span></section>
+      <button id="next-button" class="next-button hidden">下一關 <span>→</span></button>
+      <footer class="copyright">屏東縣後庄國小黃朝榮老師作品・免費分享，歡迎擴散推廣・嚴禁商用與任何侵權、不尊重著作權的行為<br><a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener noreferrer">更多 Puti-AI 教學工具</a></footer>
+    </main>
+    <div id="celebration" class="celebration hidden" role="status"></div>
+    <script src="game.js"></script>
+  </body>
+</html>
