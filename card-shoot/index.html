@@ -819,11 +819,13 @@ function renderQ(){
     if(q.opts.length===3) wrap.classList.add("cols3");
     if(q.opts.length===5) wrap.classList.add("cols5");
     if(q.opts.length===6) wrap.classList.add("cols6");
-    q.opts.forEach((opt,i)=>{
+    S.cur.order.forEach((oi,i)=>{
+        const opt=q.opts[oi];
         const card=document.createElement("div");
         card.className="card enter";
         card.style.animationDelay=(i*0.07)+"s";
         card.dataset.idx=i;
+        card.dataset.opt=oi;
         card.innerHTML=`
             <div class="card-inner">
                 <div class="card-face card-front">
@@ -892,7 +894,7 @@ function resolve(pickIdx, pickCard, correctIdx, timeout, correct){
         else{ $("#banner").textContent="脫靶！"; }
         $("#banner").className="banner bad";
         sndMiss();
-        S.wrongList.push({ ...q, picked: pickIdx!==null?pickIdx:correctIdx, timeout });
+        S.wrongList.push({ ...q, pickedOrig: pickIdx!==null?S.cur.order[pickIdx]:null, timeout });
     }
 
     // 卡片翻牌
@@ -998,8 +1000,8 @@ function finish(){
             w.opts.forEach((o,oi)=>{
                 let cls="opt";
                 if(oi===w.ansIdx) cls+=" correct-ans";
-                if(oi===w.picked && oi!==w.ansIdx) cls+=" wrong-pick";
-                html+=`<span class="${cls}">${String.fromCharCode(65+oi)}. ${o}${oi===w.ansIdx?"（正解）":""}${oi===w.picked&&oi!==w.ansIdx?"（你選的）":""}</span>`;
+                if(oi===w.pickedOrig && oi!==w.ansIdx) cls+=" wrong-pick";
+                html+=`<span class="${cls}">${String.fromCharCode(65+oi)}. ${o}${oi===w.ansIdx?"（正解）":""}${oi===w.pickedOrig&&oi!==w.ansIdx?"（你選的）":""}</span>`;
             });
             html+=`</div>`;
             if(w.exp) html+=`<div class="expl"><b>解析：</b>${w.exp}</div>`;
