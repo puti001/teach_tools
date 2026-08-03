@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Puti-AI 丙級翻牌射擊手｜CSV題庫刷題遊戲</title>
+<style>
+:root{
+    --bg1:#0b1026;
+    --bg2:#1a1140;
+    --panel:rgba(255,255,255,.06);
+    --panel-border:rgba(255,255,255,.14);
+    --cyan:#22d3ee;
+    --green:#4ade80;
+    --red:#fb7185;
+    --amber:#fbbf24;
+    --pink:#f472b6;
+    --text:#f1f5f9;
+    --muted:#94a3b8;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+    font-family:"Noto Sans TC","Microsoft JhengHei",-apple-system,"Segoe UI",sans-serif;
+    background:radial-gradient(1200px 700px at 20% -10%,var(--bg2),transparent 60%),
+               radial-gradient(900px 600px at 110% 110%,#123a4a,transparent 55%),
+               var(--bg1);
+    color:var(--text);
+    min-height:100%;
+    overflow-x:hidden;
+    user-select:none;
+    -webkit-user-select:none;
+    line-height:1.6;
+}
+#stars{
+    position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.7;
+}
+.screen{position:relative;z-index:1;display:none;max-width:860px;margin:0 auto;padding:18px 16px 90px;}
+.screen.active{display:block;}
+.hidden{display:none !important;}
+
+/* ---------- Header ---------- */
+header{
+    text-align:center;padding:26px 0 8px;
+}
+.brand-badge{
+    display:inline-block;font-size:14px;letter-spacing:2px;color:var(--cyan);
+    border:1px solid rgba(34,211,238,.4);border-radius:999px;padding:3px 14px;
+    background:rgba(34,211,238,.08);margin-bottom:12px;
+}
+h1{
+    font-size:clamp(26px,5vw,40px);
+    background:linear-gradient(90deg,#22d3ee,#f472b6,#fbbf24);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    font-weight:800;letter-spacing:1px;
+}
+h1 .brand{color:var(--cyan);}
+.subtitle{color:var(--muted);font-size:14px;margin-top:8px;}
+
+/* ---------- Logo target ---------- */
+.logo-wrap{display:flex;justify-content:center;margin:18px 0 6px;}
+svg.logo{width:84px;height:84px;filter:drop-shadow(0 0 14px rgba(34,211,238,.45));}
+
+/* ---------- Panels ---------- */
+.panel{
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:16px;
+    padding:20px;
+    margin:16px 0;
+    backdrop-filter:blur(6px);
+}
+.panel h2{
+    font-size:17px;margin-bottom:12px;color:var(--cyan);
+    display:flex;align-items:center;gap:8px;
+}
+.panel h2::before{
+    content:"";width:6px;height:18px;border-radius:3px;background:linear-gradient(180deg,var(--cyan),var(--pink));
+}
+
+/* ---------- Upload ---------- */
+.dropzone{
+    border:2px dashed rgba(34,211,238,.5);
+    border-radius:14px;padding:28px 16px;text-align:center;
+    cursor:pointer;transition:.2s;background:rgba(34,211,238,.04);
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--cyan);background:rgba(34,211,238,.12);}
+.dropzone .dz-title{font-size:16px;font-weight:700;margin-bottom:4px;}
+.dropzone .dz-sub{color:var(--muted);font-size:13px;}
+input[type=file]{display:none;}
+
+.tabs{display:flex;gap:8px;margin-top:14px;}
+.tab{
+    flex:1;padding:8px;border-radius:10px;text-align:center;cursor:pointer;
+    background:rgba(255,255,255,.06);border:1px solid transparent;font-size:14px;color:var(--muted);
+    transition:.15s;
+}
+.tab.active{background:rgba(34,211,238,.15);border-color:rgba(34,211,238,.5);color:var(--cyan);font-weight:700;}
+textarea#csvArea{
+    width:100%;min-height:130px;margin-top:12px;padding:12px;border-radius:10px;
+    background:#0b1026;color:#e2e8f0;border:1px solid var(--panel-border);
+    font-size:13px;font-family:Consolas,"Courier New",monospace;line-height:1.5;resize:vertical;
+}
+
+/* ---------- Buttons ---------- */
+.btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    border:none;cursor:pointer;font-family:inherit;font-weight:700;
+    border-radius:12px;padding:12px 22px;font-size:16px;color:#0b1026;
+    transition:transform .1s,box-shadow .2s,filter .2s;
+}
+.btn:active{transform:scale(.96);}
+.btn-primary{
+    background:linear-gradient(90deg,#22d3ee,#4ade80);box-shadow:0 4px 18px rgba(34,211,238,.35);
+}
+.btn-primary:hover{filter:brightness(1.08);}
+.btn-ghost{
+    background:rgba(255,255,255,.08);color:var(--text);border:1px solid var(--panel-border);
+}
+.btn-ghost:hover{background:rgba(255,255,255,.14);}
+.btn-danger{background:linear-gradient(90deg,#fb7185,#f472b6);box-shadow:0 4px 18px rgba(244,114,182,.3);color:#0b1026;}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:10px;}
+.btn-wrap{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+.row-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+
+/* ---------- Settings ---------- */
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;}
+.set-group label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;}
+.select{
+    width:100%;padding:9px 10px;border-radius:10px;border:1px solid var(--panel-border);
+    background:#0b1026;color:var(--text);font-size:14px;font-family:inherit;cursor:pointer;
+}
+.seg{display:flex;gap:6px;flex-wrap:wrap;}
+.seg .seg-item{
+    flex:1;min-width:56px;padding:8px 6px;text-align:center;border-radius:9px;cursor:pointer;
+    background:rgba(255,255,255,.06);font-size:13px;color:var(--muted);border:1px solid transparent;transition:.15s;
+}
+.seg .seg-item.active{background:rgba(244,114,182,.18);border-color:rgba(244,114,182,.55);color:var(--pink);font-weight:700;}
+
+/* ---------- Format spec / sample ---------- */
+code.inline{background:#0b1026;border:1px solid var(--panel-border);padding:1px 6px;border-radius:6px;font-size:13px;color:#a5f3fc;}
+.csv-example{
+    background:#0b1026;border:1px solid var(--panel-border);border-radius:10px;
+    padding:12px;font-size:12.5px;color:#a5f3fc;overflow-x:auto;
+    font-family:Consolas,"Courier New",monospace;line-height:1.7;white-space:pre;
+}
+.msg-ok{color:var(--green);font-size:14px;font-weight:700;text-align:center;margin-top:12px;}
+.msg-err{color:var(--red);font-size:14px;text-align:center;margin-top:12px;}
+
+/* ---------- HUD ---------- */
+#screen-game{
+    max-width:900px;width:100%;
+}
+.hud{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 2px;}
+.hud-box{
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;
+    padding:8px 14px;text-align:center;min-width:88px;
+}
+.hud-box .lb{font-size:11px;color:var(--muted);letter-spacing:1px;}
+.hud-box .val{font-size:22px;font-weight:800;}
+.hud-box .val.score{color:var(--amber);}
+.hud-box .val.streak{color:var(--pink);}
+.hud-box .val.prog{color:var(--cyan);}
+.hud-box .val.combo{color:var(--green);}
+#quitBtn{background:rgba(255,255,255,.06);border:1px solid var(--panel-border);color:var(--muted);border-radius:12px;padding:8px 12px;cursor:pointer;font-size:14px;}
+#quitBtn:hover{color:var(--red);border-color:var(--red);}
+
+.timer-track{height:8px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin:8px 0 14px;}
+#timerBar{height:100%;width:100%;background:linear-gradient(90deg,#4ade80,#22d3ee);border-radius:999px;transition:width .1s linear;}
+#timerBar.low{background:linear-gradient(90deg,#fb7185,#f472b6);}
+
+/* ---------- Question ---------- */
+.qcard{
+    background:linear-gradient(135deg,rgba(34,211,238,.14),rgba(244,114,182,.12));
+    border:1px solid rgba(34,211,238,.35);
+    border-radius:16px;padding:22px 20px;text-align:center;position:relative;min-height:86px;
+    display:flex;align-items:center;justify-content:center;
+}
+.qcard .qnum{
+    position:absolute;top:10px;left:14px;font-size:12px;color:var(--muted);
+    background:rgba(0,0,0,.3);padding:2px 10px;border-radius:999px;
+}
+.qcard .qtext{font-size:clamp(17px,2.6vw,22px);font-weight:700;line-height:1.6;max-width:90%;}
+
+/* ---------- Cards (翻牌) ---------- */
+.cards{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-top:18px;}
+.cards.cols3{grid-template-columns:repeat(3,1fr);}
+.cards.cols5{grid-template-columns:repeat(5,1fr);}
+.cards.cols6{grid-template-columns:repeat(3,1fr);}
+@media (max-width:560px){
+    .cards.cols5,.cards.cols6{grid-template-columns:repeat(2,1fr);}
+    .cards.cols3{grid-template-columns:repeat(2,1fr);}
+    .cards.cols3 .card{grid-column:span 1;}
+    .cards.cols3 .card:last-child:nth-child(odd){grid-column:span 2;}
+}
+.card{
+    perspective:900px;cursor:pointer;position:relative;height:120px;
+}
+.card-inner{
+    position:relative;width:100%;height:100%;
+    transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.7,.3,1.2);
+}
+.card.flipped .card-inner{transform:rotateY(180deg);}
+.card.enter{animation:deal .5s ease-out backwards;}
+@keyframes deal{
+    from{transform:translateY(-46px) scale(.6);opacity:0;}
+    to{transform:translateY(0) scale(1);opacity:1;}
+}
+.card-face{
+    position:absolute;inset:0;border-radius:14px;backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;padding:10px 12px;text-align:center;
+    overflow:hidden;
+}
+.card-front{
+    background:linear-gradient(160deg,#1e293b,#0f172a);
+    border:2px solid rgba(34,211,238,.45);
+    box-shadow:0 6px 20px rgba(0,0,0,.4);
+}
+.card-front .letter{
+    position:absolute;top:8px;left:10px;width:26px;height:26px;border-radius:8px;
+    background:rgba(34,211,238,.15);color:var(--cyan);font-weight:800;font-size:14px;
+    display:flex;align-items:center;justify-content:center;border:1px solid rgba(34,211,238,.4);
+}
+.card-front .target{
+    position:absolute;bottom:6px;right:8px;width:18px;height:18px;opacity:.35;
+}
+.card-front .opt-text{font-size:clamp(13px,1.9vw,16px);font-weight:700;color:var(--text);max-width:96%;}
+.card:hover:not(.locked) .card-front{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.18),0 8px 24px rgba(0,0,0,.5);transform:translateY(-3px);}
+.card:not(.locked){transition:transform .12s;}
+.card:not(.locked):active{transform:scale(.95);}
+.card-face.card-back{
+    transform:rotateY(180deg);border:2px solid;font-size:26px;font-weight:900;
+}
+.card-back.correct{background:linear-gradient(160deg,#064e3b,#052e16);border-color:var(--green);color:var(--green);}
+.card-back.wrong{background:linear-gradient(160deg,#7f1d1d,#450a0a);border-color:var(--red);color:var(--red);}
+.card.correct .card-front{outline:2px solid var(--green);outline-offset:-2px;}
+.card.locked{pointer-events:none;}
+
+/* hit ring */
+@keyframes ring{
+    from{transform:scale(.4);opacity:1;}
+    to{transform:scale(2.2);opacity:0;}
+}
+.hit-ring{
+    position:absolute;inset:0;border-radius:14px;pointer-events:none;z-index:5;
+    border:3px solid var(--green);animation:ring .55s ease-out forwards;
+}
+.hit-ring.bad{border-color:var(--red);}
+
+/* score popup */
+@keyframes floatUp{
+    from{transform:translateY(0) scale(.8);opacity:1;}
+    to{transform:translateY(-60px) scale(1.3);opacity:0;}
+}
+.score-pop{
+    position:absolute;z-index:8;font-weight:900;font-size:24px;color:var(--amber);
+    text-shadow:0 0 12px rgba(251,191,36,.8);animation:floatUp .9s ease-out forwards;pointer-events:none;
+}
+.score-pop.good{color:var(--green);text-shadow:0 0 12px rgba(74,222,128,.8);}
+.score-pop.bad{color:var(--red);text-shadow:0 0 12px rgba(251,113,133,.8);}
+
+/* result feedback banner */
+.banner{
+    text-align:center;font-size:clamp(20px,4vw,28px);font-weight:900;letter-spacing:2px;
+    min-height:40px;margin-top:14px;
+}
+.banner.good{color:var(--green);text-shadow:0 0 18px rgba(74,222,128,.6);}
+.banner.bad{color:var(--red);text-shadow:0 0 18px rgba(251,113,133,.6);}
+
+/* ---------- Result ---------- */
+.result-hero{text-align:center;padding:10px 0 4px;}
+.result-score{font-size:clamp(46px,9vw,64px);font-weight:900;color:var(--amber);text-shadow:0 0 26px rgba(251,191,36,.5);}
+.result-title{font-size:20px;font-weight:800;margin-top:6px;}
+.result-meta{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px;}
+.meta-chip{background:var(--panel);border:1px solid var(--panel-border);border-radius:999px;padding:8px 18px;font-size:14px;}
+.meta-chip b{color:var(--cyan);}
+.best-banner{
+    margin-top:14px;background:linear-gradient(90deg,rgba(251,191,36,.18),rgba(244,114,182,.18));
+    border:1px solid rgba(251,191,36,.5);border-radius:12px;padding:10px;font-weight:800;color:var(--amber);
+}
+.review-item{
+    background:var(--panel);border:1px solid var(--panel-border);border-radius:12px;
+    padding:14px;margin-bottom:12px;
+}
+.review-item .rq{font-weight:700;font-size:15px;margin-bottom:8px;}
+.review-item .ro{font-size:13px;line-height:1.8;}
+.review-item .ro .opt{display:block;padding:4px 10px;border-radius:8px;margin:3px 0;}
+.review-item .ro .opt.correct-ans{background:rgba(74,222,128,.16);color:var(--green);font-weight:700;}
+.review-item .ro .opt.wrong-pick{background:rgba(251,113,133,.16);color:var(--red);text-decoration:line-through;}
+.review-item .expl{font-size:13px;color:var(--muted);margin-top:8px;border-top:1px dashed var(--panel-border);padding-top:8px;}
+.review-item .expl b{color:var(--cyan);}
+
+/* ---------- Footer ---------- */
+footer{
+    position:fixed;left:0;right:0;bottom:0;z-index:5;
+    background:rgba(11,16,38,.92);border-top:1px solid var(--panel-border);
+    padding:10px 14px;text-align:center;font-size:12px;color:var(--muted);line-height:1.7;
+}
+footer a{color:var(--cyan);text-decoration:none;}
+footer a:hover{text-decoration:underline;}
+
+.crosshair{
+    position:fixed;width:26px;height:26px;pointer-events:none;z-index:60;
+    transform:translate(-50%,-50%);opacity:.9;display:none;
+}
+@media (hover:none){.crosshair{display:none !important;}}
+
+/* ---------- Toast ---------- */
+#toast{
+    position:fixed;top:16px;left:50%;transform:translateX(-50%) translateY(-120px);
+    background:rgba(11,16,38,.95);border:1px solid var(--cyan);color:var(--text);
+    padding:12px 22px;border-radius:12px;z-index:80;font-size:14px;font-weight:600;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);transition:transform .35s cubic-bezier(.2,.8,.3,1.2);
+    max-width:92vw;text-align:center;
+}
+#toast.show{transform:translateX(-50%) translateY(0);}
+#toast.err{border-color:var(--red);}
+
+/* loading overlay */
+#loading{display:none;position:fixed;inset:0;background:rgba(11,16,38,.9);z-index:99;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+#loading.show{display:flex;}
+.spinner{width:46px;height:46px;border:4px solid rgba(34,211,238,.2);border-top-color:var(--cyan);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<header>
+    <div class="brand-badge">Puti-AI 教學工具</div>
+    <h1>丙級翻牌射擊手</h1>
+    <div class="subtitle">匯入 CSV 題庫，邊玩邊刷題，射中正確答案就得分！</div>
+</header>
+
+<!-- ============ START SCREEN ============ -->
+<section id="screen-start" class="screen active">
+    <div class="logo-wrap">
+        <svg class="logo" viewBox="0 0 100 100">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="#22d3ee" stroke-width="3"/>
+            <circle cx="50" cy="50" r="30" fill="none" stroke="#f472b6" stroke-width="3"/>
+            <circle cx="50" cy="50" r="18" fill="none" stroke="#fbbf24" stroke-width="3"/>
+            <circle cx="50" cy="50" r="6" fill="#4ade80"/>
+            <line x1="50" y1="0" x2="50" y2="14" stroke="#fb7185" stroke-width="3"/>
+            <line x1="50" y1="86" x2="50" y2="100" stroke="#fb7185" stroke-width="3"/>
+            <line x1="0" y1="50" x2="14" y2="50" stroke="#fb7185" stroke-width="3"/>
+            <line x1="86" y1="50" x2="100" y2="50" stroke="#fb7185" stroke-width="3"/>
+        </svg>
+    </div>
+
+    <div class="panel">
+        <h2>第一步：上傳題庫</h2>
+        <div class="dropzone" id="dropzone">
+            <div class="dz-title">點擊或拖曳 CSV 檔到這裡</div>
+            <div class="dz-sub">支援 UTF-8 ／ Big5 編碼，副檔名 .csv 或 .txt</div>
+        </div>
+        <input type="file" id="fileInput" accept=".csv,.txt,text/csv,text/plain">
+        <div class="tabs">
+            <div class="tab active" data-tab="file">上傳檔案</div>
+            <div class="tab" data-tab="paste">直接貼上</div>
+        </div>
+        <textarea id="csvArea" class="hidden" placeholder="把 AI 清洗好的 CSV 內容整段貼到這裡…"></textarea>
+        <div class="row-actions">
+            <button class="btn btn-primary btn-sm" id="importBtn">載入題庫</button>
+            <button class="btn btn-ghost btn-sm" id="sampleBtn">下載範例 CSV</button>
+            <button class="btn btn-ghost btn-sm" id="fillSampleBtn">填入範例</button>
+        </div>
+        <div class="msg-ok hidden" id="importOk"></div>
+        <div class="msg-err hidden" id="importErr"></div>
+    </div>
+
+    <div class="panel">
+        <h2>第二步：遊戲設定</h2>
+        <div class="settings-grid">
+            <div class="set-group">
+                <label>題目數量</label>
+                <div class="seg" id="segLimit">
+                    <div class="seg-item" data-v="10">10</div>
+                    <div class="seg-item" data-v="20">20</div>
+                    <div class="seg-item" data-v="50">50</div>
+                    <div class="seg-item active" data-v="0">全部</div>
+                </div>
+            </div>
+            <div class="set-group">
+                <label>每題時間</label>
+                <div class="seg" id="segTime">
+                    <div class="seg-item" data-v="10">10秒</div>
+                    <div class="seg-item active" data-v="15">15秒</div>
+                    <div class="seg-item" data-v="20">20秒</div>
+                    <div class="seg-item" data-v="0">無限</div>
+                </div>
+            </div>
+        </div>
+        <div class="btn-wrap">
+            <button class="btn btn-primary" id="startBtn" disabled>開始射擊！</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>CSV 格式說明（請老師用 AI 統一輸出）</h2>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:10px;">
+            第一行是欄位名稱，順序不拘；建議只有七欄：
+        </p>
+        <div class="csv-example" id="csvExample"></div>
+        <p style="font-size:13px;color:var(--muted);margin-top:10px;">
+            ・答案欄填 <code class="inline">A</code>～<code class="inline">D</code> 或直接填答案文字都可以<br>
+            ・檔案請存成 <b>UTF-8</b>（Excel 另存新檔選「CSV UTF-8」）；若是 Big5 本工具也會自動轉換<br>
+            ・題目裡有逗號或換行也不怕，只要用半形雙引號 <code class="inline">" "</code> 包起來即可
+        </p>
+    </div>
+</section>
+
+<!-- ============ GAME SCREEN ============ -->
+<section id="screen-game" class="screen">
+    <div class="hud">
+        <div class="hud-box"><div class="lb">得分</div><div class="val score" id="hudScore">0</div></div>
+        <div class="hud-box"><div class="lb">連擊</div><div class="val streak" id="hudStreak">0</div></div>
+        <div class="hud-box"><div class="lb">答對</div><div class="val combo" id="hudRight">0</div></div>
+        <div class="hud-box"><div class="lb">進度</div><div class="val prog" id="hudProg">0/0</div></div>
+        <button id="quitBtn" title="離開遊戲">離開</button>
+    </div>
+    <div class="timer-track"><div id="timerBar"></div></div>
+    <div class="qcard">
+        <div class="qnum" id="qnum"></div>
+        <div class="qtext" id="qtext"></div>
+    </div>
+    <div class="cards" id="cards"></div>
+    <div class="banner" id="banner"></div>
+</section>
+
+<!-- ============ RESULT SCREEN ============ -->
+<section id="screen-result" class="screen">
+    <div class="panel result-hero">
+        <div class="result-score" id="resScore">0</div>
+        <div class="result-title" id="resTitle"></div>
+        <div class="result-meta">
+            <div class="meta-chip">答對 <b id="resRight">0</b> 題</div>
+            <div class="meta-chip">答錯 <b id="resWrong">0</b> 題</div>
+            <div class="meta-chip">正確率 <b id="resAcc">0%</b></div>
+            <div class="meta-chip">最高連擊 <b id="resStreak">0</b></div>
+        </div>
+        <div class="best-banner hidden" id="resBest">新紀錄！最佳得分：<span id="bestScore"></span></div>
+        <div class="btn-wrap">
+            <button class="btn btn-primary" id="againBtn">再玩一次</button>
+            <button class="btn btn-ghost" id="homeBtn">換一組題庫</button>
+        </div>
+    </div>
+    <div class="panel">
+        <h2>錯題複習</h2>
+        <div id="reviewList"></div>
+        <div id="noWrong" class="msg-ok hidden">全部答對，太強了！</div>
+    </div>
+</section>
+
+<footer>
+    屏東縣後庄國小黃朝榮老師作品・免費分享，歡迎擴散推廣・嚴禁商用與任何侵權、不尊重著作權的行為・
+    更多 Puti-AI 教學工具：<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener">https://padlet.com/clongwh/puti_ai_tools</a>
+</footer>
+
+<div class="crosshair" id="crosshair">
+    <svg width="26" height="26" viewBox="0 0 26 26">
+        <circle cx="13" cy="13" r="9" fill="none" stroke="#22d3ee" stroke-width="1.6"/>
+        <line x1="13" y1="0" x2="13" y2="5" stroke="#22d3ee" stroke-width="1.6"/>
+        <line x1="13" y1="21" x2="13" y2="26" stroke="#22d3ee" stroke-width="1.6"/>
+        <line x1="0" y1="13" x2="5" y2="13" stroke="#22d3ee" stroke-width="1.6"/>
+        <line x1="21" y1="13" x2="26" y2="13" stroke="#22d3ee" stroke-width="1.6"/>
+        <circle cx="13" cy="13" r="1.6" fill="#fb7185"/>
+    </svg>
+</div>
+<div id="toast"></div>
+<div id="loading"><div class="spinner"></div><div>題庫載入中…</div></div>
+
+<script>
+"use strict";
+/* ================= 工具 ================= */
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+function toast(msg, err){
+    const t=$("#toast"); t.textContent=msg; t.classList.toggle("err",!!err);
+    t.classList.add("show"); clearTimeout(t._tm); t._tm=setTimeout(()=>t.classList.remove("show"),2400);
+}
+
+/* ================= 音效 (Web Audio，離線可用) ================= */
+let actx=null;
+function ac(){ if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume(); return actx; }
+function tone(freq,dur,type="sine",gain=0.12,when=0){
+    try{
+        const c=ac(); const o=c.createOscillator(); const g=c.createGain();
+        o.type=type; o.frequency.value=freq;
+        const t=c.currentTime+when;
+        g.gain.setValueAtTime(0.0001,t);
+        g.gain.exponentialRampToValueAtTime(gain,t+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+        o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.05);
+    }catch(e){}
+}
+function sndShoot(){ tone(660,0.06,"square",0.08); tone(880,0.08,"square",0.06,0.04); }
+function sndHit(){ tone(523,0.12,"sine",0.14); tone(659,0.12,"sine",0.14,0.09); tone(784,0.22,"sine",0.14,0.18); }
+function sndMiss(){ tone(180,0.28,"sawtooth",0.1); tone(140,0.34,"sawtooth",0.1,0.12); }
+function sndTick(){ tone(1200,0.05,"square",0.05); }
+function sndEnd(){
+    [523,659,784,1046].forEach((f,i)=>tone(f,0.18,"triangle",0.12,i*0.12));
+}
+function sndBadEnd(){ [392,330,262].forEach((f,i)=>tone(f,0.2,"sine",0.1,i*0.16)); }
+
+/* ================= 星空背景 ================= */
+(function stars(){
+    const s=$("#stars"); let html="";
+    for(let i=0;i<60;i++){
+        const x=Math.random()*100, y=Math.random()*100, r=Math.random()*1.6+0.4, d=Math.random()*3+2;
+        html+=`<span style="position:absolute;left:${x}%;top:${y}%;width:${r}px;height:${r}px;background:#fff;border-radius:50%;opacity:${Math.random()*0.7+0.3};animation:tw${i} ${d}s infinite;"></span>`;
+        html+=`<style>@keyframes tw${i}{0%,100%{opacity:${Math.random()*0.3+0.2}}50%{opacity:${Math.random()*0.6+0.4}}}</style>`;
+    }
+    s.innerHTML=html;
+})();
+
+/* ================= CSV 解析 ================= */
+function parseCSV(text){
+    if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+    const rows=[]; let row=[], field="", inQ=false;
+    for(let i=0;i<text.length;i++){
+        const c=text[i];
+        if(inQ){
+            if(c==='"'){ if(text[i+1]==='"'){ field+='"'; i++; } else inQ=false; }
+            else field+=c;
+        }else{
+            if(c==='"') inQ=true;
+            else if(c===','){ row.push(field); field=""; }
+            else if(c==='\n'||c==='\r'){
+                if(c==='\r'&&text[i+1]==='\n') i++;
+                row.push(field); field="";
+                if(row.some(x=>x.trim()!=="")) rows.push(row);
+                row=[];
+            }
+            else field+=c;
+        }
+    }
+    row.push(field);
+    if(row.some(x=>x.trim()!=="")) rows.push(row);
+    return rows;
+}
+
+const CN_NUM="一二三四五六";
+const HEADER_RULES=[
+    ["q",  /題目|問題|題[：:]|question/i],
+    ["o0", /選項\s*[AＡ一]|選項\s*[1１]|option\s*[aA]|a[ＡA]選項/i],
+    ["o1", /選項\s*[BＢ二]|選項\s*[2２]|option\s*[bB]|b[ＢB]選項/i],
+    ["o2", /選項\s*[CＣ三]|選項\s*[3３]|option\s*[cC]|c[CＣ]選項/i],
+    ["o3", /選項\s*[DＤ四]|選項\s*[4４]|option\s*[dD]|d[DＤ]選項/i],
+    ["o4", /選項\s*[EＥ五]|選項\s*[5５]|option\s*[eE]/i],
+    ["o5", /選項\s*[FＦ六]|選項\s*[6６]|option\s*[fF]/i],
+    ["ans",/答案|正確(答案)?|answer|ans/i],
+    ["exp",/解析|詳解|說明|解釋|解答|explanation|note/i],
+    ["optList",/選項(?![AＡBＢCＣDＤEＥFＦ一二三四五六1-6])/i],
+];
+function optIndexFromLabel(s){
+    if(/[1-6]/.test(s)) return parseInt(s,10)-1;
+    if(/[一二三四五六]/.test(s)) return CN_NUM.indexOf(s);
+    const c=s.toUpperCase().charCodeAt(0);
+    if(c>=0xFF21&&c<=0xFF26) return c-0xFF21;
+    if(c>=65&&c<=70) return c-65;
+    return -1;
+}
+
+function mapColumns(rows){
+    // 找表頭列：前 3 列內有「題目」類與「答案」類欄位
+    let headerIdx=null, map={};
+    for(let r=0;r<Math.min(3,rows.length);r++){
+        const row=rows[r]; const m={};
+        row.forEach((cell,ci)=>{
+            const t=cell.trim();
+            if(!t) return;
+            for(const [key,re] of HEADER_RULES){
+                if(!(key in m) && re.test(t)){ m[key]=ci; break; }
+            }
+        });
+        if("q" in m && "ans" in m){ headerIdx=r; map=m; break; }
+    }
+    // 無表頭：假設固定順序 題目,選項A,B,C,D,答案,解析
+    if(headerIdx===null){
+        map={ q:0, o0:1, o1:2, o2:3, o3:4, o4:5, o5:6, ans:5, exp:7 };
+        if(rows.length && rows[0].length>=2 && /題目/.test(rows[0][0])){} // 有表頭但沒答案欄，照順序處理
+        return { headerIdx:-1, map };
+    }
+    return { headerIdx, map };
+}
+
+function cleanQ(rows, headerIdx, map){
+    const start=headerIdx<0?0:headerIdx+1;
+    const out=[];
+    for(let r=start;r<rows.length;r++){
+        const row=rows[r];
+        const cell=ci=> (row[ci]!==undefined?row[ci]:"").trim();
+        const q=cell(map.q);
+        if(!q) continue;
+        const opts=[];
+        for(let k=0;k<6;k++){
+            if(map["o"+k]!==undefined){
+                const o=cell(map["o"+k]);
+                if(o) opts.push(o);
+            }
+        }
+        // 若選項全空，嘗試從單一「選項」欄拆解
+        if(opts.length===0 && map.optList!==undefined){
+            const t=cell(map.optList);
+            const parts=t.split(/[；;|、]/).map(s=>s.trim()).filter(Boolean);
+            opts.push(...parts);
+        }
+        if(opts.length<2) continue;
+        const ansRaw=map.ans!==undefined?cell(map.ans):"";
+        let ansIdx=-1;
+        if(/^[A-Fa-fＡ-Ｆ]$/.test(ansRaw)){
+            const c=ansRaw.toUpperCase().charCodeAt(0);
+            ansIdx=(c>=0xFF21&&c<=0xFF26)?c-0xFF21:c-65;
+        }
+        else if(/^[1-6]$/.test(ansRaw)){ ansIdx=parseInt(ansRaw,10)-1; }
+        else if(/選項\s*[一二三四五六ＡＢＣＤＥＦA-F1-6]|第\s*[一二三四五六1-6]\s*項/i.test(ansRaw)){
+            const mm=ansRaw.match(/選項\s*([一二三四五六ＡＢＣＤＥＦA-F1-6])|第\s*([一二三四五六1-6])\s*項/i);
+            const label=mm[1]||mm[2];
+            ansIdx=optIndexFromLabel(label);
+        }
+        else{
+            const norm=s=>s.replace(/\s+/g,"").replace(/^[A-FＡ-Ｆ]\s*[.、)）:：]/i,"");
+            const t=norm(ansRaw);
+            ansIdx=opts.findIndex(o=>norm(o)===t);
+            if(ansIdx<0 && ansRaw){
+                ansIdx=opts.findIndex(o=>o.includes(ansRaw)||ansRaw.includes(o));
+            }
+        }
+        if(ansIdx<0||ansIdx>=opts.length) continue;
+        out.push({ q, opts, ansIdx, exp: map.exp!==undefined?cell(map.exp):"" });
+    }
+    return out;
+}
+
+/* ================= 讀檔 ================= */
+async function readFileText(file){
+    const buf=await file.arrayBuffer();
+    let txt=new TextDecoder("utf-8").decode(buf);
+    const bad=(txt.match(/\uFFFD/g)||[]).length;
+    if(bad>3){
+        try{ const big5=new TextDecoder("big5").decode(buf); if((big5.match(/\uFFFD/g)||[]).length<bad) txt=big5; }catch(e){}
+    }
+    return txt;
+}
+
+/* ================= 遊戲狀態 ================= */
+const S={ questions:[], pool:[], idx:0, score:0, streak:0, bestStreak:0, right:0, wrongList:[], timer:null, timeLeft:0, perQ:15, limit:0, locked:false, cur:{}, correctCard:null, advanceTm:null };
+
+const LS_KEY="puti_cardshoot_best_v1";
+
+/* ================= 畫面切換 ================= */
+function show(id){
+    $$(".screen").forEach(s=>s.classList.remove("active"));
+    $("#"+id).classList.add("active");
+    window.scrollTo(0,0);
+}
+
+/* ================= 題庫載入 ================= */
+function loadRows(rows){
+    const { headerIdx, map }=mapColumns(rows);
+    const qs=cleanQ(rows, headerIdx, map);
+    if(qs.length===0){
+        $("#importOk").classList.add("hidden");
+        const e=$("#importErr"); e.textContent="找不到可用的題目：請確認第一行有「題目」「答案」欄位，且每題至少有 2 個選項。"; e.classList.remove("hidden");
+        return false;
+    }
+    S.questions=qs;
+    $("#importErr").classList.add("hidden");
+    const ok=$("#importOk");
+    ok.textContent="載入成功！共 "+qs.length+" 題（已自動忽略格式錯誤的題目）";
+    ok.classList.remove("hidden");
+    $("#startBtn").disabled=false;
+    toast("已載入 "+qs.length+" 題，可以開始了！");
+    return true;
+}
+
+async function handleFile(file){
+    const ok=$("#importOk"); const err=$("#importErr");
+    ok.classList.add("hidden"); err.classList.add("hidden");
+    const load=$("#loading"); load.classList.add("show");
+    try{
+        const text=await readFileText(file);
+        loadRows(parseCSV(text));
+    }catch(e){
+        err.textContent="讀檔失敗："+e.message; err.classList.remove("hidden");
+    }finally{ load.classList.remove("show"); }
+}
+
+/* ================= CSV 範例 ================= */
+const SAMPLE=`題目,選項A,選項B,選項C,選項D,答案,解析
+下列何者是網際網路的標準通訊協定？,TCP/IP,HTTP,FTP,SMTP,A,TCP/IP 是網際網路的基礎通訊協定
+鍵盤的 Enter 鍵又稱為什麼？,換行鍵,確認鍵,刪除鍵,倒退鍵,B,Enter 鍵常作為確認或送出指令用
+1KB 等於多少位元組？,1000,1024,2048,512,B,電腦二進位中 1KB=1024 Bytes
+下列哪一項不是輸入裝置？,滑鼠,鍵盤,掃描器,印表機,D,印表機是輸出裝置
+「桌上型電腦」的 CPU 主要安裝在哪個元件上？,記憶體,主機板,硬碟,顯示卡,B,CPU 插在主機板上`
+
+function downloadSample(){
+    const blob=new Blob(["\ufeff"+SAMPLE],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="範例題庫.csv"; a.click();
+    URL.revokeObjectURL(a.href);
+}
+
+/* ================= 遊戲邏輯 ================= */
+function startGame(){
+    if(S.questions.length===0) return;
+    const pool=shuffle([...S.questions]);
+    S.pool = S.limit>0 ? pool.slice(0,Math.min(S.limit,pool.length)) : pool;
+    S.idx=0; S.score=0; S.streak=0; S.bestStreak=0; S.right=0; S.wrongList=[];
+    show("screen-game");
+    $("#banner").textContent="";
+    nextQ();
+}
+
+function nextQ(){
+    if(S.idx>=S.pool.length){ finish(); return; }
+    S.locked=false;
+    const q=S.pool[S.idx];
+    const order=shuffle(q.opts.map((_,i)=>i));
+    const correctCard=order.indexOf(q.ansIdx);
+    S.cur={ q, order, correctCard };
+    S.correctCard=correctCard;
+    renderQ();
+    $("#hudProg").textContent=(S.idx+1)+"/"+S.pool.length;
+    startTimer();
+}
+
+function renderQ(){
+    const q=S.cur.q;
+    $("#qnum").textContent="第 "+(S.idx+1)+" 題";
+    $("#qtext").textContent=q.q;
+    const wrap=$("#cards"); wrap.innerHTML="";
+    wrap.className="cards";
+    if(q.opts.length===3) wrap.classList.add("cols3");
+    if(q.opts.length===5) wrap.classList.add("cols5");
+    if(q.opts.length===6) wrap.classList.add("cols6");
+    q.opts.forEach((opt,i)=>{
+        const card=document.createElement("div");
+        card.className="card enter";
+        card.style.animationDelay=(i*0.07)+"s";
+        card.dataset.idx=i;
+        card.innerHTML=`
+            <div class="card-inner">
+                <div class="card-face card-front">
+                    <span class="letter">${String.fromCharCode(65+i)}</span>
+                    <span class="opt-text"></span>
+                    <svg class="target" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7" fill="none" stroke="#22d3ee" stroke-width="1.4"/><circle cx="9" cy="9" r="4" fill="none" stroke="#f472b6" stroke-width="1.4"/><circle cx="9" cy="9" r="1.3" fill="#fbbf24"/></svg>
+                </div>
+                <div class="card-face card-back"></div>
+            </div>`;
+        card.querySelector(".opt-text").textContent=opt;
+        card.addEventListener("click",()=>selectCard(i,card));
+        wrap.appendChild(card);
+    });
+    $("#banner").textContent="";
+    $("#banner").className="banner";
+}
+
+function startTimer(){
+    clearInterval(S.timer);
+    const bar=$("#timerBar"); bar.classList.remove("low");
+    if(S.perQ<=0){ bar.style.width="100%"; return; }
+    S.timeLeft=S.perQ;
+    bar.style.width="100%";
+    S.timer=setInterval(()=>{
+        S.timeLeft-=0.1;
+        const pct=Math.max(0,(S.timeLeft/S.perQ)*100);
+        bar.style.width=pct+"%";
+        if(pct<=30 && !bar.classList.contains("low")) bar.classList.add("low");
+        if(S.timeLeft<=0){
+            clearInterval(S.timer);
+            if(!S.locked) resolve(null,null,S.cur.correctCard,true);
+        }
+    },100);
+}
+
+function selectCard(idx,card){
+    if(S.locked) return;
+    sndShoot();
+    const correct = idx===S.cur.correctCard;
+    resolve(idx,card,S.cur.correctCard,false,correct);
+}
+
+function resolve(pickIdx, pickCard, correctIdx, timeout, correct){
+    S.locked=true;
+    clearInterval(S.timer);
+    const cards=$$("#cards .card");
+    const q=S.cur.q;
+    const correctCard=cards[correctIdx];
+
+    // 計算得分
+    let gained=0;
+    if(!timeout && correct){
+        S.streak++; S.bestStreak=Math.max(S.bestStreak,S.streak); S.right++;
+        gained=100;
+        if(S.perQ>0) gained+=Math.round(S.timeLeft*4);
+        gained*=Math.min(1+S.streak*0.1,2.5); // 連擊加成最高 2.5 倍
+        gained=Math.round(gained);
+        S.score+=gained;
+        $("#banner").textContent="命中！";
+        $("#banner").className="banner good";
+        sndHit();
+    }else{
+        S.streak=0;
+        if(timeout){ $("#banner").textContent="時間到！"; }
+        else{ $("#banner").textContent="脫靶！"; }
+        $("#banner").className="banner bad";
+        sndMiss();
+        S.wrongList.push({ ...q, picked: pickIdx!==null?pickIdx:correctIdx, timeout });
+    }
+
+    // 卡片翻牌
+    cards.forEach((c,i)=>{
+        c.classList.add("locked");
+        const back=c.querySelector(".card-back");
+        if(i===correctIdx){
+            c.classList.add("flipped","correct");
+            back.classList.add("correct"); back.textContent="✔";
+            addRing(c,"hit");
+        }else if(!timeout && pickIdx===i){
+            c.classList.add("flipped","wrong");
+            back.classList.add("wrong"); back.textContent="✘";
+            addRing(c,"bad");
+        }
+    });
+
+    // 命中特效
+    if(!timeout && correct){
+        const pop=document.createElement("div");
+        pop.className="score-pop good";
+        pop.textContent="+"+gained;
+        const rect=correctCard.getBoundingClientRect();
+        pop.style.left=(rect.left+rect.width/2-20)+"px";
+        pop.style.top=(rect.top)+"px";
+        pop.style.position="fixed";
+        document.body.appendChild(pop);
+        setTimeout(()=>pop.remove(),900);
+    }
+
+    updateHUD();
+    clearTimeout(S.advanceTm);
+    S.advanceTm=setTimeout(()=>{ S.idx++; nextQ(); }, 1100);
+}
+
+function addRing(card,kind){
+    const r=document.createElement("div");
+    r.className="hit-ring"+(kind==="bad"?" bad":"");
+    card.querySelector(".card-inner").appendChild(r);
+    setTimeout(()=>r.remove(),600);
+}
+
+function updateHUD(){
+    $("#hudScore").textContent=S.score;
+    $("#hudStreak").textContent=S.streak;
+    $("#hudRight").textContent=S.right;
+    $("#hudProg").textContent=S.idx+1+"/"+S.pool.length;
+}
+
+function finish(){
+    clearInterval(S.timer);
+    clearTimeout(S.advanceTm);
+    const total=S.pool.length;
+    const acc=total?Math.round(S.right/total*100):0;
+    $("#resScore").textContent=S.score;
+    $("#resRight").textContent=S.right;
+    $("#resWrong").textContent=S.wrongList.length;
+    $("#resAcc").textContent=acc+"%";
+    $("#resStreak").textContent=S.bestStreak;
+    if(acc>=90){ $("#resTitle").textContent="神射手！滿靶演出！"; sndEnd(); }
+    else if(acc>=70){ $("#resTitle").textContent="不錯！再練幾輪就百發百中！"; sndEnd(); }
+    else{ $("#resTitle").textContent="射偏不少，錯題複習完再挑戰！"; sndBadEnd(); }
+
+    // 最佳紀錄
+    const best=JSON.parse(localStorage.getItem(LS_KEY)||"null");
+    const isBest=!best||S.score>best.score;
+    if(isBest){
+        localStorage.setItem(LS_KEY,JSON.stringify({score:S.score,acc,date:new Date().toLocaleDateString()}));
+        $("#resBest").classList.remove("hidden");
+        $("#bestScore").textContent=S.score;
+    }else{
+        $("#resBest").classList.add("hidden");
+    }
+
+    // 錯題複習
+    const list=$("#reviewList"); list.innerHTML="";
+    if(S.wrongList.length===0){ $("#noWrong").classList.remove("hidden"); }
+    else{
+        $("#noWrong").classList.add("hidden");
+        S.wrongList.forEach((w,i)=>{
+            const d=document.createElement("div");
+            d.className="review-item";
+            let html=`<div class="rq">${i+1}. ${w.q}</div><div class="ro">`;
+            w.opts.forEach((o,oi)=>{
+                let cls="opt";
+                if(oi===w.ansIdx) cls+=" correct-ans";
+                if(oi===w.picked && oi!==w.ansIdx) cls+=" wrong-pick";
+                html+=`<span class="${cls}">${String.fromCharCode(65+oi)}. ${o}${oi===w.ansIdx?"（正解）":""}${oi===w.picked&&oi!==w.ansIdx?"（你選的）":""}</span>`;
+            });
+            html+=`</div>`;
+            if(w.exp) html+=`<div class="expl"><b>解析：</b>${w.exp}</div>`;
+            d.innerHTML=html;
+            list.appendChild(d);
+        });
+    }
+    show("screen-result");
+    window.scrollTo(0,0);
+}
+
+/* ================= 事件綁定 ================= */
+function initEvents(){
+    const dz=$("#dropzone"), fi=$("#fileInput");
+    dz.addEventListener("click",()=>fi.click());
+    dz.addEventListener("dragover",e=>{e.preventDefault();dz.classList.add("drag");});
+    dz.addEventListener("dragleave",()=>dz.classList.remove("drag"));
+    dz.addEventListener("drop",e=>{
+        e.preventDefault(); dz.classList.remove("drag");
+        const f=e.dataTransfer.files[0];
+        if(f) handleFile(f);
+    });
+    fi.addEventListener("change",()=>{ if(fi.files[0]) handleFile(fi.files[0]); fi.value=""; });
+
+    $$(".tabs .tab").forEach(t=>t.addEventListener("click",()=>{
+        $$(".tabs .tab").forEach(x=>x.classList.remove("active"));
+        t.classList.add("active");
+        $("#csvArea").classList.toggle("hidden",t.dataset.tab!=="paste");
+    }));
+
+    $("#sampleBtn").addEventListener("click",downloadSample);
+    $("#fillSampleBtn").addEventListener("click",()=>{
+        const ta=$("#csvArea"); ta.classList.remove("hidden");
+        ta.value=SAMPLE;
+        $$(".tabs .tab").forEach(x=>x.classList.remove("active"));
+        $$(".tabs .tab[data-tab=paste]")[0].classList.add("active");
+    });
+    $("#importBtn").addEventListener("click",()=>{
+        const ta=$("#csvArea");
+        if(ta.classList.contains("hidden")||!ta.value.trim()){
+            toast("請先上傳檔案或貼上 CSV 內容","err"); return;
+        }
+        loadRows(parseCSV(ta.value));
+    });
+
+    // 設定
+    const segs=[["segLimit",v=>S.limit=parseInt(v,10)],["segTime",v=>S.perQ=parseInt(v,10)]];
+    segs.forEach(([id,fn])=>{
+        $$("#"+id+" .seg-item").forEach(el=>el.addEventListener("click",()=>{
+            $$("#"+id+" .seg-item").forEach(x=>x.classList.remove("active"));
+            el.classList.add("active");
+            fn(el.dataset.v);
+        }));
+    });
+
+    $("#startBtn").addEventListener("click",startGame);
+    $("#againBtn").addEventListener("click",startGame);
+    $("#homeBtn").addEventListener("click",()=>{
+        clearInterval(S.timer); clearTimeout(S.advanceTm);
+        $("#startBtn").disabled=false;
+        show("screen-start");
+    });
+    $("#quitBtn").addEventListener("click",()=>{
+        clearInterval(S.timer); clearTimeout(S.advanceTm);
+        show("screen-start");
+    });
+
+    // 鍵盤 1-4 / A-D 射擊
+    document.addEventListener("keydown",e=>{
+        if(!$("#screen-game").classList.contains("active")) return;
+        const k=e.key.toUpperCase();
+        let idx=-1;
+        if(["1","2","3","4","5","6"].includes(e.key)) idx=parseInt(e.key,10)-1;
+        else if(["A","B","C","D","E","F"].includes(k)) idx=k.charCodeAt(0)-65;
+        if(idx>=0){
+            const card=$$("#cards .card")[idx];
+            if(card) card.click();
+        }
+    });
+
+    // 準星游標
+    const ch=$("#crosshair");
+    document.addEventListener("mousemove",e=>{
+        if($("#screen-game").classList.contains("active")){
+            ch.style.display="block";
+            ch.style.left=e.clientX+"px"; ch.style.top=e.clientY+"px";
+        }else ch.style.display="none";
+    });
+}
+
+/* ================= 啟動 ================= */
+(function init(){
+    $("#csvExample").textContent="題目,選項A,選項B,選項C,選項D,答案,解析";
+    // 讀取上次設定
+    try{
+        const saved=JSON.parse(localStorage.getItem("puti_cardshoot_set")||"null");
+        if(saved){
+            S.limit=saved.limit; S.perQ=saved.perQ;
+            $$("#segLimit .seg-item").forEach(x=>x.classList.toggle("active",parseInt(x.dataset.v,10)===S.limit));
+            $$("#segTime .seg-item").forEach(x=>x.classList.toggle("active",parseInt(x.dataset.v,10)===S.perQ));
+        }
+    }catch(e){}
+    initEvents();
+})();
+</script>
+</body>
+</html>
