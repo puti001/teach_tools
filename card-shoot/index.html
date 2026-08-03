@@ -268,6 +268,21 @@ code.inline{background:#0b1026;border:1px solid var(--panel-border);padding:1px 
 .banner.good{color:var(--green);text-shadow:0 0 18px rgba(74,222,128,.6);}
 .banner.bad{color:var(--red);text-shadow:0 0 18px rgba(251,113,133,.6);}
 
+/* ---------- Mode badge / wrong practice ---------- */
+.mode-badge{text-align:center;margin:0 0 12px;min-height:26px;}
+.mode-badge span{
+    display:inline-block;background:rgba(244,114,182,.15);border:1px solid rgba(244,114,182,.5);
+    color:var(--pink);padding:4px 16px;border-radius:999px;font-size:13px;font-weight:700;
+    animation:popIn .4s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+.wrong-remain{
+    margin-top:12px;background:linear-gradient(90deg,rgba(244,114,182,.16),rgba(251,191,36,.16));
+    border:1px solid rgba(244,114,182,.5);border-radius:12px;padding:10px;font-weight:800;color:var(--pink);font-size:15px;
+}
+.wrong-remain b{color:var(--amber);font-size:18px;}
+.wrong-remain.all-clear{color:var(--green);border-color:var(--green);background:linear-gradient(90deg,rgba(74,222,128,.16),rgba(34,211,238,.16));}
+.wrong-remain.all-clear b{color:var(--cyan);}
+
 /* ---------- Result ---------- */
 .result-hero{text-align:center;padding:10px 0 4px;}
 .result-score{font-size:clamp(46px,9vw,64px);font-weight:900;color:var(--amber);text-shadow:0 0 26px rgba(251,191,36,.5);}
@@ -397,6 +412,17 @@ footer a:hover{text-decoration:underline;}
         </div>
     </div>
 
+    <div class="panel hidden" id="wrongPanel">
+        <h2>錯題練習</h2>
+        <p style="font-size:14px;color:var(--muted);margin-bottom:4px;">
+            上次答錯的題目會自動收錄在這裡，答對就會從錯題銀行移除，直到全部清空為止。
+        </p>
+        <div class="btn-wrap">
+            <button class="btn btn-danger" id="wrongBtn">開始錯題練習</button>
+            <button class="btn btn-ghost" id="clearWrongBtn">清空錯題</button>
+        </div>
+    </div>
+
     <div class="panel">
         <h2>CSV 格式說明（請老師用 AI 統一輸出）</h2>
         <p style="font-size:14px;color:var(--muted);margin-bottom:10px;">
@@ -421,6 +447,7 @@ footer a:hover{text-decoration:underline;}
         <button id="quitBtn" title="離開遊戲">離開</button>
     </div>
     <div class="timer-track"><div id="timerBar"></div></div>
+    <div class="mode-badge"><span id="modeBadge" class="hidden"></span></div>
     <div class="qcard">
         <div class="qnum" id="qnum"></div>
         <div class="qtext" id="qtext"></div>
@@ -441,6 +468,7 @@ footer a:hover{text-decoration:underline;}
             <div class="meta-chip">最高連擊 <b id="resStreak">0</b></div>
         </div>
         <div class="best-banner hidden" id="resBest">新紀錄！最佳得分：<span id="bestScore"></span></div>
+        <div class="wrong-remain hidden" id="wrongRemain"></div>
         <div class="btn-wrap">
             <button class="btn btn-primary" id="againBtn">再玩一次</button>
             <button class="btn btn-ghost" id="homeBtn">換一組題庫</button>
@@ -647,9 +675,45 @@ async function readFileText(file){
 }
 
 /* ================= 遊戲狀態 ================= */
-const S={ questions:[], pool:[], idx:0, score:0, streak:0, bestStreak:0, right:0, wrongList:[], timer:null, timeLeft:0, perQ:15, limit:0, locked:false, cur:{}, correctCard:null, advanceTm:null };
+const S={ questions:[], pool:[], idx:0, score:0, streak:0, bestStreak:0, right:0, wrongList:[], timer:null, timeLeft:0, perQ:15, limit:0, locked:false, cur:{}, correctCard:null, advanceTm:null, wrongMode:false, lastMode:"normal", sessionResults:null };
 
 const LS_KEY="puti_cardshoot_best_v1";
+const LS_WRONG="puti_cardshoot_wrong_v1";
+
+/* ================= 錯題銀行 ================= */
+function loadWrongBank(){
+    try{ return JSON.parse(localStorage.getItem(LS_WRONG)||"[]")||[]; }catch(e){ return []; }
+}
+function saveWrongBank(bank){ localStorage.setItem(LS_WRONG, JSON.stringify(bank)); }
+function qToBank(q){ return { q:q.q, opts:q.opts, ansIdx:q.ansIdx, exp:q.exp }; }
+function updateWrongPanel(){
+    const bank=loadWrongBank();
+    const panel=$("#wrongPanel");
+    const btn=$("#wrongBtn");
+    if(bank.length===0){
+        panel.classList.add("hidden");
+    }else{
+        panel.classList.remove("hidden");
+        btn.textContent="開始錯題練習（"+bank.length+" 題）";
+    }
+}
+function applyWrongSession(){
+    if(!S.wrongMode || !S.sessionResults) return;
+    let bank=loadWrongBank();
+    for(const q of S.sessionResults.keys()){
+        if(S.sessionResults.get(q)===true) bank=bank.filter(b=>b.q!==q.q);
+    }
+    saveWrongBank(bank);
+    S.sessionResults=new Map();
+}
+function appendWrongBank(){
+    const bank=loadWrongBank();
+    const existing=new Set(bank.map(b=>b.q));
+    for(const w of S.wrongList){
+        if(!existing.has(w.q)){ bank.push(qToBank(w)); existing.add(w.q); }
+    }
+    saveWrongBank(bank);
+}
 
 /* ================= 畫面切換 ================= */
 function show(id){
@@ -704,11 +768,30 @@ function downloadSample(){
 }
 
 /* ================= 遊戲邏輯 ================= */
-function startGame(){
-    if(S.questions.length===0) return;
-    const pool=shuffle([...S.questions]);
-    S.pool = S.limit>0 ? pool.slice(0,Math.min(S.limit,pool.length)) : pool;
+function startGame(mode){
+    mode = mode || "normal";
+    clearTimeout(S.advanceTm); clearInterval(S.timer);
+    if(mode==="wrong"){
+        const bank=loadWrongBank();
+        if(bank.length===0){ toast("目前沒有錯題，先去玩一輪吧！","err"); return; }
+        S.pool=shuffle(bank);
+        S.wrongMode=true;
+    }else{
+        if(S.questions.length===0) return;
+        const pool=shuffle([...S.questions]);
+        S.pool = S.limit>0 ? pool.slice(0,Math.min(S.limit,pool.length)) : pool;
+        S.wrongMode=false;
+    }
+    S.lastMode=mode;
     S.idx=0; S.score=0; S.streak=0; S.bestStreak=0; S.right=0; S.wrongList=[];
+    S.sessionResults=new Map();
+    const badge=$("#modeBadge");
+    if(S.wrongMode){
+        badge.textContent="錯題練習中 · 答對即清出錯題";
+        badge.classList.remove("hidden");
+    }else{
+        badge.classList.add("hidden");
+    }
     show("screen-game");
     $("#banner").textContent="";
     nextQ();
@@ -792,6 +875,7 @@ function resolve(pickIdx, pickCard, correctIdx, timeout, correct){
 
     // 計算得分
     let gained=0;
+    if(S.sessionResults) S.sessionResults.set(q, !timeout && correct);
     if(!timeout && correct){
         S.streak++; S.bestStreak=Math.max(S.bestStreak,S.streak); S.right++;
         gained=100;
@@ -871,6 +955,25 @@ function finish(){
     if(acc>=90){ $("#resTitle").textContent="神射手！滿靶演出！"; sndEnd(); }
     else if(acc>=70){ $("#resTitle").textContent="不錯！再練幾輪就百發百中！"; sndEnd(); }
     else{ $("#resTitle").textContent="射偏不少，錯題複習完再挑戰！"; sndBadEnd(); }
+
+    // 錯題銀行更新
+    const remainEl=$("#wrongRemain");
+    if(S.wrongMode){
+        applyWrongSession();
+        const remain=loadWrongBank().length;
+        if(remain>0){
+            remainEl.innerHTML="錯題剩餘 <b>"+remain+"</b> 題，再練一輪就能全部清空！";
+            remainEl.classList.remove("hidden","all-clear");
+        }else{
+            remainEl.innerHTML="錯題已全部清空 <b>0</b> 題，太強了！";
+            remainEl.classList.remove("hidden");
+            remainEl.classList.add("all-clear");
+        }
+    }else{
+        remainEl.classList.add("hidden");
+        appendWrongBank();
+        updateWrongPanel();
+    }
 
     // 最佳紀錄
     const best=JSON.parse(localStorage.getItem(LS_KEY)||"null");
@@ -952,16 +1055,26 @@ function initEvents(){
         }));
     });
 
-    $("#startBtn").addEventListener("click",startGame);
-    $("#againBtn").addEventListener("click",startGame);
+    $("#startBtn").addEventListener("click",()=>startGame("normal"));
+    $("#againBtn").addEventListener("click",()=>startGame(S.lastMode||"normal"));
     $("#homeBtn").addEventListener("click",()=>{
         clearInterval(S.timer); clearTimeout(S.advanceTm);
+        applyWrongSession(); updateWrongPanel();
         $("#startBtn").disabled=false;
         show("screen-start");
     });
     $("#quitBtn").addEventListener("click",()=>{
         clearInterval(S.timer); clearTimeout(S.advanceTm);
+        applyWrongSession(); updateWrongPanel();
         show("screen-start");
+    });
+    $("#wrongBtn").addEventListener("click",()=>startGame("wrong"));
+    $("#clearWrongBtn").addEventListener("click",()=>{
+        if(!loadWrongBank().length) return;
+        if(!confirm("確定要清空所有錯題嗎？")) return;
+        saveWrongBank([]);
+        updateWrongPanel();
+        toast("錯題已清空");
     });
 
     // 鍵盤 1-4 / A-D 射擊
@@ -999,6 +1112,7 @@ function initEvents(){
             $$("#segTime .seg-item").forEach(x=>x.classList.toggle("active",parseInt(x.dataset.v,10)===S.perQ));
         }
     }catch(e){}
+    updateWrongPanel();
     initEvents();
 })();
 </script>
