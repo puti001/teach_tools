@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puti-AI | 108課綱素養題產生器</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+    body {
+      font-family: 'Zen Maru Gothic', 'Noto Sans TC', sans-serif;
+      background-color: #F8F9FA;
+    }
+
+    /* 書商與標準素養題排版樣式 */
+    .two-column-exam {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      column-gap: 1.5rem !important;
+      row-gap: 1.25rem !important;
+      align-items: start !important;
+    }
+
+    .paper-item {
+      break-inside: avoid !important;
+      page-break-inside: avoid !important;
+      background: white;
+    }
+
+    /* 列印與轉存 PDF 專用樣式 */
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 10mm 12mm;
+      }
+      html, body {
+        background: white !important;
+        color: black !important;
+        font-family: 'Noto Sans TC', serif !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .no-print, header, footer, #inputSection, #viewTabs, #keyModal, #cropModal, #promptModal, #loadingIndicator, #diffView {
+        display: none !important;
+      }
+      #paperView {
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .exam-paper {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+      }
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #F1F5F9;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #CBD5E1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800">
+
+  <!-- 頂部導覽列 -->
+  <header class="bg-white/90 backdrop-blur-md border-b border-amber-100 sticky top-0 z-40 px-4 sm:px-8 py-3.5 flex items-center justify-between no-print shadow-xs">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-500 via-orange-500 to-emerald-500 flex items-center justify-center text-white shadow-md shadow-amber-200">
+        <i class="ph-bold ph-compass text-2xl"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-bold text-lg text-slate-800 tracking-wide">Puti-AI | 108課綱素養題產生器</h1>
+          <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-200">跨文本 × 資訊圖表 × 評量規準</span>
+        </div>
+        <p class="text-xs text-slate-500 hidden sm:block">把傳統死板題升級為生活探究題組，內建 SVG 向量圖表與非選評分標準</p>
+      </div>
+    </div>
+
+    <!-- 右側功能操作區 -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- 示範範例下拉選單 -->
+      <div class="relative hidden md:block">
+        <select id="demoSelect" class="bg-amber-50/80 border border-amber-200 text-amber-900 text-xs font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-amber-300 transition cursor-pointer pr-7 appearance-none">
+          <option value="" disabled selected>✨ 點此載入經典素養範例...</option>
+          <option value="demo_math">📐 國小/國中數學：手搖飲熱量大解密與折扣戰 (雙折線圖)</option>
+          <option value="demo_science">⚡ 自然理化：綠能風力發電機組效能探究 (實驗數據圖)</option>
+          <option value="demo_social">🗺️ 社會領域：捷運路網與在地創生一日遊 (捷運地圖)</option>
+          <option value="demo_reading">📰 跨域閱讀：假訊息查核與 Deepfake 辨識 (流程資訊圖)</option>
+        </select>
+        <i class="ph-bold ph-caret-down absolute right-2.5 top-1/2 -translate-y-1/2 text-amber-700 pointer-events-none text-xs"></i>
+      </div>
+
+      <!-- 免 API Key 通用 Prompt 按鈕 -->
+      <button id="openPromptModalBtn" onclick="openPromptModal()" class="px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm shadow-blue-200">
+        <i class="ph-bold ph-copy text-sm"></i>
+        <span>免 Key 通用 Prompt</span>
+      </button>
+
+      <!-- API Key 設定按鈕 -->
+      <button id="openKeyModalBtn" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition flex items-center gap-1.5 border border-slate-200">
+        <i class="ph-bold ph-key text-amber-600 text-sm"></i>
+        <span class="hidden sm:inline">Gemini API Key</span>
+        <span id="keyCountBadge" class="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full">1</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 免 API Key 通用出題 Prompt 專屬彈窗 (Modal) -->
+  <div id="promptModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-blue-100 space-y-4 animate-in fade-in zoom-in duration-150 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm shadow-xs">
+            <i class="ph-bold ph-copy"></i>
+          </span>
+          免 API Key！108 課綱素養題通用 Prompt（貼給 ChatGPT / Claude / Gemini 網頁版）
+        </h3>
+        <button onclick="document.getElementById('promptModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <!-- 3 步驟指南 -->
+      <div class="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 text-xs space-y-1.5 text-slate-700">
+        <div class="font-bold text-blue-900 flex items-center justify-between flex-wrap gap-1 text-sm">
+          <span class="flex items-center gap-1.5">
+            <i class="ph-bold ph-lightbulb text-amber-500"></i>
+            免金鑰超簡單 3 步驟：
+          </span>
+          <span class="text-[11px] bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
+            <i class="ph-bold ph-translate"></i> 嚴格強制臺灣繁體中文 (好修改／零簡體)
+          </span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+          <div class="bg-white/80 p-2.5 rounded-xl border border-blue-100/80">
+            <strong class="text-blue-900">步驟 1. 複製繁中 Prompt</strong>
+            <p class="text-slate-500 mt-0.5">點擊下方按鈕一鍵複製各科素養導向命題提示詞。</p>
+          </div>
+          <div class="bg-white/80 p-2.5 rounded-xl border border-blue-100/80">
+            <strong class="text-blue-900">步驟 2. 開啟常用 AI</strong>
+            <p class="text-slate-500 mt-0.5">打開 ChatGPT、Claude 或 Gemini 網頁版。</p>
+          </div>
+          <div class="bg-white/80 p-2.5 rounded-xl border border-blue-100/80">
+            <strong class="text-blue-900">步驟 3. 貼上並輸入單元</strong>
+            <p class="text-slate-500 mt-0.5">貼上提示詞並給予教材或想考的概念，秒出題組！</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 學科切換快捷標籤與複製按鈕 -->
+      <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-xs font-bold text-slate-700">學科自選：</span>
+          <button type="button" onclick="setPromptSubject('general')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-xs" data-sub="general">全科通用素養</button>
+          <button type="button" onclick="setPromptSubject('math')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="math">數學科</button>
+          <button type="button" onclick="setPromptSubject('science')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="science">自然科學</button>
+          <button type="button" onclick="setPromptSubject('social')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="social">社會領域</button>
+          <button type="button" onclick="setPromptSubject('reading')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="reading">國語文/閱讀</button>
+          <button type="button" onclick="setPromptSubject('english')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="english">英語文</button>
+        </div>
+        <button id="copyPromptModalBtn" onclick="copyUniversalPrompt()" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1 shadow-sm">
+          <i class="ph-bold ph-copy"></i>
+          <span>一鍵複製 Prompt</span>
+        </button>
+      </div>
+
+      <!-- 提示詞文字框 -->
+      <div class="relative">
+        <textarea id="universalPromptTextarea" rows="11" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 font-mono text-xs text-slate-800 leading-relaxed outline-none focus:bg-white focus:border-blue-400 transition select-all whitespace-pre-wrap"></textarea>
+      </div>
+
+      <!-- 底部操作列與直達連結 -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100 flex-wrap gap-2 text-xs">
+        <div class="flex items-center gap-2 text-slate-500 text-[11px]">
+          <span>常用 AI 官網直達：</span>
+          <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold flex items-center gap-0.5">ChatGPT <i class="ph-bold ph-arrow-square-out text-[10px]"></i></a>
+          <span>·</span>
+          <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-semibold flex items-center gap-0.5">Claude <i class="ph-bold ph-arrow-square-out text-[10px]"></i></a>
+          <span>·</span>
+          <a href="https://gemini.google.com" target="_blank" rel="noopener noreferrer" class="text-amber-700 hover:underline font-semibold flex items-center gap-0.5">Gemini <i class="ph-bold ph-arrow-square-out text-[10px]"></i></a>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="document.getElementById('promptModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-semibold text-xs transition">關閉</button>
+          <button onclick="copyUniversalPrompt()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-md shadow-blue-200 flex items-center gap-1.5">
+            <i class="ph-bold ph-copy"></i>
+            <span>複製 Prompt</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- API Key 設定 Modal -->
+  <div id="keyModal" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-xl border border-amber-100 space-y-4 animate-in fade-in zoom-in duration-150">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="ph-bold ph-key text-amber-500"></i>
+          設定 Gemini API Key (多組輪替)
+        </h3>
+        <button id="closeKeyModalBtn" class="text-slate-400 hover:text-slate-600">
+          <i class="ph-bold ph-x text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-3 bg-blue-50/80 rounded-2xl border border-blue-100 flex items-center justify-between gap-3 text-xs">
+        <span class="text-blue-900 font-medium">不想申請金鑰？直接使用專屬出題提示詞！</span>
+        <button type="button" onclick="openPromptModal(); document.getElementById('keyModal').classList.add('hidden');" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition flex-shrink-0 shadow-xs">
+          免 Key Prompt
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-500 leading-relaxed">
+        可貼入多組 Gemini API Key（每行一組），系統會自動隨機輪替使用，避免觸碰每分鐘頻率限制 (RPM Rate Limit)。金鑰僅保存在您的本機瀏覽器 LocalStorage 中，絕不上傳第三方伺服器。
+      </p>
+
+      <textarea id="apiKeyTextarea" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs font-mono text-slate-800 outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white transition" placeholder="AIzaSy...&#10;AIzaSy... (每行輸入一組)"></textarea>
+
+      <div class="flex items-center justify-between pt-2">
+        <button id="clearKeysBtn" class="text-xs text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1">
+          <i class="ph-bold ph-trash"></i> 清除全部金鑰
+        </button>
+        <div class="flex items-center gap-2">
+          <button id="saveKeysBtn" class="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-xl shadow-sm transition">
+            儲存金鑰
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- A 卷/教材截圖裁切 Modal -->
+  <div id="cropModal" class="hidden fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-3xl max-w-4xl w-full p-6 shadow-2xl border border-amber-100 space-y-4 max-h-[95vh] flex flex-col animate-in fade-in zoom-in duration-150">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100 flex-shrink-0">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <i class="ph-bold ph-crop text-amber-500"></i>
+          框選要升級為素養題的原題或素材區塊
+        </h3>
+        <button id="closeCropModalBtn" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-auto bg-slate-100 rounded-2xl p-4 flex items-center justify-center relative select-none min-h-[380px]">
+        <div id="cropContainer" class="relative inline-block cursor-crosshair">
+          <img id="cropTargetImage" src="" class="max-h-[62vh] object-contain block pointer-events-none rounded shadow-sm border border-slate-300">
+          <div id="cropSelectionBox" class="absolute border-2 border-dashed border-red-500 bg-red-500/20 hidden pointer-events-none"></div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100 flex-shrink-0">
+        <span id="cropStatusText" class="text-xs text-slate-500">提示：請在圖片上按住滑鼠左鍵並拖曳出紅虛線框</span>
+        <div class="flex items-center gap-2">
+          <button id="cancelCropBtn" class="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-semibold text-xs transition">取消</button>
+          <button id="applyCropBtn" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition shadow-sm flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+            <i class="ph-bold ph-check"></i> 完成裁切並套用
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主內容區 -->
+  <main class="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 flex-1">
+
+    <!-- 模式切換 Tabs (有題目時顯示) -->
+    <div id="viewTabs" class="hidden no-print flex items-center justify-between bg-white p-2 rounded-2xl shadow-sm border border-amber-50 mb-6 flex-wrap gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="tabDiff" class="px-4 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white shadow-sm transition flex items-center gap-1.5">
+          <i class="ph-bold ph-cards"></i> 素養題組審題與編輯
+        </button>
+        <button id="tabStudent" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
+          <i class="ph-bold ph-exam"></i> 學生測驗卷 (附作答欄)
+        </button>
+        <button id="tabTeacher" class="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5">
+          <i class="ph-bold ph-check-circle"></i> 教師詳解與評分規準 (Rubric)
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <!-- 排版模式切換 (書商雙欄 vs 單欄寬版) -->
+        <button id="toggleLayoutBtn" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1.5 border border-slate-200">
+          <i class="ph-bold ph-columns text-amber-600"></i>
+          <span id="layoutText">書商雙欄考卷風</span>
+        </button>
+
+        <!-- 一鍵複製全卷配圖提示詞 -->
+        <button id="copyAllPromptsBtn" class="px-3.5 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm">
+          <i class="ph-bold ph-palette text-sm"></i>
+          <span>🎨 複製所有配圖提示詞</span>
+        </button>
+
+        <!-- 複製到 Word (含圖) -->
+        <button id="copyWordBtn" class="px-3 py-2 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 text-xs font-semibold rounded-xl transition flex items-center gap-1">
+          <i class="ph-bold ph-copy"></i> 複製到 Word (含圖)
+        </button>
+
+        <!-- 下載 Word 檔 (.doc) -->
+        <button id="downloadWordBtn" class="px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 text-xs font-bold rounded-xl transition flex items-center gap-1 shadow-sm">
+          <i class="ph-bold ph-file-doc"></i> 下載 Word 檔
+        </button>
+
+        <!-- 列印與存為 PDF -->
+        <button onclick="window.print()" class="px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl transition flex items-center gap-1">
+          <i class="ph-bold ph-printer"></i> 列印 / PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- 上傳與輸入面板 -->
+    <section id="inputSection" class="no-print bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-amber-100 mb-8 transition-all">
+      <!-- 免 API Key 快捷橫幅 -->
+      <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 via-indigo-50/60 to-emerald-50 rounded-2xl border border-blue-100 flex items-center justify-between flex-wrap gap-3 shadow-2xs">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-md shadow-blue-200 flex-shrink-0">
+            <i class="ph-bold ph-magic-wand"></i>
+          </div>
+          <div>
+            <span class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+              不想申請 API Key？提供「一鍵複製 108 課綱通用素養出題 Prompt」！
+              <span class="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">免金鑰</span>
+            </span>
+            <p class="text-xs text-slate-600 mt-0.5">直接複製針對臺灣素養評量調校的神級繁中提示詞，貼給 ChatGPT、Claude 或 Gemini 網頁版，秒出長文跨圖表素養題組！</p>
+          </div>
+        </div>
+        <button onclick="openPromptModal()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-200">
+          <i class="ph-bold ph-copy text-sm"></i>
+          <span>📋 一鍵複製素養 Prompt</span>
+        </button>
+      </div>
+
+      <!-- 輸入方式切換 Tab -->
+      <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-3">
+        <button id="inputModeImageBtn" onclick="switchInputMode('image')" class="px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white shadow-xs transition flex items-center gap-1.5">
+          <i class="ph-bold ph-image"></i> 模式一：圖片/截圖升級素養題
+        </button>
+        <button id="inputModeTextBtn" onclick="switchInputMode('text')" class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition flex items-center gap-1.5">
+          <i class="ph-bold ph-pencil-simple-line"></i> 模式二：主題與時事情境全新命題
+        </button>
+      </div>
+
+      <!-- 模式一：圖片上傳與拖曳區 -->
+      <div id="imageInputArea" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <!-- 左側：拖曳與貼上區 -->
+        <div class="lg:col-span-7">
+          <div id="dropZone" class="border-2 border-dashed border-amber-200 hover:border-amber-400 bg-amber-50/40 hover:bg-amber-50/70 rounded-3xl p-6 sm:p-8 text-center transition-all cursor-pointer relative group">
+            <input type="file" id="fileInput" accept="image/*" class="hidden">
+            
+            <div id="uploadPrompt" class="space-y-3">
+              <div class="w-14 h-14 mx-auto rounded-2xl bg-white shadow-sm flex items-center justify-center text-amber-500 text-2xl group-hover:scale-105 transition-transform">
+                <i class="ph-bold ph-upload-simple"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-slate-700">點擊上傳、拖曳圖片，或直接按 <kbd class="px-2 py-0.5 bg-amber-100 border border-amber-200 rounded-lg text-amber-800 text-xs font-mono font-bold shadow-xs">Ctrl + V</kbd> 貼上截圖</h3>
+                <p class="text-xs text-slate-500 mt-1">截下現有書商死板考題或段落，AI 會將其擴充為「真實生活情境＋資訊圖表」素養題組</p>
+              </div>
+            </div>
+
+            <!-- 預覽容器 -->
+            <div id="previewContainer" class="hidden relative max-w-sm mx-auto">
+              <img id="imagePreview" src="" alt="預覽圖片" class="max-h-56 mx-auto rounded-2xl shadow-sm border border-amber-200 object-contain">
+              <div class="absolute -top-2 -right-2 flex gap-1.5">
+                <button id="openCropBtn" class="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center shadow-md hover:bg-amber-600 transition" title="裁切局部重點">
+                  <i class="ph-bold ph-crop"></i>
+                </button>
+                <button id="removeImageBtn" class="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-md hover:bg-rose-600 transition" title="移除圖片">
+                  <i class="ph-bold ph-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右側：參數設定與觸發 -->
+        <div class="lg:col-span-5 space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">學科領域與適用年級</label>
+            <div class="grid grid-cols-2 gap-2">
+              <select id="subjectSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 font-medium outline-none focus:border-amber-400 focus:bg-white transition">
+                <option value="math">📐 數學領域</option>
+                <option value="science">⚡ 自然科學領域</option>
+                <option value="social">🗺️ 社會領域</option>
+                <option value="chinese">📖 國語文/閱讀素養</option>
+                <option value="english">🔤 英語文領域</option>
+              </select>
+              <select id="gradeSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 font-medium outline-none focus:border-amber-400 focus:bg-white transition">
+                <option value="國小中年級">國小中年級 (3-4年級)</option>
+                <option value="國小高年級" selected>國小高年級 (5-6年級)</option>
+                <option value="國中階段">國中階段 (7-9年級)</option>
+                <option value="高中階段">高中階段</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1.5">生活情境融入偏好</label>
+            <select id="scenarioSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 font-medium outline-none focus:border-amber-400 focus:bg-white transition">
+              <option value="auto">🎲 AI 智慧適配最佳生活情境</option>
+              <option value="eco">🌿 環保永續、氣候變遷與綠能生活</option>
+              <option value="daily">🏪 在地超商、夜市商圈與小吃消費</option>
+              <option value="tech">📱 數位科技、社群媒體與網路資訊判讀</option>
+              <option value="travel">🚆 臺灣在地旅遊、捷運公車時刻與地圖規劃</option>
+              <option value="health">🥗 運動健康、飲食熱量與成長發育</option>
+            </select>
+          </div>
+
+          <!-- 模型選擇 -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-bold text-slate-700">AI 推理模型</label>
+              <button id="refreshModelsBtn" class="text-[11px] text-amber-600 hover:underline flex items-center gap-1 font-semibold">
+                <i class="ph-bold ph-arrows-clockwise"></i> 重新偵測可用模型
+              </button>
+            </div>
+            <select id="modelSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-700 outline-none focus:border-amber-400 focus:bg-white transition">
+              <option value="gemini-2.5-flash">gemini-2.5-flash (推薦：最新極速與強大推理)</option>
+              <option value="gemini-2.0-flash">gemini-2.0-flash (推薦：多模態高相容)</option>
+              <option value="gemini-1.5-pro">gemini-1.5-pro (深度長文與高難度素養題)</option>
+              <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+            </select>
+          </div>
+
+          <button id="generateBtn" class="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm rounded-2xl shadow-lg shadow-amber-200 transition-all flex items-center justify-center gap-2">
+            <i class="ph-bold ph-sparkle text-lg"></i>
+            <span>一鍵生成 108 課綱生活素養題組</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 模式二：純文字主題情境出題區 -->
+      <div id="textInputArea" class="hidden space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">學科領域</label>
+            <select id="textSubjectSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700">
+              <option value="math">📐 數學科</option>
+              <option value="science">⚡ 自然科學</option>
+              <option value="social">🗺️ 社會科</option>
+              <option value="chinese">📖 國語文/閱讀</option>
+              <option value="english">🔤 英語科</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">年級階段</label>
+            <select id="textGradeSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700">
+              <option value="國小中年級">國小中年級 (3-4年級)</option>
+              <option value="國小高年級" selected>國小高年級 (5-6年級)</option>
+              <option value="國中階段">國中階段 (7-9年級)</option>
+              <option value="高中階段">高中階段</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">情境導向</label>
+            <input type="text" id="customScenarioInput" placeholder="如：園遊會擺攤分潤、捷運一日遊、減碳生活..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1">核心學習概念或教材重點</label>
+          <textarea id="textConceptInput" rows="3" placeholder="請輸入想命題的核心概念，例如：「比與比值、圓面積計算」、「電路串並聯與耗電分析」、「地圖等高線判讀與坡度影響」..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3 text-xs text-slate-800 outline-none focus:bg-white focus:border-amber-400 transition"></textarea>
+        </div>
+
+        <button id="generateFromTextBtn" class="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm rounded-2xl shadow-lg shadow-emerald-200 transition-all flex items-center justify-center gap-2">
+          <i class="ph-bold ph-magic-wand text-lg"></i>
+          <span>依主題一鍵客製 108 課綱素養題組</span>
+        </button>
+      </div>
+
+      <!-- 讀取載入中提示 -->
+      <div id="loadingIndicator" class="hidden mt-6 p-6 bg-amber-50/60 rounded-2xl border border-amber-200 text-center space-y-3 animate-pulse">
+        <div class="inline-block p-3 bg-amber-500 text-white rounded-2xl shadow-md animate-bounce">
+          <i class="ph-bold ph-compass text-2xl"></i>
+        </div>
+        <h4 id="loadingStepText" class="text-sm font-bold text-amber-900">AI 正在構思真實情境文本與繪製 SVG 向量資訊圖表...</h4>
+        <p class="text-xs text-amber-700">融合生活經驗、跨文本圖表判讀、層次遞進題組與評分規準 (Rubrics)，請稍候約 15 秒</p>
+      </div>
+    </section>
+
+    <!-- 模式 1：素養題組審題與編輯檢視 (卡片式) -->
+    <div id="diffView" class="space-y-6 hidden">
+      <!-- 題組大情境卡片 -->
+      <div id="scenarioBannerCard" class="bg-white rounded-3xl p-6 shadow-sm border border-amber-100 space-y-3">
+        <!-- 動態渲染情境長文與圖表 -->
+      </div>
+
+      <!-- 各小題卡片清單 -->
+      <div id="questionsContainer" class="space-y-6">
+        <!-- 動態渲染小題卡片 -->
+      </div>
+    </div>
+
+    <!-- 模式 2 & 3：正式考卷版面 (學生試題卷 / 教師解答卷) -->
+    <div id="paperView" class="hidden">
+      <div class="exam-paper bg-white rounded-2xl p-8 sm:p-12 shadow-sm border border-slate-200 max-w-4xl mx-auto">
+        <!-- 考卷抬頭 -->
+        <div class="border-b-2 border-slate-800 pb-4 mb-6 text-center">
+          <h2 id="paperSchoolName" class="text-2xl font-bold tracking-wider mb-2" contenteditable="true">屏東縣國民小學 113 學年度 素養導向評量題組</h2>
+          <div class="flex justify-between items-center text-sm font-medium text-slate-700 px-4 mt-4">
+            <div>
+              <span>年級：</span><span class="border-b border-slate-600 px-4" contenteditable="true">五年 班</span>
+            </div>
+            <div>
+              <span>座號：</span><span class="border-b border-slate-600 px-4" contenteditable="true">   </span>
+            </div>
+            <div>
+              <span>姓名：</span><span class="border-b border-slate-600 px-6" contenteditable="true">        </span>
+            </div>
+            <div id="scoreBox" class="border-2 border-slate-800 px-4 py-1 font-bold">
+              得分：_______
+            </div>
+          </div>
+        </div>
+
+        <!-- 考卷情境長文與資訊圖表區 -->
+        <div id="paperScenarioSection" class="mb-6 p-5 bg-slate-50 rounded-xl border border-slate-300">
+          <!-- 題目情境與 SVG 渲染 -->
+        </div>
+
+        <!-- 考卷題目清單 -->
+        <div id="paperQuestionsContainer" class="space-y-6">
+          <!-- 小題渲染區 -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- 底部版權宣告 -->
+  <footer class="bg-white border-t border-amber-100 py-6 px-4 text-center text-xs text-slate-500 no-print mt-12">
+    <div class="max-w-4xl mx-auto">
+      <p class="font-medium text-slate-700 leading-relaxed">
+        屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為，<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener noreferrer" class="text-amber-600 hover:text-orange-600 font-bold underline ml-0.5">更多 Puti-AI 教學工具</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- 應用主邏輯腳本 -->
+  <script>
+    // 狀態管理
+    let currentImageBase64 = null;
+    let generatedData = null;
+    let currentMode = 'diff'; // diff | student | teacher
+    let activeInputTab = 'image'; // image | text
+
+    // DOM 元素
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const uploadPrompt = document.getElementById('uploadPrompt');
+    const previewContainer = document.getElementById('previewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const removeImageBtn = document.getElementById('removeImageBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    const generateFromTextBtn = document.getElementById('generateFromTextBtn');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const loadingStepText = document.getElementById('loadingStepText');
+
+    const viewTabs = document.getElementById('viewTabs');
+    const tabDiff = document.getElementById('tabDiff');
+    const tabStudent = document.getElementById('tabStudent');
+    const tabTeacher = document.getElementById('tabTeacher');
+    const diffView = document.getElementById('diffView');
+    const paperView = document.getElementById('paperView');
+    const scenarioBannerCard = document.getElementById('scenarioBannerCard');
+    const questionsContainer = document.getElementById('questionsContainer');
+    const copyAllPromptsBtn = document.getElementById('copyAllPromptsBtn');
+    const copyWordBtn = document.getElementById('copyWordBtn');
+    const downloadWordBtn = document.getElementById('downloadWordBtn');
+    const toggleLayoutBtn = document.getElementById('toggleLayoutBtn');
+    const layoutText = document.getElementById('layoutText');
+
+    // 裁切模態框
+    const cropModal = document.getElementById('cropModal');
+    const openCropBtn = document.getElementById('openCropBtn');
+    const closeCropModalBtn = document.getElementById('closeCropModalBtn');
+    const cancelCropBtn = document.getElementById('cancelCropBtn');
+    const applyCropBtn = document.getElementById('applyCropBtn');
+    const cropTargetImage = document.getElementById('cropTargetImage');
+    const cropSelectionBox = document.getElementById('cropSelectionBox');
+    const cropContainer = document.getElementById('cropContainer');
+    const cropStatusText = document.getElementById('cropStatusText');
+
+    // API Key 相關
+    const openKeyModalBtn = document.getElementById('openKeyModalBtn');
+    const closeKeyModalBtn = document.getElementById('closeKeyModalBtn');
+    const keyModal = document.getElementById('keyModal');
+    const apiKeyTextarea = document.getElementById('apiKeyTextarea');
+    const saveKeysBtn = document.getElementById('saveKeysBtn');
+    const clearKeysBtn = document.getElementById('clearKeysBtn');
+    const keyCountBadge = document.getElementById('keyCountBadge');
+    const modelSelect = document.getElementById('modelSelect');
+    const refreshModelsBtn = document.getElementById('refreshModelsBtn');
+
+    // 1. 初始化讀取多組 API Key 與動態模型
+    let apiKeys = loadApiKeys();
+    let availableModels = [];
+
+    function loadApiKeys() {
+      const raw = localStorage.getItem('puti_competency_api_keys') || localStorage.getItem('puti_gemini_api_keys') || localStorage.getItem('puti_gemini_api_key') || '';
+      if (!raw) return [];
+      return raw.split('\n').map(k => k.trim()).filter(k => k.length > 5);
+    }
+
+    function saveApiKeys(keys) {
+      apiKeys = keys;
+      localStorage.setItem('puti_competency_api_keys', keys.join('\n'));
+      localStorage.setItem('puti_gemini_api_keys', keys.join('\n'));
+      updateKeyCountBadge();
+    }
+
+    function updateKeyCountBadge() {
+      if (apiKeys.length === 0) {
+        keyCountBadge.textContent = '未設定';
+        keyCountBadge.className = 'bg-rose-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full';
+      } else {
+        keyCountBadge.textContent = `${apiKeys.length} 組 Key`;
+        keyCountBadge.className = 'bg-emerald-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full';
+      }
+    }
+
+    function getRandomApiKey() {
+      if (apiKeys.length === 0) return null;
+      const idx = Math.floor(Math.random() * apiKeys.length);
+      return apiKeys[idx];
+    }
+
+    updateKeyCountBadge();
+
+    // 2. 動態拉取可用模型
+    async function fetchAvailableModels() {
+      const key = getRandomApiKey();
+      if (!key) return;
+
+      refreshModelsBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> 偵測中...';
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        if (data.models && Array.isArray(data.models)) {
+          const geminiModels = data.models
+            .filter(m => m.name.includes('gemini') && (m.supportedGenerationMethods || []).includes('generateContent'))
+            .map(m => m.name.replace('models/', ''));
+
+          if (geminiModels.length > 0) {
+            availableModels = geminiModels;
+            const currentSelected = modelSelect.value;
+            modelSelect.innerHTML = '';
+            availableModels.forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m;
+              opt.textContent = m + (m.includes('2.5-flash') || m.includes('2.0-flash') ? ' (推薦)' : '');
+              modelSelect.appendChild(opt);
+            });
+            if (availableModels.includes(currentSelected)) {
+              modelSelect.value = currentSelected;
+            } else if (availableModels.includes('gemini-2.5-flash')) {
+              modelSelect.value = 'gemini-2.5-flash';
+            } else if (availableModels.includes('gemini-2.0-flash')) {
+              modelSelect.value = 'gemini-2.0-flash';
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('動態獲取模型失敗，採用預設列表:', err);
+      } finally {
+        refreshModelsBtn.innerHTML = '<i class="ph-bold ph-arrows-clockwise"></i> 重新偵測可用模型';
+      }
+    }
+
+    refreshModelsBtn.addEventListener('click', fetchAvailableModels);
+    if (apiKeys.length > 0) fetchAvailableModels();
+
+    // Key Modal 開關
+    openKeyModalBtn.addEventListener('click', () => {
+      apiKeyTextarea.value = apiKeys.join('\n');
+      keyModal.classList.remove('hidden');
+    });
+    closeKeyModalBtn.addEventListener('click', () => keyModal.classList.add('hidden'));
+    saveKeysBtn.addEventListener('click', () => {
+      const lines = apiKeyTextarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+      saveApiKeys(lines);
+      keyModal.classList.add('hidden');
+      alert(`已儲存 ${lines.length} 組 Gemini API Key！`);
+      if (lines.length > 0) fetchAvailableModels();
+    });
+    clearKeysBtn.addEventListener('click', () => {
+      if (confirm('確定要清除所有金鑰嗎？')) {
+        saveApiKeys([]);
+        apiKeyTextarea.value = '';
+        keyModal.classList.add('hidden');
+      }
+    });
+
+    // 3. 輸入模式切換 (圖片 vs 純文字)
+    window.switchInputMode = function(mode) {
+      activeInputTab = mode;
+      const imgBtn = document.getElementById('inputModeImageBtn');
+      const textBtn = document.getElementById('inputModeTextBtn');
+      const imgArea = document.getElementById('imageInputArea');
+      const textArea = document.getElementById('textInputArea');
+
+      if (mode === 'image') {
+        imgBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white shadow-xs transition flex items-center gap-1.5';
+        textBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition flex items-center gap-1.5';
+        imgArea.classList.remove('hidden');
+        textArea.classList.add('hidden');
+      } else {
+        textBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white shadow-xs transition flex items-center gap-1.5';
+        imgBtn.className = 'px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition flex items-center gap-1.5';
+        textArea.classList.remove('hidden');
+        imgArea.classList.add('hidden');
+      }
+    };
+
+    // 4. 檔案拖曳、點擊與全域 Ctrl + V 貼上
+    dropZone.addEventListener('click', (e) => {
+      if (e.target.closest('#previewContainer')) return;
+      fileInput.click();
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('border-amber-500', 'bg-amber-100/50');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('border-amber-500', 'bg-amber-100/50');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('border-amber-500', 'bg-amber-100/50');
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleImageFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleImageFile(e.target.files[0]);
+      }
+    });
+
+    window.addEventListener('paste', (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+      const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+      for (const item of items) {
+        if (item.type.indexOf('image') !== -1) {
+          const blob = item.getAsFile();
+          handleImageFile(blob);
+          break;
+        }
+      }
+    });
+
+    function handleImageFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('請上傳圖檔格式！');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        currentImageBase64 = event.target.result;
+        imagePreview.src = currentImageBase64;
+        uploadPrompt.classList.add('hidden');
+        previewContainer.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    removeImageBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      currentImageBase64 = null;
+      fileInput.value = '';
+      imagePreview.src = '';
+      previewContainer.classList.add('hidden');
+      uploadPrompt.classList.remove('hidden');
+    });
+
+    // 5. 互動式手動框選裁切
+    let isDrawing = false;
+    let startX = 0, startY = 0;
+    let cropRect = { x: 0, y: 0, w: 0, h: 0 };
+
+    openCropBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (!currentImageBase64) return;
+      cropTargetImage.src = currentImageBase64;
+      cropSelectionBox.classList.add('hidden');
+      applyCropBtn.disabled = true;
+      cropModal.classList.remove('hidden');
+    });
+
+    closeCropModalBtn.addEventListener('click', () => cropModal.classList.add('hidden'));
+    cancelCropBtn.addEventListener('click', () => cropModal.classList.add('hidden'));
+
+    cropContainer.addEventListener('mousedown', (e) => {
+      isDrawing = true;
+      const rect = cropTargetImage.getBoundingClientRect();
+      startX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      startY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+
+      cropSelectionBox.style.left = `${startX}px`;
+      cropSelectionBox.style.top = `${startY}px`;
+      cropSelectionBox.style.width = '0px';
+      cropSelectionBox.style.height = '0px';
+      cropSelectionBox.classList.remove('hidden');
+      applyCropBtn.disabled = true;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDrawing) return;
+      const rect = cropTargetImage.getBoundingClientRect();
+      const currentX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const currentY = Math.max(0, Math.min(e.clientY - rect.top, rect.height));
+
+      const x = Math.min(startX, currentX);
+      const y = Math.min(startY, currentY);
+      const w = Math.abs(currentX - startX);
+      const h = Math.abs(currentY - startY);
+
+      cropRect = { x, y, w, h };
+      cropSelectionBox.style.left = `${x}px`;
+      cropSelectionBox.style.top = `${y}px`;
+      cropSelectionBox.style.width = `${w}px`;
+      cropSelectionBox.style.height = `${h}px`;
+
+      if (w > 20 && h > 20) {
+        applyCropBtn.disabled = false;
+        cropStatusText.textContent = `框選範圍：${Math.round(w)} × ${Math.round(h)} px`;
+      }
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isDrawing) isDrawing = false;
+    });
+
+    applyCropBtn.addEventListener('click', () => {
+      if (cropRect.w < 20 || cropRect.h < 20) return;
+      const canvas = document.createElement('canvas');
+      const scaleX = cropTargetImage.naturalWidth / cropTargetImage.width;
+      const scaleY = cropTargetImage.naturalHeight / cropTargetImage.height;
+
+      canvas.width = cropRect.w * scaleX;
+      canvas.height = cropRect.h * scaleY;
+
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(
+        cropTargetImage,
+        cropRect.x * scaleX,
+        cropRect.y * scaleY,
+        cropRect.w * scaleX,
+        cropRect.h * scaleY,
+        0, 0,
+        canvas.width,
+        canvas.height
+      );
+
+      currentImageBase64 = canvas.toDataURL('image/png');
+      imagePreview.src = currentImageBase64;
+      cropModal.classList.add('hidden');
+    });
+
+    // 6. 內建 4 大經典素養示範範例 (Demo Showcase)
+    const DEMO_COMPETENCY_DATA = {
+      demo_math: {
+        exam_title: "108課綱數學素養題組：手搖飲熱量大解密與折扣戰",
+        grade_subject: "國小五年級 數學領域",
+        scenario_title: "校慶園遊會「鮮果茶飲社」促銷活動與熱量管理",
+        scenario_story: "後庄國小五年級在校慶園遊會設立「鮮果茶飲社」，同學們為了健康與成本效益，分析了熱銷飲料「黑糖珍珠鮮奶」與「鮮檸綠茶」在不同甜度下的熱量變化（如下圖折線圖），同時店內推出促銷活動：『同價位第二杯半價，或全面消費滿 200 元折 40 元（優惠不可合併）』。請根據圖表與說明回答下列問題：",
+        has_scenario_figure: true,
+        scenario_svg: `<svg viewBox="0 0 460 230" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-lg mx-auto bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
+          <!-- 標題 -->
+          <text x="230" y="22" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">兩種飲品在不同甜度下的熱量對照圖 (大卡/kcal)</text>
+          <!-- 座標軸 -->
+          <line x1="60" y1="180" x2="430" y2="180" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="60" y1="35" x2="60" y2="180" stroke="#64748b" stroke-width="1.5"/>
+          <!-- Y軸刻度 -->
+          <text x="50" y="184" font-size="10" fill="#64748b" text-anchor="end">0</text>
+          <text x="50" y="145" font-size="10" fill="#64748b" text-anchor="end">150</text>
+          <line x1="56" y1="145" x2="430" y2="145" stroke="#f1f5f9" stroke-width="1"/>
+          <text x="50" y="110" font-size="10" fill="#64748b" text-anchor="end">300</text>
+          <line x1="56" y1="110" x2="430" y2="110" stroke="#f1f5f9" stroke-width="1"/>
+          <text x="50" y="75" font-size="10" fill="#64748b" text-anchor="end">450</text>
+          <line x1="56" y1="75" x2="430" y2="75" stroke="#f1f5f9" stroke-width="1"/>
+          <text x="50" y="42" font-size="10" fill="#64748b" text-anchor="end">600</text>
+          <!-- X軸刻度與標籤 -->
+          <text x="120" y="196" font-size="11" fill="#334155" text-anchor="middle">無糖 (0%)</text>
+          <text x="220" y="196" font-size="11" fill="#334155" text-anchor="middle">微糖 (30%)</text>
+          <text x="320" y="196" font-size="11" fill="#334155" text-anchor="middle">半糖 (50%)</text>
+          <text x="400" y="196" font-size="11" fill="#334155" text-anchor="middle">全糖 (100%)</text>
+          <!-- 數據線 1: 黑糖珍珠鮮奶 (紅色) -->
+          <polyline points="120,125 220,102 320,80 400,45" fill="none" stroke="#dc2626" stroke-width="2.5"/>
+          <circle cx="120" cy="125" r="4" fill="#dc2626"/><text x="120" y="118" font-size="9" font-weight="bold" fill="#dc2626" text-anchor="middle">240</text>
+          <circle cx="220" cy="102" r="4" fill="#dc2626"/><text x="220" y="95" font-size="9" font-weight="bold" fill="#dc2626" text-anchor="middle">330</text>
+          <circle cx="320" cy="80" r="4" fill="#dc2626"/><text x="320" y="73" font-size="9" font-weight="bold" fill="#dc2626" text-anchor="middle">420</text>
+          <circle cx="400" cy="45" r="4" fill="#dc2626"/><text x="400" y="38" font-size="9" font-weight="bold" fill="#dc2626" text-anchor="middle">580</text>
+          <!-- 數據線 2: 鮮檸綠茶 (綠色) -->
+          <polyline points="120,175 220,165 320,150 400,128" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="4,2"/>
+          <circle cx="120" cy="175" r="4" fill="#16a34a"/><text x="120" y="170" font-size="9" font-weight="bold" fill="#16a34a" text-anchor="middle">20</text>
+          <circle cx="220" cy="165" r="4" fill="#16a34a"/><text x="220" y="160" font-size="9" font-weight="bold" fill="#16a34a" text-anchor="middle">65</text>
+          <circle cx="320" cy="150" r="4" fill="#16a34a"/><text x="320" y="145" font-size="9" font-weight="bold" fill="#16a34a" text-anchor="middle">130</text>
+          <circle cx="400" cy="128" r="4" fill="#16a34a"/><text x="400" y="122" font-size="9" font-weight="bold" fill="#16a34a" text-anchor="middle">220</text>
+          <!-- 圖例 -->
+          <rect x="250" y="212" width="12" height="4" fill="#dc2626"/>
+          <text x="268" y="218" font-size="10" fill="#334155">黑糖珍珠鮮奶 (單價60元)</text>
+          <rect x="375" y="212" width="12" height="4" fill="#16a34a"/>
+          <text x="393" y="218" font-size="10" fill="#334155">鮮檸綠茶 (單價40元)</text>
+        </svg>`,
+        scenario_figure_prompt: "臺灣國小教科書黑白折線圖風格，X軸為甜度（無糖、微糖、半糖、全糖），Y軸為熱量kcal，包含兩條不同標記的折線，純白底黑線，數據清晰標註。",
+        questions: [
+          {
+            q_id: 1,
+            level: "擷取與理解 (基礎層次)",
+            title: "小華為了控制熱量，想點一杯「熱量不超過 100 大卡」的飲料，請問下列哪一種點法符合他的要求？",
+            type: "choice",
+            options: [
+              "(A) 黑糖珍珠鮮奶（無糖）",
+              "(B) 鮮檸綠茶（微糖）",
+              "(C) 鮮檸綠茶（半糖）",
+              "(D) 黑糖珍珠鮮奶（微糖）"
+            ],
+            answer: "(B) 鮮檸綠茶（微糖）",
+            solution: "查閱圖表數據：\n- 黑糖珍珠鮮奶（無糖）熱量為 240 大卡\n- 鮮檸綠茶（微糖）熱量為 65 大卡（低於 100 大卡）\n- 鮮檸綠茶（半糖）熱量為 130 大卡\n故選 (B)。",
+            rubric: "【選擇題評分】：選 (B) 得滿分 2 分；其餘 0 分。"
+          },
+          {
+            q_id: 2,
+            level: "統整與解釋 (分析層次)",
+            title: "老師帶著班上幹部去採購，共買了 4 杯「黑糖珍珠鮮奶」（每杯 60 元）。店長說明店內促銷活動方案：\n方案甲：同品項第二杯半價。\n方案乙：全店消費滿 200 元現折 40 元。\n請問哪一個方案比較省錢？相差多少元？",
+            type: "short_answer",
+            answer: "方案甲比較省錢，相差 20 元",
+            solution: "1. 方案甲（第二杯半價）：\n   4 杯分成兩組「買一杯＋第二杯半價」\n   第 1、3 杯原價 60 元；第 2、4 杯半價 30 元\n   總花費 = (60 + 30) × 2 = 180 元。\n2. 方案乙（滿 200 折 40）：\n   原價總額 = 60 × 4 = 240 元，達 200 元門檻，折 40 元\n   總花費 = 240 - 40 = 200 元。\n3. 比較：方案甲花 180 元 < 方案乙花 200 元，相差 200 - 180 = 20 元。",
+            rubric: "【評量規準】：\n- 滿分 (3分)：完整列出兩種方案的列式計算，正確指出方案甲較省錢且相差 20 元。\n- 部分給分 (2分)：計算正確但未做省錢結論，或結論正確但計算有小瑕疵。\n- 部分給分 (1分)：僅列出其中一種方案的計算。\n- 0分：空白或完全錯誤。"
+          },
+          {
+            q_id: 3,
+            level: "省思與評鑑 (素養非選題)",
+            title: "健康中心建議學童單次飲品「精緻糖所產生的額外熱量應低於 100 大卡」。小明發現黑糖珍珠鮮奶從「無糖」到「微糖」熱量增加了 90 大卡，從「微糖」到「半糖」又增加了 90 大卡。請說明：如果小明想喝黑糖珍珠鮮奶，他能選擇「半糖」嗎？請引用數據並說明理由。",
+            type: "essay",
+            answer: "不能選擇半糖。理由：半糖比無糖共增加了 180 大卡，超過建議標準 100 大卡。",
+            solution: "黑糖珍珠鮮奶無糖時已有 240 大卡（主要來自珍珠與鮮奶本身），當加入半糖時總熱量達到 420 大卡，額外添加糖增加之熱量為 420 - 240 = 180 大卡，已經超過健康中心建議的 100 大卡上限，因此不能選擇半糖，最多只能選擇微糖（增加 90 大卡）。",
+            rubric: "【非選評量規準】：\n- 滿分 (3分)：明確回答「不能」，並精準計算出半糖增加的熱量 (180大卡) 超過標準 (100大卡)，論述邏輯完整。\n- 部分給分 (2分)：回答不能且有提到熱量太高，但未精準計算差值或數據引述不完整。\n- 部分給分 (1分)：僅回答不能，缺乏數據支撐。\n- 0分：空白或觀念錯誤。"
+          }
+        ]
+      },
+      demo_science: {
+        exam_title: "108課綱自然科學探究題組：離岸風電與發電機效能分析",
+        grade_subject: "國中自然理化領域",
+        scenario_title: "臺灣海峽離岸風力發電的風速與葉片長度實驗",
+        scenario_story: "臺灣西部海岸擁有全球排名前列的優良風場。某研究小組在風洞實驗室中，模擬固定發電機轉速下，測試「風速 (m/s)」與「葉片長度 (公尺)」對「發電功率 (kW)」之影響，記錄數據如下表與特徵曲線圖：",
+        has_scenario_figure: true,
+        scenario_svg: `<svg viewBox="0 0 460 210" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-lg mx-auto bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
+          <text x="230" y="20" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">風速與發電功率關係曲線圖 (葉片半徑 40m)</text>
+          <line x1="60" y1="170" x2="430" y2="170" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="60" y1="35" x2="60" y2="170" stroke="#64748b" stroke-width="1.5"/>
+          <!-- X軸 -->
+          <text x="60" y="185" font-size="10" fill="#64748b" text-anchor="middle">0</text>
+          <text x="120" y="185" font-size="10" fill="#64748b" text-anchor="middle">3 (起動)</text>
+          <text x="220" y="185" font-size="10" fill="#64748b" text-anchor="middle">12 (額定)</text>
+          <text x="360" y="185" font-size="10" fill="#64748b" text-anchor="middle">25 (切出切斷)</text>
+          <text x="430" y="185" font-size="11" fill="#0f172a" text-anchor="start">風速(m/s)</text>
+          <!-- Y軸 -->
+          <text x="50" y="60" font-size="10" fill="#64748b" text-anchor="end">2000 (最大滿載)</text>
+          <line x1="56" y1="60" x2="360" y2="60" stroke="#f1f5f9" stroke-width="1"/>
+          <!-- 曲線 -->
+          <path d="M 60 170 L 120 170 Q 170 140 220 60 L 360 60 L 360 170" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+          <text x="175" y="105" font-size="10" fill="#2563eb" font-weight="bold">三次方上升區</text>
+          <text x="280" y="52" font-size="10" fill="#059669" font-weight="bold">恆定滿載發電區</text>
+          <text x="380" y="130" font-size="10" fill="#dc2626" font-weight="bold">停機保護區</text>
+        </svg>`,
+        scenario_figure_prompt: "臺灣國中理化教科書實驗曲線圖，橫軸為風速(m/s)，縱軸為發電功率(kW)，清楚標示起動風速、額定風速、停機保護切斷風速三個分區。",
+        questions: [
+          {
+            q_id: 1,
+            level: "擷取與理解",
+            title: "根據實驗曲線，當風速達到 25 m/s 以上時，發電功率驟降至 0，其最主要原因為何？",
+            type: "choice",
+            options: [
+              "(A) 海風水分過多導致短路",
+              "(B) 啟動防颱保護機制，強制葉片順槳停機",
+              "(C) 發電機轉速過快導致空氣摩擦力消失",
+              "(D) 風速過快造成風車倒轉"
+            ],
+            answer: "(B) 啟動防颱保護機制，強制葉片順槳停機",
+            solution: "風速超過 25 m/s（切出風速）時，為避免強風破壞機械結構，系統會自動將葉片順槳剎車停機，故選 (B)。",
+            rubric: "【評分】：正確選 (B) 得 2 分，其餘 0 分。"
+          },
+          {
+            q_id: 2,
+            level: "探究與實作設計",
+            title: "小組若想探究「葉片長度對發電功率的影響」，在設計實驗時：\n(1) 操縱變因（獨立變數）為何？\n(2) 應至少控制哪兩項控制變因保持不變？",
+            type: "short_answer",
+            answer: "(1) 操縱變因：葉片長度；(2) 控制變因：風速、葉片材質（或風向角度、發電機轉速等）。",
+            solution: "(1) 想探究的因即為操縱變因：葉片長度。\n(2) 控制變因必須保持固定，如環境風速大小、入風角度、葉片傾角及發電機轉速。",
+            rubric: "【評分規準】：完整寫出操縱變因得 1 分，寫出兩項合理控制變因得 2 分，共 3 分。"
+          }
+        ]
+      },
+      demo_social: {
+        exam_title: "108課綱社會素養題組：大眾捷運與在地生活圈發展",
+        grade_subject: "國中小 社會領域",
+        scenario_title: "捷運路網拓展與城市生活圈的轉型",
+        scenario_story: "某都會區規劃興建捷運藍線與綠線，連結舊城區商圈與新創高鐵園區。小華一家住在「幸福新村」站，週六計畫前往「文創園區」參觀展覽。根據捷運票價表（基本里程 20 元，每超過 3 公里加收 5 元）與營運路線圖，請評估小華一家的交通行程選擇：",
+        has_scenario_figure: true,
+        scenario_svg: `<svg viewBox="0 0 460 180" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-lg mx-auto bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
+          <text x="230" y="20" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">捷運路網示意圖</text>
+          <!-- 藍線 -->
+          <line x1="40" y1="80" x2="420" y2="80" stroke="#2563eb" stroke-width="6"/>
+          <text x="400" y="70" font-size="10" font-weight="bold" fill="#2563eb">藍線</text>
+          <!-- 綠線 -->
+          <line x1="230" y1="35" x2="230" y2="160" stroke="#059669" stroke-width="6"/>
+          <text x="240" y="45" font-size="10" font-weight="bold" fill="#059669">綠線</text>
+          <!-- 車站節點 -->
+          <circle cx="80" cy="80" r="7" fill="#ffffff" stroke="#2563eb" stroke-width="3"/>
+          <text x="80" y="102" font-size="10" font-weight="bold" fill="#334155" text-anchor="middle">幸福新村 (起點)</text>
+          <!-- 轉乘站 -->
+          <circle cx="230" cy="80" r="9" fill="#ffffff" stroke="#d97706" stroke-width="3.5"/>
+          <text x="230" y="102" font-size="10" font-weight="bold" fill="#d97706" text-anchor="middle">中央車站 (轉乘)</text>
+          <!-- 目標站 -->
+          <circle cx="230" cy="140" r="7" fill="#ffffff" stroke="#059669" stroke-width="3"/>
+          <text x="245" y="145" font-size="10" font-weight="bold" fill="#334155">文創園區 (目的地)</text>
+          <!-- 距離標註 -->
+          <text x="155" y="72" font-size="9" fill="#64748b" text-anchor="middle">行車距離 6 公里</text>
+          <text x="275" y="115" font-size="9" fill="#64748b" text-anchor="start">行車距離 4 公里</text>
+        </svg>`,
+        scenario_figure_prompt: "臺灣教科書風格的簡約捷運路線示意圖，清楚標示藍線、綠線、幸福新村站、中央轉乘站與文創園區站，純白底黑字與簡潔線條。",
+        questions: [
+          {
+            q_id: 1,
+            level: "擷取與檢索",
+            title: "小華從「幸福新村」出發到達「文創園區」，總搭乘距離為多少公里？需要在哪一站換車？",
+            type: "choice",
+            options: [
+              "(A) 10 公里，在中央車站換車",
+              "(B) 6 公里，不用換車直達",
+              "(C) 14 公里，在文創園區換車",
+              "(D) 8 公里，在高鐵站換車"
+            ],
+            answer: "(A) 10 公里，在中央車站換車",
+            solution: "從幸福新村搭藍線至中央車站 (6公里)，再轉乘綠線至文創園區 (4公里)，總距離 6 + 4 = 10 公里，故選 (A)。",
+            rubric: "選 (A) 得 2 分，其餘 0 分。"
+          }
+        ]
+      },
+      demo_reading: {
+        exam_title: "108課綱跨領域閱讀素養：假訊息查核與深偽科技 (Deepfake)",
+        grade_subject: "國中小 語文與科技跨領域",
+        scenario_title: "AI 換臉與深偽影片的辨識四部曲",
+        scenario_story: "近年來生成式 AI 快速發展，利用「深偽技術 (Deepfake)」假冒名人、政治人物或親友聲音進行詐騙的案件頻傳。事實查核中心公布了一份「深偽影音辨識指南」：一、注意眨眼頻率是否過低；二、觀察臉頰輪廓邊緣是否有毛邊或模糊晃動；三、留意燈光陰影角度是否不自然；四、利用以圖搜尋與權威新聞反向查證。",
+        has_scenario_figure: true,
+        scenario_svg: `<svg viewBox="0 0 460 160" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-lg mx-auto bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
+          <text x="230" y="20" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">防範深偽 (Deepfake) 查證四步驟</text>
+          <rect x="20" y="45" width="95" height="70" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="67" y="70" font-size="11" font-weight="bold" fill="#1d4ed8" text-anchor="middle">1. 仔細觀察</text>
+          <text x="67" y="92" font-size="9" fill="#475569" text-anchor="middle">眨眼與毛邊</text>
+          <!-- 箭頭 -->
+          <text x="122" y="85" font-size="14" fill="#94a3b8">→</text>
+          <rect x="135" y="45" width="95" height="70" rx="8" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5"/>
+          <text x="182" y="70" font-size="11" font-weight="bold" fill="#15803d" text-anchor="middle">2. 光影檢驗</text>
+          <text x="182" y="92" font-size="9" fill="#475569" text-anchor="middle">光源一致性</text>
+          <text x="237" y="85" font-size="14" fill="#94a3b8">→</text>
+          <rect x="250" y="45" width="95" height="70" rx="8" fill="#fefce8" stroke="#eab308" stroke-width="1.5"/>
+          <text x="297" y="70" font-size="11" font-weight="bold" fill="#a16207" text-anchor="middle">3. 聲音比對</text>
+          <text x="297" y="92" font-size="9" fill="#475569" text-anchor="middle">嘴型同步度</text>
+          <text x="352" y="85" font-size="14" fill="#94a3b8">→</text>
+          <rect x="365" y="45" width="80" height="70" rx="8" fill="#fdf2f8" stroke="#ec4899" stroke-width="1.5"/>
+          <text x="405" y="70" font-size="11" font-weight="bold" fill="#be185d" text-anchor="middle">4. 多方求證</text>
+          <text x="405" y="92" font-size="9" fill="#475569" text-anchor="middle">查核中心</text>
+        </svg>`,
+        scenario_figure_prompt: "臺灣教育用繁體中文資訊流程圖，四個圓角矩形由左至右箭頭相連，清楚展示防範深偽影音的四個查核步驟，白底黑字風格。",
+        questions: [
+          {
+            q_id: 1,
+            level: "擷取與解釋",
+            title: "根據閱讀文章，下列哪一種現象最可能是「深偽 (Deepfake) 影片」的特徵？",
+            type: "choice",
+            options: [
+              "(A) 說話過程中眨眼頻率自然且穩定",
+              "(B) 臉部邊緣在動作時出現模糊毛邊與不自然晃動",
+              "(C) 背景環境聲音與說話回音完全吻合",
+              "(D) 在官方正規電視台即時現場直播"
+            ],
+            answer: "(B) 臉部邊緣在動作時出現模糊毛邊與不自然晃動",
+            solution: "文中提到：注意眨眼頻率是否過低、觀察臉頰輪廓邊緣是否有毛邊或模糊晃動，故選 (B)。",
+            rubric: "選 (B) 得滿分 2 分。"
+          }
+        ]
+      }
+    };
+
+    // 示範範例下拉切換
+    document.getElementById('demoSelect').addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (!val || !DEMO_COMPETENCY_DATA[val]) return;
+      generatedData = DEMO_COMPETENCY_DATA[val];
+      renderAllViews();
+      viewTabs.classList.remove('hidden');
+      switchMode('diff');
+      alert(`已成功載入【${generatedData.exam_title}】經典生活素養題組範例！`);
+    });
+
+    // 7. 呼叫 Gemini 生成 108 課綱生活素養題組
+    generateBtn.addEventListener('click', () => triggerGeneration(false));
+    generateFromTextBtn.addEventListener('click', () => triggerGeneration(true));
+
+    async function triggerGeneration(isPureText = false) {
+      if (!isPureText && !currentImageBase64) {
+        alert('請先上傳或貼上題目/教材圖片，或切換至「模式二：主題情境出題」！');
+        return;
+      }
+      if (isPureText && !document.getElementById('textConceptInput').value.trim()) {
+        alert('請輸入核心學習概念或教材重點！');
+        return;
+      }
+
+      const apiKey = getRandomApiKey();
+      if (!apiKey) {
+        keyModal.classList.remove('hidden');
+        alert('請先設定至少一組 Gemini API Key，或點擊上方「免 Key 通用 Prompt」複製指令直接貼給 AI 網頁版！');
+        return;
+      }
+
+      const model = modelSelect.value || 'gemini-2.5-flash';
+      loadingIndicator.classList.remove('hidden');
+      loadingStepText.textContent = 'AI 正在分析學習目標與架構生活情境長文...';
+
+      try {
+        const payload = buildPromptPayload(isPureText);
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const candidate = data.candidates?.[0];
+        if (!candidate || !candidate.content?.parts?.[0]?.text) {
+          throw new Error('AI 未返回有效內容，請重試或切換模型。');
+        }
+
+        let jsonText = candidate.content.parts[0].text;
+        jsonText = jsonText.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+
+        const parsed = JSON.parse(jsonText);
+        if (!parsed.questions || !Array.isArray(parsed.questions)) {
+          throw new Error('回傳 JSON 格式不符合素養題規範，請再試一次。');
+        }
+
+        generatedData = parsed;
+        renderAllViews();
+        viewTabs.classList.remove('hidden');
+        switchMode('diff');
+        window.scrollTo({ top: diffView.offsetTop - 80, behavior: 'smooth' });
+
+      } catch (err) {
+        console.error('生成失敗:', err);
+        alert('生成素養題失敗：' + err.message + '\n\n提示：若遭遇配額限制，可加入更多組 API Key 輪替，或使用「免 Key 通用 Prompt」！');
+      } finally {
+        loadingIndicator.classList.add('hidden');
+      }
+    }
+
+    function buildPromptPayload(isPureText) {
+      const subject = isPureText ? document.getElementById('textSubjectSelect').value : document.getElementById('subjectSelect').value;
+      const grade = isPureText ? document.getElementById('textGradeSelect').value : document.getElementById('gradeSelect').value;
+      const scenarioPref = isPureText ? document.getElementById('customScenarioInput').value : document.getElementById('scenarioSelect').value;
+      const conceptText = isPureText ? document.getElementById('textConceptInput').value : '';
+
+      const systemPrompt = `你是一位深諳臺灣 108 課綱核心素養導向命題的大學教授與國中小輔導團命題主委。
+你的任務是將輸入的傳統死板考題/課本內容，升級轉化為一份標準的【108 課綱素養導向情境題組】。
+
+【語言強制規範（極重要）】
+★ 全程 100% 使用「臺灣繁體中文 (Traditional Chinese, zh-TW)」，嚴禁簡體字。
+★ 所有專有名詞必須嚴格遵循臺灣教育部課綱標準審訂詞彙（如「質數」非「素數」、「方程式」非「方程組」、「莫耳濃度」非「摩爾濃度」、「粒線體」非「線粒體」等）。
+
+【108 課綱素養題命題最高原則】
+1. 真實生活或探究情境 (Context)：情境長文約 150~300 字，貼近臺灣學童生活經驗（超商、在地商圈、綠能減碳、地圖路網、營養健康等），數據合乎常理。
+2. 跨文本與資訊圖表 (Information Representation)：必須包含一份資訊圖表，請直接以標準 SVG 向量代碼輸出（白底黑線黑字或簡潔高對比設計，寬高 viewBox 建議 460x220，文字清晰無雜訊），若原題無圖表請根據情境設計一份圖表（折線圖、長條圖、地圖、表格或流程圖）。
+3. 循序漸進的題組設計 (2~3 題)：
+   - 第 1 題：訊息擷取與檢索（選擇題，四選一，選項長度相仿）。
+   - 第 2 題：統整解釋與分析運算（簡答題或計算題，檢驗觀念本質）。
+   - 第 3 題：省思評鑑或實作探究（非選擇題/論述題，要求學生引用圖表數據進行推論與決策）。
+4. 專業評量規準 (Rubrics)：每題（特別是非選題）必須提供清楚的「滿分 3分/2分/1分/0分」客觀給分規準。
+
+請【僅輸出純 JSON】格式，不要包含任何 markdown 標記（如 \`\`\`json）：
+{
+  "exam_title": "108課綱素養導向評量試卷標題",
+  "grade_subject": "${grade} ${subject}",
+  "scenario_title": "情境大標題",
+  "scenario_story": "生活情境閱讀長文（150~300字）",
+  "has_scenario_figure": true,
+  "scenario_svg": "<svg viewBox=\\"0 0 460 220\\" xmlns=\\"http://www.w3.org/2000/svg\\" ...>...</svg>",
+  "scenario_figure_prompt": "繁體中文黑白線條教材配圖提示詞，供老師一鍵複製到 AI 生圖",
+  "questions": [
+    {
+      "q_id": 1,
+      "level": "擷取與檢索",
+      "title": "題目文字敘述",
+      "type": "choice",
+      "options": ["(A) ...", "(B) ...", "(C) ...", "(D) ..."],
+      "answer": "(A) ...",
+      "solution": "詳細推導與解題步驟",
+      "rubric": "評分規準說明"
+    },
+    {
+      "q_id": 2,
+      "level": "統整與解釋",
+      "title": "題目文字敘述",
+      "type": "short_answer",
+      "answer": "標準答案",
+      "solution": "計算與思考流程",
+      "rubric": "【評量規準】：滿分/部分給分/0分"
+    },
+    {
+      "q_id": 3,
+      "level": "省思與評鑑",
+      "title": "題目文字敘述",
+      "type": "essay",
+      "answer": "參考答案範例",
+      "solution": "評鑑觀點分析",
+      "rubric": "【非選評量規準】：滿分3分條件、2分條件、1分條件、0分"
+    }
+  ]
+}`;
+
+      let userParts = [];
+      if (!isPureText && currentImageBase64) {
+        const base64Data = currentImageBase64.replace(/^data:image\/\w+;base64,/, '');
+        const mimeType = currentImageBase64.substring(currentImageBase64.indexOf(':') + 1, currentImageBase64.indexOf(';'));
+        userParts.push({
+          inline_data: {
+            mime_type: mimeType,
+            data: base64Data
+          }
+        });
+        userParts.push({
+          text: `請分析以上圖片中的學習重點與考點，針對【${grade}】【${subject}】，以情境偏好【${scenarioPref}】生成一套完整的 108 課綱素養題組。`
+        });
+      } else {
+        userParts.push({
+          text: `請根據核心概念：【${conceptText}】，針對【${grade}】【${subject}】，以情境【${scenarioPref}】命製一套完整的 108 課綱生活情境素養題組。`
+        });
+      }
+
+      return {
+        contents: [{ role: "user", parts: userParts }],
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        generationConfig: {
+          response_mime_type: "application/json",
+          temperature: 0.3
+        }
+      };
+    }
+
+    // 8. 視圖渲染核心
+    function renderAllViews() {
+      if (!generatedData) return;
+      renderDiffView();
+      renderPaperView();
+    }
+
+    // 渲染卡片式審題檢視
+    function renderDiffView() {
+      scenarioBannerCard.innerHTML = `
+        <div class="flex items-center justify-between border-b border-amber-100 pb-3 flex-wrap gap-2">
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500 text-white">素養情境長文</span>
+            <h3 class="font-bold text-base text-slate-800" contenteditable="true" onblur="generatedData.scenario_title = this.innerText">${escapeHtml(generatedData.scenario_title)}</h3>
+          </div>
+          <span class="text-xs text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full font-medium">${escapeHtml(generatedData.grade_subject || '')}</span>
+        </div>
+
+        <p class="text-sm text-slate-700 leading-relaxed bg-amber-50/30 p-4 rounded-2xl border border-amber-100/60" contenteditable="true" onblur="generatedData.scenario_story = this.innerText">
+          ${escapeHtml(generatedData.scenario_story)}
+        </p>
+
+        ${generatedData.has_scenario_figure && generatedData.scenario_svg ? `
+          <div class="pt-2 text-center">
+            <div class="inline-block border border-slate-200 bg-white rounded-2xl p-3 shadow-xs">
+              ${generatedData.scenario_svg}
+            </div>
+            ${generatedData.scenario_figure_prompt ? `
+              <div class="mt-2 flex items-center justify-center gap-2">
+                <span class="text-[11px] text-slate-500">配圖繁中指令：</span>
+                <button onclick="navigator.clipboard.writeText('${escapeJsString(generatedData.scenario_figure_prompt)}'); alert('✅ 已複製情境圖生圖提示詞！');" class="text-xs text-amber-700 hover:text-amber-900 bg-amber-100/80 px-2.5 py-1 rounded-lg font-medium transition flex items-center gap-1">
+                  <i class="ph-bold ph-copy"></i> 複製提示詞
+                </button>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+      `;
+
+      questionsContainer.innerHTML = '';
+      generatedData.questions.forEach((q, idx) => {
+        const isChoice = q.type === 'choice' && q.options && q.options.length > 0;
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-3xl p-6 shadow-sm border border-slate-200 space-y-4';
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 flex-wrap gap-2">
+            <div class="flex items-center gap-2">
+              <span class="w-7 h-7 rounded-xl bg-slate-800 text-white font-bold text-xs flex items-center justify-center">${idx + 1}</span>
+              <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">${escapeHtml(q.level || '素養題')}</span>
+            </div>
+            <span class="text-xs text-slate-400 font-mono">第 ${idx + 1} 小題</span>
+          </div>
+
+          <!-- 題目文字 -->
+          <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">題目文字（點擊可直接修改）：</label>
+            <div class="text-sm font-semibold text-slate-800 leading-relaxed outline-none focus:bg-amber-50/50 p-2 rounded-xl transition" contenteditable="true" onblur="generatedData.questions[${idx}].title = this.innerText">
+              ${escapeHtml(q.title)}
+            </div>
+          </div>
+
+          <!-- 選項 (若為選擇題) -->
+          ${isChoice ? `
+            <div class="pl-4 space-y-1.5 text-xs text-slate-700">
+              ${q.options.map((opt, oIdx) => `
+                <div contenteditable="true" onblur="generatedData.questions[${idx}].options[${oIdx}] = this.innerText" class="outline-none focus:bg-amber-50 p-1 rounded">
+                  ${escapeHtml(opt)}
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+
+          <!-- 答案與解析 -->
+          <div class="p-3.5 bg-emerald-50/60 rounded-2xl border border-emerald-100 text-xs space-y-1.5">
+            <div class="font-bold text-emerald-900 flex items-center gap-1.5">
+              <i class="ph-bold ph-check-circle text-emerald-600"></i>
+              參考答案：<span contenteditable="true" onblur="generatedData.questions[${idx}].answer = this.innerText" class="text-emerald-800 underline ml-1">${escapeHtml(q.answer)}</span>
+            </div>
+            <div class="text-slate-600 leading-relaxed" contenteditable="true" onblur="generatedData.questions[${idx}].solution = this.innerText">
+              <strong>【解析】</strong> ${escapeHtml(q.solution)}
+            </div>
+          </div>
+
+          <!-- 評量規準 (Rubric) -->
+          ${q.rubric ? `
+            <div class="p-3.5 bg-amber-50/60 rounded-2xl border border-amber-200 text-xs space-y-1 text-slate-700">
+              <div class="font-bold text-amber-900 flex items-center gap-1">
+                <i class="ph-bold ph-list-checks text-amber-600"></i>
+                評分標準與給分規準 (Rubrics)：
+              </div>
+              <div class="leading-relaxed whitespace-pre-wrap font-mono text-[11px]" contenteditable="true" onblur="generatedData.questions[${idx}].rubric = this.innerText">${escapeHtml(q.rubric)}</div>
+            </div>
+          ` : ''}
+        `;
+        questionsContainer.appendChild(card);
+      });
+    }
+
+    // 渲染正式考卷檢視 (學生卷 / 教師卷)
+    function renderPaperView() {
+      if (!generatedData) return;
+
+      document.getElementById('paperSchoolName').innerText = generatedData.exam_title || '108課綱素養導向評量試卷';
+
+      // 情境長文與圖表
+      const paperScenarioSection = document.getElementById('paperScenarioSection');
+      paperScenarioSection.innerHTML = `
+        <div class="font-bold text-base text-slate-900 mb-2">【素養題組情境】${escapeHtml(generatedData.scenario_title)}</div>
+        <div class="text-xs sm:text-sm text-slate-800 leading-relaxed mb-4 text-justify font-serif">
+          ${escapeHtml(generatedData.scenario_story)}
+        </div>
+        ${generatedData.has_scenario_figure && generatedData.scenario_svg ? `
+          <div class="text-center my-3">
+            <div class="inline-block max-w-full">
+              ${generatedData.scenario_svg}
+            </div>
+          </div>
+        ` : ''}
+      `;
+
+      // 小題清單
+      const paperContainer = document.getElementById('paperQuestionsContainer');
+      const isTeacher = currentMode === 'teacher';
+
+      // 支援雙欄樣式切換
+      const isTwoColumn = paperContainer.classList.contains('two-column-exam');
+
+      paperContainer.innerHTML = '';
+      generatedData.questions.forEach((q, idx) => {
+        const item = document.createElement('div');
+        item.className = `paper-item ${isTwoColumn ? 'mb-4' : 'mb-6'} text-xs sm:text-sm text-slate-900 leading-relaxed font-serif`;
+        const isChoice = q.type === 'choice' && q.options && q.options.length > 0;
+
+        item.innerHTML = `
+          <div class="font-bold mb-1.5 flex items-start gap-1">
+            <span>(${idx + 1})</span>
+            <span>${escapeHtml(q.title)}</span>
+          </div>
+
+          ${isChoice ? `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 my-2 ml-4">
+              ${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}
+            </div>
+          ` : `
+            <div class="my-2 p-3 bg-slate-50 border border-dashed border-slate-300 rounded-lg text-slate-400 text-xs min-h-[48px]">
+              【作答區 / 計算過程】：
+            </div>
+          `}
+
+          ${isTeacher ? `
+            <div class="mt-3 p-3 bg-slate-50 border-l-4 border-emerald-500 rounded text-xs space-y-1 text-slate-800">
+              <div class="font-bold text-emerald-800">正確答案：${escapeHtml(q.answer)}</div>
+              <div><strong>【解析】：</strong>${escapeHtml(q.solution)}</div>
+              ${q.rubric ? `<div class="pt-1 text-slate-600 font-mono text-[11px]"><strong>【評分規準】：</strong><br/>${escapeHtml(q.rubric)}</div>` : ''}
+            </div>
+          ` : ''}
+        `;
+        paperContainer.appendChild(item);
+      });
+    }
+
+    // 模式切換邏輯 (審題 / 學生卷 / 教師卷)
+    tabDiff.addEventListener('click', () => switchMode('diff'));
+    tabStudent.addEventListener('click', () => switchMode('student'));
+    tabTeacher.addEventListener('click', () => switchMode('teacher'));
+
+    function switchMode(mode) {
+      currentMode = mode;
+      [tabDiff, tabStudent, tabTeacher].forEach(tab => {
+        tab.className = 'px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition flex items-center gap-1.5';
+      });
+
+      if (mode === 'diff') {
+        tabDiff.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white shadow-sm transition flex items-center gap-1.5';
+        diffView.classList.remove('hidden');
+        paperView.classList.add('hidden');
+      } else if (mode === 'student') {
+        tabStudent.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white shadow-sm transition flex items-center gap-1.5';
+        diffView.classList.add('hidden');
+        paperView.classList.remove('hidden');
+        renderPaperView();
+      } else if (mode === 'teacher') {
+        tabTeacher.className = 'px-4 py-2 rounded-xl text-sm font-bold bg-emerald-600 text-white shadow-sm transition flex items-center gap-1.5';
+        diffView.classList.add('hidden');
+        paperView.classList.remove('hidden');
+        renderPaperView();
+      }
+    }
+
+    // 排版模式切換 (雙欄 / 單欄)
+    toggleLayoutBtn.addEventListener('click', () => {
+      const container = document.getElementById('paperQuestionsContainer');
+      const isTwo = container.classList.toggle('two-column-exam');
+      layoutText.textContent = isTwo ? '單欄大字版' : '書商雙欄考卷風';
+      renderPaperView();
+    });
+
+    // 複製所有配圖提示詞
+    copyAllPromptsBtn.addEventListener('click', () => {
+      if (!generatedData) return;
+      let text = `【${generatedData.exam_title || '素養題組'} 配圖生圖提示詞清單】\n\n`;
+      if (generatedData.scenario_figure_prompt) {
+        text += `[情境大圖]：${generatedData.scenario_figure_prompt}\n\n`;
+      }
+      navigator.clipboard.writeText(text).then(() => {
+        alert('✅ 已複製素養題配圖提示詞到剪貼簿！可直接貼給 AI 繪圖工具生成圖檔。');
+      }).catch(() => {
+        alert('複製失敗，請手動複製。');
+      });
+    });
+
+    // 9. Word 匯出功能 (Base64 內嵌 SVG/圖片)
+    async function convertSvgToPngDataUrl(svgString) {
+      return new Promise((resolve) => {
+        try {
+          const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+          const URL = window.URL || window.webkitURL || window;
+          const blobURL = URL.createObjectURL(svgBlob);
+          const image = new Image();
+          image.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.width || 500;
+            canvas.height = image.height || 250;
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#FFFFFF';
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(image, 0, 0);
+            const pngData = canvas.toDataURL('image/png');
+            URL.revokeObjectURL(blobURL);
+            resolve(pngData);
+          };
+          image.onerror = () => {
+            URL.revokeObjectURL(blobURL);
+            resolve(null);
+          };
+          image.src = blobURL;
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function generateWordHtmlDocument() {
+      if (!generatedData) return null;
+      const title = generatedData.exam_title || '108課綱素養導向試題';
+      
+      let scenarioImgTag = '';
+      if (generatedData.has_scenario_figure && generatedData.scenario_svg) {
+        const pngSrc = await convertSvgToPngDataUrl(generatedData.scenario_svg);
+        if (pngSrc) {
+          scenarioImgTag = `<div style="text-align:center; margin: 12pt 0;"><img src="${pngSrc}" style="max-width: 360pt; border: 1pt solid #ccc;" /></div>`;
+        }
+      }
+
+      let html = `
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>${escapeHtml(title)}</title>
+<style>
+  body { font-family: "微軟正黑體", "Noto Sans TC", sans-serif; font-size: 11pt; line-height: 1.5; color: #000; margin: 20mm; }
+  h1 { font-size: 16pt; font-weight: bold; text-align: center; margin-bottom: 6pt; }
+  .scenario-box { background-color: #f8fafc; border: 1pt solid #cbd5e1; padding: 10pt; margin-bottom: 16pt; }
+  .q-item { margin-bottom: 16pt; page-break-inside: avoid; }
+  .q-title { font-weight: bold; margin-bottom: 4pt; }
+  .ans-box { background-color: #ecfdf5; border: 1pt solid #a7f3d0; padding: 6pt 10pt; margin-top: 6pt; font-size: 10pt; }
+</style>
+</head>
+<body>
+<h1>${escapeHtml(title)}</h1>
+<p style="text-align:center; font-size: 10.5pt;">班級：_______ 座號：____ 姓名：_______ 得分：_______</p>
+<hr/>
+<div class="scenario-box">
+  <div style="font-weight:bold; font-size: 12pt; margin-bottom: 4pt;">【情境文本】${escapeHtml(generatedData.scenario_title)}</div>
+  <div>${escapeHtml(generatedData.scenario_story)}</div>
+  ${scenarioImgTag}
+</div>
+`;
+
+      generatedData.questions.forEach((q, idx) => {
+        const isChoice = q.type === 'choice' && q.options && q.options.length > 0;
+        html += `
+<div class="q-item">
+  <div class="q-title">(${idx + 1}) [${escapeHtml(q.level || '素養題')}] ${escapeHtml(q.title)}</div>
+  ${isChoice ? `
+    <div style="margin-left: 16pt; margin-top: 4pt;">
+      ${q.options.map(opt => `<div>${escapeHtml(opt)}</div>`).join('')}
+    </div>
+  ` : `
+    <div style="border: 1pt dashed #94a3b8; height: 50pt; margin-top: 6pt; padding: 4pt; color: #94a3b8; font-size: 9pt;">【作答與計算區】</div>
+  `}
+</div>`;
+      });
+
+      // 教師解答與評分標準
+      html += `
+<br/><br/>
+<div style="page-break-before: always;"></div>
+<h2 style="text-align: center; border-bottom: 1.5pt solid #333; padding-bottom: 6pt;">【參考答案與評分規準 (Rubrics)】</h2>
+`;
+      generatedData.questions.forEach((q, idx) => {
+        html += `
+<div class="q-item">
+  <div><strong>第 (${idx + 1}) 題：</strong> 正確答案：<strong style="color: #047857;">${escapeHtml(q.answer || '')}</strong></div>
+  <div class="ans-box">
+    <strong>【詳解】</strong><br/>${escapeHtml(q.solution || '')}<br/><br/>
+    <strong>【評分規準】</strong><br/>${escapeHtml(q.rubric || '')}
+  </div>
+</div>`;
+      });
+
+      html += `</body></html>`;
+      return html;
+    }
+
+    copyWordBtn.addEventListener('click', async () => {
+      if (!generatedData) {
+        alert('請先生成或載入素養題組！');
+        return;
+      }
+      const origText = copyWordBtn.innerHTML;
+      copyWordBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> 處理圖片中...';
+
+      try {
+        const docHtml = await generateWordHtmlDocument();
+        const blobHtml = new Blob([docHtml], { type: 'text/html' });
+        const blobText = new Blob([generatedData.scenario_story], { type: 'text/plain' });
+
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'text/html': blobHtml,
+            'text/plain': blobText
+          })
+        ]);
+        alert('✅ 已複製素養題卷（包含圖表與評分規準）到剪貼簿！請直接至 Word 按 Ctrl + V 貼上！');
+      } catch (err) {
+        alert('剪貼簿複製受限，請點擊旁邊「下載 Word 檔」按鈕！');
+      } finally {
+        copyWordBtn.innerHTML = origText;
+      }
+    });
+
+    downloadWordBtn.addEventListener('click', async () => {
+      if (!generatedData) {
+        alert('請先生成或載入素養題組！');
+        return;
+      }
+      const origText = downloadWordBtn.innerHTML;
+      downloadWordBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> 下載中...';
+
+      try {
+        const docHtml = await generateWordHtmlDocument();
+        const title = generatedData.exam_title || '108課綱素養試題';
+        const blob = new Blob(['\ufeff' + docHtml], { type: 'application/msword;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title}.doc`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert('下載 Word 失敗：' + err.message);
+      } finally {
+        downloadWordBtn.innerHTML = origText;
+      }
+    });
+
+    // 10. 免 API Key 108 課綱通用素養出題 Prompt 資料庫
+    const PROMPT_TEMPLATES = {
+      general: `你是一位深諳臺灣 108 課綱核心素養導向命題的大學教授與國中小輔導團首席諮詢委員。請依據我接下來提供的【學習概念/教材文字/照片】，命製一份高品質的【108 課綱素養導向情境題組】。
+
+【語言強制規範（極重要）】
+★ 全程必須「100% 使用臺灣繁體中文 (Traditional Chinese, zh-TW)」，嚴禁任何簡體中文或中國大陸用語。
+★ 專有名詞必須嚴格遵循臺灣教育部課綱審訂標準術語（如「質數」非「素數」、「方程式」非「方程組」、「資訊」非「信息」、「程式」非「程序」等），確保臺灣教師複製後可直接修改出題！
+
+【108 課綱素養命題架構】
+一、真實生活情境長文 (約 200~300 字)：
+   - 融入臺灣學生生活脈絡（如捷運公車時刻、超商夜市折扣、健康餐盤卡路里、碳足跡與綠能發電等）。
+二、資訊圖表與視覺化：
+   - 請提供清晰的【圖表結構描述】與【黑白向量教材插圖 AI 生圖提示詞（臺灣繁中）】。
+三、階梯式循序題組 (共 3 題)：
+   - 第 1 題：【擷取與檢索】（選擇題，針對圖表或文本基本數據）。
+   - 第 2 題：【統整與解釋】（簡答或計算題，跨圖表比較因果）。
+   - 第 3 題：【省思與評鑑 / 素養實作】（非選擇論述題，要求學生依據數據提出建議或論證判斷）。
+四、評量規準 (Rubrics)：
+   - 針對第 2 題與第 3 題提供「滿分 3分 / 部分給分 2分 / 部分給分 1分 / 0分」的明確客觀評分要點。
+
+請確認完全理解，待我傳入題目或學習單元後，請直接產出標準素養題組與評量規準！`,
+
+      math: `你是一位專精臺灣教育部 108 課綱國中小數學素養命題的輔導團名師。請為我命製一份【數學領域 生活情境素養題組】。
+
+【語言強制規範（極重要）】
+★ 全程 100% 使用臺灣繁體中文 (Traditional Chinese, zh-TW)，嚴禁簡體字。
+★ 數學名詞嚴格依照臺灣教育部審訂標準術語（如：「質數」、「因數與倍數」、「正方體/長方體」、「方程式」、「聯立」等），方便臺灣數學老師直接排版與出卷！
+
+【數學素養命題原則】
+1. 情境非虛設：數學計算必須與生活情境緊密結合（如打折優惠比較、工程預算、高鐵時刻表換算、包裝紙箱表面積利用等），數值合乎常理且易於計算。
+2. 圖表判讀：設計一份折線圖、長條圖、平面示意圖或發票票券，並附上【圖表結構說明】與【黑白線稿生圖 Prompt】。
+3. 三層次題組：
+   - 第 1 題：讀圖獲取數據（選擇題）。
+   - 第 2 題：數理列式與多步驟運算（計算題）。
+   - 第 3 題：數學建模與生活決策（非選題，如『哪種方案划算？為什麼？』）。
+4. 詳細解答與 Rubrics 給分規準。
+
+請準備好，待我提供數學單元後以臺灣繁體中文開始命題！`,
+
+      science: `你是一位深諳臺灣 108 課綱自然科學領域（探究與實作）命題的名師。請為我命製一份【自然科學 探究導向素養題組】。
+
+【語言強制規範（極重要）】
+★ 全程 100% 使用臺灣繁體中文 (Traditional Chinese, zh-TW)。
+★ 科學名詞依照臺灣課綱（如：「酸鹼中和」、「氧化還原」、「莫耳濃度」非「摩爾」、「歐姆定律」、「大氣壓力」等）。
+
+【探究素養命題原則】
+1. 科學探究情境：設計一組實驗情境（如水質檢測、不同材質保溫效果、電路串並聯耗電、酵素催化反應速率）。
+2. 提供實驗數據表或曲線圖結構，並附【黑白實驗圖生圖提示詞】。
+3. 題組設計：
+   - 第 1 題：辨識操縱變因、應變變因與控制變因。
+   - 第 2 題：數據趨勢分析與推論。
+   - 第 3 題：實驗批判與改進建議（非選題）。
+4. 附客觀給分 Rubrics。
+
+請準備好，待我傳入科學單元後立即出題！`,
+
+      social: `你是一位精通臺灣 108 課綱社會領域（公民、歷史、地理）跨學科素養命題專家。請為我命製一份【社會領域 核心素養情境題組】。
+
+【語言強制規範（極重要）】
+★ 全程 100% 使用臺灣繁體中文 (Traditional Chinese, zh-TW)。
+★ 史地公名詞符合臺灣審訂課本（如「荷西/鄭氏/清領/日治時期」、「公民權」、「機會成本」、「供給與需求曲線」等）。
+
+【社會素養命題原則】
+1. 在地與全球公民情境：以臺灣在地創生、氣候變遷因應、公共政策參與或史料辨析為情境。
+2. 附地圖、統計圖或史料表格之結構描述與生圖提示詞。
+3. 題組由淺入深：資訊擷取 ➔ 歷史因果/地理成因探討 ➔ 公民思辨與公共行動論述。
+4. 完整評量規準。
+
+請待我提供主題後立即以繁體中文開展命題！`,
+
+      reading: `你是一位專精臺灣 108 課綱國語文與跨領域閱讀素養（PISA 閱讀歷程評量）的命題名師。請為我命製一份【閱讀理解與思辨素養題組】。
+
+【語言強制規範（極重要）】
+★ 全程 100% 使用臺灣教育部標準繁體國字與審訂音 (zh-TW)，嚴禁簡體字。
+
+【閱讀素養命題原則】
+1. 跨文本或多重資訊文本：設計一段結合科普、社會或時事議題的閱讀長文（如 AI 科技倫理、海洋塑膠微粒、假訊息媒體識讀）。
+2. 搭配流程圖、資訊圖卡或數據表。
+3. 題組涵蓋 PIRLS/PISA 三大認知歷程：
+   - 歷程一：擷取具體訊息。
+   - 歷程二：發展解釋與統整主旨。
+   - 歷程三：反思文本內容與批判形式（論述題）。
+4. 提供詳細評分規準 (Rubrics)。
+
+請待我提供文章或概念後開始！`,
+
+      english: `你是一位精通臺灣 108 課綱英語文素養導向命題的名師。請為我命製一份【英語文 生活情境閱讀題組】。
+
+【語言強制規範（極重要）】
+★ 考題與文本為英文，但所有【中文翻譯、文法解析、教學指引與評分規準】，必須 100% 使用臺灣繁體中文 (zh-TW)。
+
+【英語素養命題原則】
+1. Authentic Context：生活真實情境英文（如社群貼文、英文旅遊手冊、活動傳單、Email 或菜單）。
+2. 題組包含細節檢索、主旨推論及代名詞指涉。
+3. 提供道地臺灣繁體中文解答與解析。
+
+Ready for my topic or text!`,
+    };
+
+    let currentPromptSubject = 'general';
+
+    window.openPromptModal = function() {
+      const modal = document.getElementById('promptModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        setPromptSubject(currentPromptSubject || 'general');
+      }
+    };
+
+    window.setPromptSubject = function(sub) {
+      if (!PROMPT_TEMPLATES[sub]) sub = 'general';
+      currentPromptSubject = sub;
+      const textarea = document.getElementById('universalPromptTextarea');
+      if (textarea) textarea.value = PROMPT_TEMPLATES[sub];
+
+      document.querySelectorAll('.prompt-tab').forEach(btn => {
+        const isCur = btn.getAttribute('data-sub') === sub;
+        btn.className = isCur ? 'prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-xs' : 'prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200';
+      });
+    };
+
+    window.copyUniversalPrompt = async function() {
+      const textarea = document.getElementById('universalPromptTextarea');
+      if (!textarea) return;
+      const text = textarea.value;
+      const copyBtn = document.getElementById('copyPromptModalBtn');
+      const origHtml = copyBtn ? copyBtn.innerHTML : '';
+
+      try {
+        await navigator.clipboard.writeText(text);
+        if (copyBtn) {
+          copyBtn.innerHTML = '<i class="ph-bold ph-check"></i><span>✅ 已複製！可直接貼給 AI</span>';
+          copyBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+          copyBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+          setTimeout(() => {
+            copyBtn.innerHTML = origHtml;
+            copyBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+            copyBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+          }, 2000);
+        }
+      } catch (err) {
+        textarea.select();
+        document.execCommand('copy');
+        alert('✅ 已複製通用素養 Prompt！請直接貼到 ChatGPT / Claude / Gemini 網頁版。');
+      }
+    };
+
+    // 工具函式
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>'"]/g, 
+        tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+      );
+    }
+
+    function escapeJsString(str) {
+      if (!str) return '';
+      return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+    }
+  </script>
+</body>
+</html>
