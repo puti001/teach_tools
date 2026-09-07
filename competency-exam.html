@@ -96,8 +96,10 @@
       <!-- 示範範例下拉選單 -->
       <div class="relative hidden md:block">
         <select id="demoSelect" class="bg-amber-50/80 border border-amber-200 text-amber-900 text-xs font-bold rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-amber-300 transition cursor-pointer pr-7 appearance-none">
-          <option value="" disabled selected>✨ 點此載入經典素養範例...</option>
-          <option value="demo_math">📐 國小/國中數學：手搖飲熱量大解密與折扣戰 (雙折線圖)</option>
+          <option value="" disabled selected>✨ 點此載入各年段素養範例...</option>
+          <option value="demo_primary_low">🎒 國小低年級 (1-2年級)：小文動物園看時鐘與門票 (生活圖文·非長文)</option>
+          <option value="demo_primary_mid">🌱 國小中年級 (3-4年級)：綠豆盆栽澆水生長觀察 (簡易長條圖·精練)</option>
+          <option value="demo_math">📐 國小高年級/國中數學：手搖飲熱量大解密與折扣戰 (雙折線圖)</option>
           <option value="demo_science">⚡ 自然理化：綠能風力發電機組效能探究 (實驗數據圖)</option>
           <option value="demo_social">🗺️ 社會領域：捷運路網與在地創生一日遊 (捷運地圖)</option>
           <option value="demo_reading">📰 跨域閱讀：假訊息查核與 Deepfake 辨識 (流程資訊圖)</option>
@@ -165,8 +167,10 @@
       <!-- 學科切換快捷標籤與複製按鈕 -->
       <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
         <div class="flex items-center gap-1.5 flex-wrap">
-          <span class="text-xs font-bold text-slate-700">學科自選：</span>
-          <button type="button" onclick="setPromptSubject('general')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-xs" data-sub="general">全科通用素養</button>
+          <span class="text-xs font-bold text-slate-700">年段與學科：</span>
+          <button type="button" onclick="setPromptSubject('low_grade')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-xs" data-sub="low_grade">🎒 低年級(圖文短句)</button>
+          <button type="button" onclick="setPromptSubject('mid_grade')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="mid_grade">🌱 中年級(精練生活)</button>
+          <button type="button" onclick="setPromptSubject('general')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="general">高年級/國中(通用)</button>
           <button type="button" onclick="setPromptSubject('math')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="math">數學科</button>
           <button type="button" onclick="setPromptSubject('science')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="science">自然科學</button>
           <button type="button" onclick="setPromptSubject('social')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="social">社會領域</button>
@@ -400,10 +404,11 @@
                 <option value="english">🔤 英語文領域</option>
               </select>
               <select id="gradeSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs text-slate-700 font-medium outline-none focus:border-amber-400 focus:bg-white transition">
-                <option value="國小中年級">國小中年級 (3-4年級)</option>
-                <option value="國小高年級" selected>國小高年級 (5-6年級)</option>
-                <option value="國中階段">國中階段 (7-9年級)</option>
-                <option value="高中階段">高中階段</option>
+                <option value="國小低年級">🎒 國小低年級 (1-2年級 / 圖文短句實作)</option>
+                <option value="國小中年級">🌱 國小中年級 (3-4年級 / 精練生活圖表)</option>
+                <option value="國小高年級" selected>📐 國小高年級 (5-6年級 / 複合分析)</option>
+                <option value="國中階段">🔬 國中階段 (7-9年級 / 探究思辨)</option>
+                <option value="高中階段">🎓 高中階段 (10-12年級 / 跨領域深度)</option>
               </select>
             </div>
           </div>
@@ -460,10 +465,11 @@
           <div>
             <label class="block text-xs font-bold text-slate-700 mb-1">年級階段</label>
             <select id="textGradeSelect" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium text-slate-700">
-              <option value="國小中年級">國小中年級 (3-4年級)</option>
-              <option value="國小高年級" selected>國小高年級 (5-6年級)</option>
-              <option value="國中階段">國中階段 (7-9年級)</option>
-              <option value="高中階段">高中階段</option>
+              <option value="國小低年級">🎒 國小低年級 (1-2年級 / 圖文短句實作)</option>
+              <option value="國小中年級">🌱 國小中年級 (3-4年級 / 精練生活圖表)</option>
+              <option value="國小高年級" selected>📐 國小高年級 (5-6年級 / 複合分析)</option>
+              <option value="國中階段">🔬 國中階段 (7-9年級 / 探究思辨)</option>
+              <option value="高中階段">🎓 高中階段 (10-12年級 / 跨領域深度)</option>
             </select>
           </div>
           <div>
@@ -884,8 +890,119 @@
       cropModal.classList.add('hidden');
     });
 
-    // 6. 內建 4 大經典素養示範範例 (Demo Showcase)
+    // 6. 內建涵蓋各年段素養示範範例 (Demo Showcase)
     const DEMO_COMPETENCY_DATA = {
+      demo_primary_low: {
+        exam_title: "108課綱低年級生活素養題：小文動物園看時鐘與門票",
+        grade_subject: "國小低年級 (1-2年級) 生活與數學",
+        scenario_title: "星期六小文和媽媽去動物園",
+        scenario_story: "星期六，小文和媽媽一起去動物園看企鵝與水豚。門口公告牌寫著：『兒童票 20 元，大人票 40 元』。右邊的時鐘顯示他們進園的時間：",
+        has_scenario_figure: true,
+        scenario_svg: `<svg viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-md mx-auto bg-white border border-slate-200 rounded-2xl p-3 shadow-2xs">
+          <!-- 門票標籤 -->
+          <rect x="25" y="35" width="180" height="130" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="2"/>
+          <rect x="25" y="35" width="180" height="32" rx="12" fill="#d97706"/>
+          <text x="115" y="56" font-size="13" font-weight="bold" fill="#ffffff" text-anchor="middle">動物園門票資訊牌 🦁</text>
+          <text x="45" y="95" font-size="12" font-weight="bold" fill="#78350f">大人票：40 元</text>
+          <text x="45" y="125" font-size="12" font-weight="bold" fill="#78350f">兒童票：20 元</text>
+          <text x="45" y="150" font-size="10" fill="#b45309">※ 投幣或刷卡入場</text>
+
+          <!-- 鐘面 -->
+          <circle cx="340" cy="100" r="65" fill="#f8fafc" stroke="#334155" stroke-width="3"/>
+          <text x="340" y="52" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">12</text>
+          <text x="395" y="104" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">3</text>
+          <text x="340" y="156" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">6</text>
+          <text x="285" y="104" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">9</text>
+          <!-- 指針：9點整 -->
+          <line x1="340" y1="100" x2="340" y2="56" stroke="#dc2626" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="340" y1="100" x2="305" y2="100" stroke="#0f172a" stroke-width="4.5" stroke-linecap="round"/>
+          <circle cx="340" cy="100" r="4" fill="#0f172a"/>
+          <text x="340" y="182" font-size="11" font-weight="bold" fill="#334155" text-anchor="middle">入園時間鐘面 ⏰</text>
+        </svg>`,
+        scenario_figure_prompt: "臺灣國小低年級教材風格，左邊是彩色的動物園門票資訊牌（大人票40元，兒童票20元），右邊是清楚的指針時鐘顯示9點整，純白底黑字，乾淨可愛大字號。",
+        questions: [
+          {
+            q_id: 1,
+            level: "擷取與理解 (看時鐘)",
+            title: "看右邊的時鐘，小文和媽媽進動物園的時間是幾點整？請圈圈看：",
+            type: "choice",
+            options: [
+              "(A) 9 點整",
+              "(B) 12 點整",
+              "(C) 3 點整",
+              "(D) 6 點整"
+            ],
+            answer: "(A) 9 點整",
+            solution: "短針（時針）指著 9，長針（分針）指著 12，表示是 9 點整。答：選 (A)。",
+            rubric: "【評分】：正確圈選 (A) 得 2 分。"
+          },
+          {
+            q_id: 2,
+            level: "生活應用 (算算看)",
+            title: "媽媽買了 1 張大人票和 1 張小文的兒童票，一共要付多少元？請寫出算式並算算看：",
+            type: "short_answer",
+            answer: "40 + 20 = 60，一共要付 60 元",
+            solution: "大人票 40 元，兒童票 20 元，\n算式：40 + 20 = 60 元。\n答：一共 60 元。",
+            rubric: "【低年級評分規準】：算式寫出 40 + 20 = 60 得 2 分；答 60 元得 1 分，共 3 分。"
+          }
+        ]
+      },
+      demo_primary_mid: {
+        exam_title: "108課綱中年級自然探究素養題：三年級小綠豆生長日記",
+        grade_subject: "國小中年級 (3-4年級) 自然科學與生活",
+        scenario_title: "三年愛班的綠豆盆栽澆水與生長高度觀察",
+        scenario_story: "三年愛班同學分成兩組在自然教室窗邊種綠豆。甲組每天澆水 30 毫升，乙組兩天澆水一次（每次 30 毫升）。兩星期後，大家量出豆苗的高度並畫成長條圖：",
+        has_scenario_figure: true,
+        scenario_svg: `<svg viewBox="0 0 460 200" xmlns="http://www.w3.org/2000/svg" class="w-full max-w-md mx-auto bg-white border border-slate-200 rounded-2xl p-3 shadow-2xs">
+          <text x="230" y="20" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">兩組綠豆苗平均生長高度 (公分/cm)</text>
+          <!-- 座標軸 -->
+          <line x1="70" y1="160" x2="400" y2="160" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="70" y1="35" x2="70" y2="160" stroke="#64748b" stroke-width="1.5"/>
+          <!-- Y軸刻度 -->
+          <text x="60" y="164" font-size="10" fill="#64748b" text-anchor="end">0</text>
+          <text x="60" y="125" font-size="10" fill="#64748b" text-anchor="end">5</text>
+          <line x1="66" y1="125" x2="400" y2="125" stroke="#f1f5f9" stroke-width="1"/>
+          <text x="60" y="85" font-size="10" fill="#64748b" text-anchor="end">10</text>
+          <line x1="66" y1="85" x2="400" y2="85" stroke="#f1f5f9" stroke-width="1"/>
+          <text x="60" y="45" font-size="10" fill="#64748b" text-anchor="end">15 (cm)</text>
+          <line x1="66" y1="45" x2="400" y2="45" stroke="#f1f5f9" stroke-width="1"/>
+          <!-- 甲組長條 (高度12cm) -->
+          <rect x="130" y="64" width="70" height="96" fill="#16a34a" rx="4"/>
+          <text x="165" y="56" font-size="11" font-weight="bold" fill="#16a34a" text-anchor="middle">12 公分</text>
+          <text x="165" y="178" font-size="11" font-weight="bold" fill="#334155" text-anchor="middle">甲組 (每天澆)</text>
+          <!-- 乙組長條 (高度8cm) -->
+          <rect x="260" y="96" width="70" height="64" fill="#0284c7" rx="4"/>
+          <text x="295" y="88" font-size="11" font-weight="bold" fill="#0284c7" text-anchor="middle">8 公分</text>
+          <text x="295" y="178" font-size="11" font-weight="bold" fill="#334155" text-anchor="middle">乙組 (兩天澆一次)</text>
+        </svg>`,
+        scenario_figure_prompt: "臺灣國小三年級自然課長條圖，比較甲組（每天澆水，12公分）與乙組（兩天澆一次，8公分）豆苗的高度長條圖，白底乾淨線條，標註清晰。",
+        questions: [
+          {
+            q_id: 1,
+            level: "讀圖與比較",
+            title: "看長條圖，甲組的豆苗比乙組高出多少公分？",
+            type: "choice",
+            options: [
+              "(A) 4 公分",
+              "(B) 8 公分",
+              "(C) 12 公分",
+              "(D) 20 公分"
+            ],
+            answer: "(A) 4 公分",
+            solution: "甲組高 12 公分，乙組高 8 公分，相差 12 - 8 = 4 公分。答：選 (A)。",
+            rubric: "選 (A) 得 2 分。"
+          },
+          {
+            q_id: 2,
+            level: "探究變因與應用",
+            title: "為了讓實驗公平，除了澆水次數不同之外，請問『種植地點與陽光照射』應該保持相同還是不同？為什麼？",
+            type: "short_answer",
+            answer: "應該保持相同。因為這是控制變因，必須相同才能知道生長高度是不是由水分引起的。",
+            solution: "實驗中只能有一個操縱變因（澆水量或次數），其他環境條件如陽光、土壤、溫度都必須保持相同（控制變因），才能公平比較。",
+            rubric: "回答「相同」得 1 分；說明「這樣才能公平比較/確認是水分的影響」得 2 分，共 3 分。"
+          }
+        ]
+      },
       demo_math: {
         exam_title: "108課綱數學素養題組：手搖飲熱量大解密與折扣戰",
         grade_subject: "國小五年級 數學領域",
@@ -1215,20 +1332,53 @@
       const scenarioPref = isPureText ? document.getElementById('customScenarioInput').value : document.getElementById('scenarioSelect').value;
       const conceptText = isPureText ? document.getElementById('textConceptInput').value : '';
 
+      const isLowGrade = grade.includes('低年級') || grade.includes('1-2年級');
+      const isMidGrade = grade.includes('中年級') || grade.includes('3-4年級');
+
+      let gradeSpecificRules = '';
+      let scenarioLengthGuide = '生活情境長文（150~250字）';
+
+      if (isLowGrade) {
+        scenarioLengthGuide = '生活情境短文（嚴格限制在 30~60 字以內，文字極精簡）';
+        gradeSpecificRules = `
+【教育部與國教院官方最高規範：國小低年級（第一學習階段，1-2年級）】
+★ 堅決反對「為了考素養而刻意拉長題幹」的文字耐力測驗！「素養題 ≠ 長文閱讀題」，嚴禁任何不必要的背景修飾與無效文字干擾！
+★ 情境文字【嚴格限制在 30~60 字以內】，用字淺白生動、扣合生活日常（動物園門票、文具尺、看時鐘、日曆作息、分水果玩具等）。
+★ 核心在於【圖文互證與生活實作】：必須輸出直觀趣味的高對比向量 SVG（如萌系門票標籤、標準12小時鐘面、日曆、尺子、分裝示意圖）。
+★ 題型設計輕紙筆死記、重直觀實作：
+   - 第 1 題：看圖尋找關鍵資訊（選擇題或圈選）。
+   - 第 2 題：生活運算或簡單對應（簡答填空，例如鐘面幾點幾分、簡單生活加減）。
+   - 第 3 題：生活常識推理與決策（簡答題，禁止要求長篇大論，回答一至兩句話即可）。`;
+      } else if (isMidGrade) {
+        scenarioLengthGuide = '生活情境精練文字（嚴格限制在 80~150 字以內）';
+        gradeSpecificRules = `
+【教育部與國教院官方最高規範：國小中年級（第二學習階段，3-4年級）】
+★ 堅守「素養在於生活應用與解決問題，拒絕文字耐力刁難」原則，嚴禁過度包裝與冗長故事。
+★ 情境文字【嚴格限制在 80~150 字以內】，讓學生專注於思考、圖表判讀與數理運算。
+★ 必須輸出直觀清晰的向量 SVG 統計圖表（如簡易長條圖、雙週記錄表、路線圖、價格明細等）。
+★ 題型設計：第 1 題圖表擷取、第 2 題兩步驟因果運算/比較、第 3 題生活解決問題（簡短論述，約20~40字）。`;
+      } else {
+        gradeSpecificRules = `
+【教育部與國教院官方規範：中高年級與中學階段】
+★ 貫徹教育部「素養導向評量非長文耐力測驗」原則，文字精準聚焦（約 150~250 字），嚴禁無效冗贅文字。
+★ 強化非連續性文本與探究實作，圖表（SVG 向量圖）與題幹緊密相扣。`;
+      }
+
       const systemPrompt = `你是一位深諳臺灣 108 課綱核心素養導向命題的大學教授與國中小輔導團命題主委。
 你的任務是將輸入的傳統死板考題/課本內容，升級轉化為一份標準的【108 課綱素養導向情境題組】。
 
 【語言強制規範（極重要）】
 ★ 全程 100% 使用「臺灣繁體中文 (Traditional Chinese, zh-TW)」，嚴禁簡體字。
 ★ 所有專有名詞必須嚴格遵循臺灣教育部課綱標準審訂詞彙（如「質數」非「素數」、「方程式」非「方程組」、「莫耳濃度」非「摩爾濃度」、「粒線體」非「線粒體」等）。
+${gradeSpecificRules}
 
 【108 課綱素養題命題最高原則】
-1. 真實生活或探究情境 (Context)：情境長文約 150~300 字，貼近臺灣學童生活經驗（超商、在地商圈、綠能減碳、地圖路網、營養健康等），數據合乎常理。
+1. 真實生活或探究情境 (Context)：情境敘述貼近臺灣學童生活經驗（超商、在地商圈、綠能減碳、地圖路網、營養健康等），數據合乎常理。文字長度請嚴格遵守上述學段指引。
 2. 跨文本與資訊圖表 (Information Representation)：必須包含一份資訊圖表，請直接以標準 SVG 向量代碼輸出（白底黑線黑字或簡潔高對比設計，寬高 viewBox 建議 460x220，文字清晰無雜訊），若原題無圖表請根據情境設計一份圖表（折線圖、長條圖、地圖、表格或流程圖）。
 3. 循序漸進的題組設計 (2~3 題)：
    - 第 1 題：訊息擷取與檢索（選擇題，四選一，選項長度相仿）。
    - 第 2 題：統整解釋與分析運算（簡答題或計算題，檢驗觀念本質）。
-   - 第 3 題：省思評鑑或實作探究（非選擇題/論述題，要求學生引用圖表數據進行推論與決策）。
+   - 第 3 題：省思評鑑或實作探究（非選擇題/論述題，要求學生引用圖表數據進行推論與決策；低年級僅需一兩句簡要回答）。
 4. 專業評量規準 (Rubrics)：每題（特別是非選題）必須提供清楚的「滿分 3分/2分/1分/0分」客觀給分規準。
 
 請【僅輸出純 JSON】格式，不要包含任何 markdown 標記（如 \`\`\`json）：
@@ -1236,7 +1386,7 @@
   "exam_title": "108課綱素養導向評量試卷標題",
   "grade_subject": "${grade} ${subject}",
   "scenario_title": "情境大標題",
-  "scenario_story": "生活情境閱讀長文（150~300字）",
+  "scenario_story": "${scenarioLengthGuide}",
   "has_scenario_figure": true,
   "scenario_svg": "<svg viewBox=\\"0 0 460 220\\" xmlns=\\"http://www.w3.org/2000/svg\\" ...>...</svg>",
   "scenario_figure_prompt": "繁體中文黑白線條教材配圖提示詞，供老師一鍵複製到 AI 生圖",
@@ -1673,15 +1823,57 @@
 
     // 10. 免 API Key 108 課綱通用素養出題 Prompt 資料庫
     const PROMPT_TEMPLATES = {
+      low_grade: `你是一位專精臺灣教育部 108 課綱【國小低年級（第一學習階段，1-2 年級）】評量指引的大學教授與輔導團首席名師。請依據我提供的概念、課本內容或考題，命製一份專屬國小低年級的【生活圖文實作素養題組】。
+
+【教育部與國教院官方立場（最高原則）】
+★ 堅決反對「為了考素養而刻意拉長題幹」的長文測驗！教育部官方多次強調：「素養題 ≠ 長文閱讀題」。
+★ 低年級核心在於「真實生活應用與圖文理解」，文字必須極度精簡，嚴禁長篇大論與無關背景過度包裝！
+★ 全程 100% 使用「臺灣繁體中文 (Traditional Chinese, zh-TW)」，用語完全契合國小一二年級生活經驗。
+
+【國小低年級素養命題架構】
+一、極簡生活情境 (嚴格限制在 30~60 字以內)：
+   - 扣合真實日常（如：動物園門票、文具尺量長度、看時鐘幾點整、分裝水果點心、搭公車投幣等）。
+   - 句型短捷純粹，絕不塞入無效的長篇故事背景。
+二、非連續性文本與資訊圖表（重中之重）：
+   - 必須設計一張【直觀趣味的生活標籤或圖示】（如可愛門票標籤、標準12小時鐘面、月曆貼紙、文具尺），並附【黑白簡筆線稿教材生圖 Prompt（臺灣繁中）】。
+三、階梯式生活實作題組 (共 3 題)：
+   - 第 1 題：【看圖擷取】（選擇題或圈圈看，直觀辨識圖上的數字、時間或名稱）。
+   - 第 2 題：【生活運算】（填空或簡答題，100以內加減、整點半點時間、長度公分）。
+   - 第 3 題：【生活常識推理】（簡答題，嚴禁要求低年級寫長篇大論，只需回答1~2句或勾選並說明簡單理由）。
+四、評量規準 (Rubrics)：提供明確客觀的給分標準。
+
+請確認完全理解教育部低年級規範，待我提供單元後立即以極簡生活情境出題！`,
+
+      mid_grade: `你是一位專精臺灣 108 課綱【國小中年級（第二學習階段，3-4 年級）】素養導向命題的輔導團名師。請為我命製一份適合國小三四年級的【精練生活圖表素養題組】。
+
+【教育部與國教院官方立場（極重要）】
+★ 貫徹國教院「素養導向評量非文字耐力測驗」原則，堅決反對無關背景過度包裝，拒絕刻意拉長題幹！
+★ 文字長度必須適齡精練【嚴格限制在 80~150 字以內】，把心智負擔留給圖表判讀與運算推論。
+★ 全程 100% 使用「臺灣繁體中文 (Traditional Chinese, zh-TW)」與臺灣審訂詞彙。
+
+【國小中年級素養命題架構】
+一、精練生活情境 (80~150 字)：
+   - 貼近中年級生活經驗（如班級園遊會記帳、盆栽植物生長測量、氣溫變化圖、健康飲食營養標示）。
+二、資訊圖表與視覺化：
+   - 設計一份【長條圖、折線圖、二維表格或路線示意圖】結構說明，並附【黑白線條圖 AI 生圖提示詞（臺灣繁中）】。
+三、三層次題組 (共 3 題)：
+   - 第 1 題：【圖表數據擷取】（選擇題，讀取圖表特定數值或項目）。
+   - 第 2 題：【因果比較與兩步驟運算】（計算或簡答題）。
+   - 第 3 題：【生活問題解決與決策】（簡答論述題，依據圖表數據提出建議或理由，約20~40字）。
+四、評量規準 (Rubrics)：提供滿分與部分給分規準。
+
+請確認完全理解，待我輸入主題後開始命題！`,
+
       general: `你是一位深諳臺灣 108 課綱核心素養導向命題的大學教授與國中小輔導團首席諮詢委員。請依據我接下來提供的【學習概念/教材文字/照片】，命製一份高品質的【108 課綱素養導向情境題組】。
 
-【語言強制規範（極重要）】
+【教育部與國教院官方立場】
+★ 官方明確指出：素養的核心在於「生活情境的應用與解決問題能力」，堅決反對「為了考素養而刻意拉長題幹」的文字耐力測驗與過度包裝！
 ★ 全程必須「100% 使用臺灣繁體中文 (Traditional Chinese, zh-TW)」，嚴禁任何簡體中文或中國大陸用語。
 ★ 專有名詞必須嚴格遵循臺灣教育部課綱審訂標準術語（如「質數」非「素數」、「方程式」非「方程組」、「資訊」非「信息」、「程式」非「程序」等），確保臺灣教師複製後可直接修改出題！
 
 【108 課綱素養命題架構】
-一、真實生活情境長文 (約 200~300 字)：
-   - 融入臺灣學生生活脈絡（如捷運公車時刻、超商夜市折扣、健康餐盤卡路里、碳足跡與綠能發電等）。
+一、真實生活情境短文 (中高年級約 150~250 字，低年級 30~60 字，中年級 80~150 字)：
+   - 融入臺灣學生生活脈絡（如捷運公車時刻、超商夜市折扣、健康餐盤卡路里、碳足跡與綠能發電等），避免無效冗贅干擾。
 二、資訊圖表與視覺化：
    - 請提供清晰的【圖表結構描述】與【黑白向量教材插圖 AI 生圖提示詞（臺灣繁中）】。
 三、階梯式循序題組 (共 3 題)：
