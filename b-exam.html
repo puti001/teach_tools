@@ -98,6 +98,12 @@
       </div>
 
       <div class="flex items-center gap-2 flex-wrap">
+        <!-- 免 API Key 通用出題 Prompt 按鈕 -->
+        <button id="openPromptModalBtn" onclick="openPromptModal()" class="flex items-center bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl px-3 py-1.5 text-xs shadow-sm transition gap-1.5">
+          <i class="ph-bold ph-magic-wand text-sm"></i>
+          <span>免 Key 通用 Prompt</span>
+        </button>
+
         <!-- API Key 多組備援設定按鈕 -->
         <button id="openKeyModalBtn" class="flex items-center bg-slate-100 hover:bg-slate-200 rounded-xl px-3 py-1.5 border border-slate-200 text-xs font-semibold text-slate-700 transition">
           <i class="ph-bold ph-key text-amber-500 mr-1.5"></i>
@@ -152,6 +158,17 @@
         </button>
       </div>
 
+      <!-- 不想申請 Key？捷徑引導 -->
+      <div class="p-3 bg-blue-50/90 rounded-2xl border border-blue-200 flex items-center justify-between flex-wrap gap-2 text-xs">
+        <div class="flex items-center gap-1.5 text-blue-950 font-medium">
+          <i class="ph-bold ph-lightbulb text-amber-500"></i>
+          <span>不想申請 API Key？只想在網頁版 ChatGPT / Claude 出題？</span>
+        </div>
+        <button type="button" onclick="keyModal.classList.add('hidden'); openPromptModal();" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-xs flex items-center gap-1 transition shadow-xs">
+          <i class="ph-bold ph-copy"></i> 複製通用 Prompt
+        </button>
+      </div>
+
       <!-- 官方申請入口與 30秒教學卡片 -->
       <div class="bg-gradient-to-br from-amber-50 to-orange-50/60 rounded-2xl p-4 border border-amber-200 text-xs space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
@@ -198,6 +215,87 @@
             <button id="clearKeysBtn" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 font-medium transition">清空</button>
             <button id="saveKeysBtn" class="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold transition shadow-sm">儲存並同步模型</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 免 API Key 通用出題 Prompt 專屬彈窗 (Modal) -->
+  <div id="promptModal" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 no-print">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-7 shadow-2xl border border-blue-100 space-y-4 animate-in fade-in zoom-in duration-150 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+          <span class="w-7 h-7 rounded-xl bg-blue-600 text-white flex items-center justify-center text-sm shadow-xs">
+            <i class="ph-bold ph-copy"></i>
+          </span>
+          免 API Key！通用出題 Prompt（貼給 ChatGPT / Claude / Gemini 網頁版）
+        </h3>
+        <button id="closePromptModalBtn" onclick="document.getElementById('promptModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-lg">
+          <i class="ph-bold ph-x"></i>
+        </button>
+      </div>
+
+      <!-- 3 步驟 10 秒出題指南 -->
+      <div class="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl border border-blue-200 text-xs space-y-1.5 text-slate-700">
+        <div class="font-bold text-blue-900 flex items-center gap-1.5 text-sm">
+          <i class="ph-bold ph-lightbulb text-amber-500"></i>
+          老師不需申請任何金鑰！超簡單 3 步驟：
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px]">
+          <div class="bg-white/80 p-2.5 rounded-xl border border-blue-100/80">
+            <strong class="text-blue-900">步驟 1. 複製 Prompt</strong>
+            <p class="text-slate-500 mt-0.5">點擊下方按鈕一鍵複製神級出題提示詞。</p>
+          </div>
+          <div class="bg-white/80 p-2.5 rounded-xl border border-blue-100/80">
+            <strong class="text-blue-900">步驟 2. 開啟常用 AI</strong>
+            <p class="text-slate-500 mt-0.5">打開 ChatGPT、Claude 或 Gemini 網頁版。</p>
+          </div>
+          <div class="bg-white/80 p-2.5 rounded-xl border border-blue-100/80">
+            <strong class="text-blue-900">步驟 3. 貼上並傳考卷</strong>
+            <p class="text-slate-500 mt-0.5">上傳 A 卷照片並貼入提示詞，AI 秒生 B 卷！</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 學科切換快捷標籤與複製按鈕 -->
+      <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-xs font-bold text-slate-700">學科自選：</span>
+          <button type="button" onclick="setPromptSubject('general')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-xs" data-sub="general">全科通用</button>
+          <button type="button" onclick="setPromptSubject('math')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="math">數學科</button>
+          <button type="button" onclick="setPromptSubject('science')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="science">自然理化</button>
+          <button type="button" onclick="setPromptSubject('biology')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="biology">生物科</button>
+          <button type="button" onclick="setPromptSubject('social')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="social">社會科</button>
+          <button type="button" onclick="setPromptSubject('english')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="english">英語科</button>
+          <button type="button" onclick="setPromptSubject('chinese')" class="prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200" data-sub="chinese">國語文</button>
+        </div>
+        <button id="copyPromptModalBtn" onclick="copyUniversalPrompt()" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1 shadow-sm">
+          <i class="ph-bold ph-copy"></i>
+          <span>一鍵複製 Prompt</span>
+        </button>
+      </div>
+
+      <!-- 提示詞文字框 -->
+      <div class="relative">
+        <textarea id="universalPromptTextarea" rows="11" class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 font-mono text-xs text-slate-800 leading-relaxed outline-none focus:bg-white focus:border-blue-400 transition select-all whitespace-pre-wrap"></textarea>
+      </div>
+
+      <!-- 底部操作列與直達連結 -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100 flex-wrap gap-2 text-xs">
+        <div class="flex items-center gap-2 text-slate-500 text-[11px]">
+          <span>常用 AI 官網直達：</span>
+          <a href="https://chatgpt.com" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline font-semibold flex items-center gap-0.5">ChatGPT <i class="ph-bold ph-arrow-square-out text-[10px]"></i></a>
+          <span>·</span>
+          <a href="https://claude.ai" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline font-semibold flex items-center gap-0.5">Claude <i class="ph-bold ph-arrow-square-out text-[10px]"></i></a>
+          <span>·</span>
+          <a href="https://gemini.google.com" target="_blank" rel="noopener noreferrer" class="text-amber-700 hover:underline font-semibold flex items-center gap-0.5">Gemini <i class="ph-bold ph-arrow-square-out text-[10px]"></i></a>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="document.getElementById('promptModal').classList.add('hidden')" class="px-4 py-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 font-semibold text-xs transition">關閉</button>
+          <button onclick="copyUniversalPrompt()" class="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs transition shadow-md shadow-blue-200 flex items-center gap-1.5">
+            <i class="ph-bold ph-copy"></i>
+            <span>複製 Prompt</span>
+          </button>
         </div>
       </div>
     </div>
@@ -281,6 +379,26 @@
 
     <!-- 上傳與處理面板 (單張圖檔) -->
     <section id="uploadSection" class="no-print bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-amber-100 mb-8 transition-all">
+      <!-- 免 API Key 快捷橫幅 -->
+      <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 via-indigo-50/60 to-amber-50 rounded-2xl border border-blue-100 flex items-center justify-between flex-wrap gap-3 shadow-2xs">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-md shadow-blue-200 flex-shrink-0">
+            <i class="ph-bold ph-magic-wand"></i>
+          </div>
+          <div>
+            <span class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+              不想申請 API Key？提供「一鍵複製通用出題 Prompt」！
+              <span class="text-[10px] bg-blue-100 text-blue-700 font-bold px-2 py-0.5 rounded-full">免金鑰</span>
+            </span>
+            <p class="text-xs text-slate-600 mt-0.5">直接複製針對臺灣各教科書商調校的神級提示詞，貼給 ChatGPT、Claude 或 Gemini 網頁版，上傳考卷照片秒出 B 卷！</p>
+          </div>
+        </div>
+        <button onclick="openPromptModal()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-md shadow-blue-200">
+          <i class="ph-bold ph-copy text-sm"></i>
+          <span>📋 一鍵複製通用 Prompt</span>
+        </button>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         <!-- 左側：拖曳與貼上區 -->
         <div class="lg:col-span-7">
@@ -1987,6 +2105,178 @@ ${customPrompt ? `4. 使用者自訂要求：${customPrompt}` : ''}
         tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
       );
     }
+
+    // ==========================================
+    // 免 API Key 通用出題 Prompt 資料庫與交互邏輯
+    // ==========================================
+    const PROMPT_TEMPLATES = {
+      general: `你是一位資深的臺灣中小學各科命題與審題教授。我將會上傳一張「A卷考卷照片（或題目文字）」，請你為我打造一份完全同構的【B卷（平行類似題測驗卷）】。
+
+【命題最高指導原則】
+1. 核心指標同構：每題必須精準鎖定 A 卷原題的「學習指標」與「核心考點」，難易度、認知階層（記憶/理解/應用/分析）保持一致。
+2. 題目完全換新：更換人名、時間、生活情境與具體數據，絕不抄襲原題文字，但解題思維路徑必須完全對應。
+3. 嚴謹常理校驗：所有數值、時事或科學條件必須合乎生活常理（如人數不能為小數、年齡不可為負數等）。
+4. 圖表配圖處理：若原題含有圖表、幾何圖或示意圖，請在該題下方提供：
+   - 【圖表文字描述】：詳細描述圖中所有標示與關鍵條件。
+   - 【AI 生圖提示詞（繁體中文）】：精確描述「黑白簡約考試線條圖、白底無雜訊」的生圖指令，方便我一鍵複製到生圖 AI 繪製。
+5. 輸出排版規範：
+   - 階段一：【B卷 學生測驗卷】（清楚標記題號、括號、題目、選項 ABCD，排版整潔利於直接印製或貼入 Word）。
+   - 階段二：【教師版 參考答案與詳盡解析】（列出各題正確答案，並提供步驟化解析與常犯盲點提示）。
+
+請確認已完全理解，待我上傳考卷照片或提供題目後，請直接產出標準的 B 卷試題與答案解析！`,
+
+      math: `你是一位深諳臺灣教育部課綱（康軒/南一/翰林版）的國中小數學命題輔導團名師。我將上傳「A卷數學考卷照片（或題目）」，請為我命製一份完全同構的【數學 B卷 平行類題】。
+
+【數學命題最高規範】
+1. 題型與解題架構完全同構：
+   - 代數題：更換係數與常數，保證計算過程工整，最終答案避免繁複無意義的無窮循環小數或怪異分數。
+   - 幾何題：保持相同幾何性質與定理考點（如相似形、平行截比例線段、圓周角、畢氏定理等），更換角度或邊長數據。
+   - 應用題：替換貼近臺灣學童生活經驗之情境（如園遊會、超商打折、搭乘捷運、班級採買），嚴格遵守生活常理。
+2. 幾何配圖防呆與提示詞：
+   - 針對幾何或圖形題，提供清晰的【圖形結構文字規格】。
+   - 同時附上【黑白線條幾何圖生圖 Prompt（繁中）】，要求「國小國中教科書黑白向量線稿風、標註頂點字母與長度角度、白底高對比、無多餘雜訊」。
+3. 輸出結構要求：
+   - 【學生測驗卷】：題號、配分、題目文字、選擇題選項排列整齊。
+   - 【詳細解答卷】：每題均附「正確答案」、「公式與完整列式計算過程」以及「學生最易陷阱錯誤分析」。
+
+請確認已完全理解，待我傳上考卷題目後即刻開始出題！`,
+
+      science: `你是一位資深的臺灣國中小自然與國高中理化科首席命題名師。我將上傳「A卷自然/理化考卷照片」，請為我命製一份完全同構的【B卷 平行概念測驗卷】。
+
+【理化命題規範】
+1. 概念同構與變因對調：
+   - 保留原題考查之物理/化學核心概念（如力與運動、浮力、電路歐姆定律、酸鹼中和、反應速率與平衡等）。
+   - 可改變實驗操縱變因、觀察變因，或替換同族化學元素/反應物，考查學生舉一反三之觀念理解。
+2. 數據與物理常數精準：
+   - 計算題（如加速度、密度、功與能、莫耳濃度）數值設計必須易於整除或符合理化常理。
+3. 實驗裝置圖與示意圖：
+   - 若有實驗裝置圖（如天平、量筒、滑輪組、電路圖），請明確列出【實驗圖表描述】與【黑白實驗線條圖生圖 Prompt】。
+4. 輸出結構：
+   - 一、【B卷 學生測驗卷】（格式清晰，可直接排版印刷）
+   - 二、【教師解析卷】（附各題標準答案、關鍵觀念剖析、推導步驟與常見迷思概念澄清）
+
+請確認理解，待我傳送題目後立即輸出！`,
+
+      biology: `你是一位精通臺灣國中小自然（生物篇）與高中生物學的命題專家。我將上傳「A卷生物考卷照片」，請為我生成完全對標核心素養的【B卷 平行類似題】。
+
+【生物命題規範】
+1. 生命科學概念同構：
+   - 鎖定相同生物學觀念（如細胞構造、顯微鏡操作、光合與呼吸作用、人體消化循環神經系統、遺傳孟德爾法則、生態系能量流動）。
+   - 替換生物物種（如由水稻換成玉米、人體胃液換成唾液酵素）、替換圖表變因，檢驗觀念本質而非死記硬背。
+2. 探究與實驗素養題：
+   - 著重實驗設計、對照組與實驗組設定、曲線圖或數據表格判讀。
+3. 生物解剖與構造配圖：
+   - 若原題含解剖圖、器官圖或細胞圖，提供【結構標記說明】與【教科書等級黑白輪廓圖生圖 Prompt】。
+4. 輸出結構：
+   - 【B卷 學生作答卷】
+   - 【完整參考答案與素養導向解析】
+
+請確認已準備好，待我傳入題目照片後開始！`,
+
+      social: `你是一位深諳臺灣中小學社會領域課綱（歷史、地理、公民）的資深命題輔導團輔導員。我將上傳「A卷社會科考卷照片」，請為我命製【B卷 核心素養平行類題】。
+
+【社會科命題規範】
+1. 素養情境同構化：
+   - 地理：保持相同地圖判讀、等高線、經緯度、氣候圖或產業轉型概念，更換地區、洋流、風向或案例背景。
+   - 歷史：保持相同歷史因果邏輯、重要制度、改革背景或史料研讀考點，替換相應時期之相關史料、日記節錄或平行歷史事件。
+   - 公民：維持相同憲法、人權、民刑法、經濟學供需曲線或政府體制概念，改寫成貼近當代臺灣之公共議題或時事新聞情境。
+2. 避免偏頗與死背：著重圖表資料解讀與批判思考，非冷僻年代數字死記。
+3. 輸出結構：
+   - 【學生測驗卷】（附情境題幹、圖表描述或生圖提示詞）
+   - 【教師詳解卷】（附標準答案、各選項正誤判斷依據與史地觀念延伸）
+
+請確認已準備好，待我傳入題目後立即出題！`,
+
+      english: `你是一位精通臺灣國中小英語科（1200字/2000字常用單字與文法指標）及會考學測命題的英文名師。我將上傳「A卷英語考卷照片」，請為我命製一份完全同構的【B卷 英語平行測驗卷】。
+
+【英語科命題規範】
+1. 文法句型與語意同構：
+   - 嚴格鎖定原題所測驗之文法焦點（如：動名詞vs不定詞、關係代名詞、完成式、被動態、假設語氣等）。
+   - 更換主詞、動詞與語境單字，但難度係數與字彙量級完全平行。
+2. 克漏字與閱讀測驗：
+   - 若包含長篇閱讀或對話，請改寫一篇字數相當、同等Lexile閱讀難度、情境不同但題目考點（主旨題、細節題、代名詞指涉、字義推論）完全對齊的新短文。
+3. 輸出結構：
+   - Part I: B-Form Student Test Paper (With complete questions, dialogue/reading passages, and options ABCD).
+   - Part II: Teacher's Answer Key & Detailed Explanations (含中文翻譯、文法解析、易混淆選項辨析).
+
+Ready to accept my exam photo or text!`,
+
+      chinese: `你是一位專精臺灣中小學國語文（字音字形、成語典故、修辭技巧、文言文閱測與白話文閱讀）的資深國文名師。我將上傳「A卷國文考卷照片」，請為我生成完全同構的【B卷 語文素養平行測驗卷】。
+
+【國文科命題規範】
+1. 語文考點完全對齊：
+   - 形音義：替換同等難度之常見易錯國字、一字多音或形近字。
+   - 成語修辭：若原題考互文、借代、轉化等，請改以不同成語或句子出題，但測驗相同修辭格。
+   - 文言文：若原題為先秦兩漢或唐宋散文，請選取難度相仿、篇幅相當之同主題文言短文（如寓言、人物列傳），設計同構之字詞釋義與主旨提問。
+   - 白話閱測：改編或挑選同等主題（科普散文、哲理寓意、抒情隨筆），維持相同推論層次題目。
+2. 繁體中文標準：嚴格遵循臺灣教育部標準國字與審訂音。
+3. 輸出結構：
+   - 【B卷 學生測驗卷】
+   - 【教師解答卷】（附語譯、詞義解釋、修辭判別與題目詳盡解析）
+
+請確認理解，待我傳送題目後立即開展命題！`
+    };
+
+    let currentPromptSubject = 'general';
+
+    // 開啟通用 Prompt 彈窗
+    window.openPromptModal = function() {
+      const modal = document.getElementById('promptModal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        setPromptSubject(currentPromptSubject || 'general');
+      }
+    };
+
+    // 切換學科
+    window.setPromptSubject = function(sub) {
+      if (!PROMPT_TEMPLATES[sub]) sub = 'general';
+      currentPromptSubject = sub;
+      
+      const textarea = document.getElementById('universalPromptTextarea');
+      if (textarea) {
+        textarea.value = PROMPT_TEMPLATES[sub];
+      }
+
+      // 切換按鈕標籤高亮
+      document.querySelectorAll('.prompt-tab').forEach(btn => {
+        const isCurrent = btn.getAttribute('data-sub') === sub;
+        if (isCurrent) {
+          btn.className = 'prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white shadow-xs';
+        } else {
+          btn.className = 'prompt-tab px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200';
+        }
+      });
+    };
+
+    // 一鍵複製通用 Prompt
+    window.copyUniversalPrompt = async function() {
+      const textarea = document.getElementById('universalPromptTextarea');
+      if (!textarea) return;
+      
+      const text = textarea.value;
+      const copyBtn = document.getElementById('copyPromptModalBtn');
+      const origHtml = copyBtn ? copyBtn.innerHTML : '';
+
+      try {
+        await navigator.clipboard.writeText(text);
+        if (copyBtn) {
+          copyBtn.innerHTML = '<i class="ph-bold ph-check"></i><span>✅ 已複製！可直接貼給 AI</span>';
+          copyBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+          copyBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-700');
+          setTimeout(() => {
+            copyBtn.innerHTML = origHtml;
+            copyBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-700');
+            copyBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+          }, 2000);
+        }
+      } catch (err) {
+        // 後備方案
+        textarea.select();
+        document.execCommand('copy');
+        alert('✅ 已複製通用出題 Prompt！請直接貼到 ChatGPT / Claude / Gemini 網頁版對話框。');
+      }
+    };
   </script>
 </body>
 </html>
