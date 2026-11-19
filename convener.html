@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>Puti-AI | 社群召集人 Gemini NotebookLM 教師研習任務單</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #faf8f4;
+      --surface: #ffffff;
+      --surface-soft: #f3f7f4;
+      --surface-warm: #fff8eb;
+      --surface-blue: #eef6ff;
+      --surface-rose: #fff2f2;
+      --text: #1e293b;
+      --text-muted: #475569;
+      --primary: #15803d;
+      --primary-hover: #166534;
+      --primary-soft: #dcfce7;
+      --accent: #d97706;
+      --accent-soft: #fef3c7;
+      --blue: #2563eb;
+      --blue-soft: #dbeafe;
+      --border: #e2e8f0;
+      --radius: 18px;
+      --radius-sm: 12px;
+      --shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 124px;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 16px;
+      line-height: 1.7;
+      padding-bottom: 92px;
+    }
+
+    /* Sticky Header & Progress */
+    .top-bar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(250, 248, 244, 0.94);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .top-bar-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 10px 14px 8px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .progress-pill {
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--primary-soft);
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .nav-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+
+    .nav-pills::-webkit-scrollbar {
+      display: none;
+    }
+
+    .nav-pill {
+      flex-shrink: 0;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 999px;
+      transition: all 0.15s ease;
+    }
+
+    .nav-pill.active,
+    .nav-pill:active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 16px 14px 24px;
+    }
+
+    /* Hero */
+    .hero {
+      background: linear-gradient(135deg, #14532d 0%, #15803d 60%, #0f766e 100%);
+      color: #ffffff;
+      border-radius: 22px;
+      padding: 22px 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 26px rgba(21, 128, 61, 0.22);
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 11px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 24px;
+      line-height: 1.3;
+      font-weight: 900;
+    }
+
+    .hero p {
+      margin: 0 0 16px;
+      font-size: 14px;
+      opacity: 0.94;
+      line-height: 1.6;
+    }
+
+    .hero-actions {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    @media (min-width: 520px) {
+      .hero-actions {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-white {
+      background: #ffffff;
+      color: #14532d;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .btn-outline-light {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border: 1.5px solid rgba(255, 255, 255, 0.55);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #ffffff;
+      width: 100%;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-copy {
+      background: var(--primary);
+      color: #ffffff;
+      width: 100%;
+      box-shadow: 0 3px 10px rgba(21, 128, 61, 0.18);
+    }
+
+    .btn-copy.copied {
+      background: #0f766e;
+    }
+
+    .btn-blue {
+      background: var(--blue);
+      color: #ffffff;
+      width: 100%;
+    }
+
+    .btn-soft {
+      background: var(--surface-soft);
+      color: var(--primary);
+      border: 1.5px solid #bbf7d0;
+      width: 100%;
+    }
+
+    .btn-disabled {
+      background: #e2e8f0;
+      color: #64748b;
+      cursor: not-allowed;
+      width: 100%;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 19px;
+      font-weight: 900;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-time {
+      flex-shrink: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 3px 9px;
+      border-radius: 999px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-warm {
+      background: var(--surface-warm);
+      border-color: #fde68a;
+    }
+
+    .card-soft {
+      background: var(--surface-soft);
+      border-color: #bbf7d0;
+    }
+
+    .card-blue {
+      background: var(--surface-blue);
+      border-color: #bfdbfe;
+    }
+
+    .card-title {
+      margin: 0 0 10px;
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-sub {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    /* Prompt Box */
+    .prompt-box {
+      background: #f8fafc;
+      border: 1.5px dashed #94a3b8;
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      margin-bottom: 10px;
+      font-size: 15px;
+      line-height: 1.65;
+      color: #0f172a;
+      user-select: text;
+      -webkit-user-select: text;
+      white-space: pre-wrap;
+    }
+
+    .prompt-label {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--primary);
+      background: var(--primary-soft);
+      padding: 2px 9px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .prompt-block + .prompt-block {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Lists */
+    .clean-list {
+      margin: 0;
+      padding-left: 20px;
+    }
+
+    .clean-list li {
+      margin-bottom: 8px;
+    }
+
+    .clean-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Nine-pack Grid */
+    .grid-5 {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    @media (min-width: 520px) {
+      .grid-5 {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .mini-tile {
+      background: #ffffff;
+      border: 1px solid #d1fae5;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+
+    .mini-tile strong {
+      color: var(--primary);
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    /* Schedule Table */
+    .schedule-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .schedule-item {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      font-size: 14px;
+      padding: 8px 10px;
+      background: #f8fafc;
+      border-radius: 10px;
+    }
+
+    .schedule-time {
+      flex-shrink: 0;
+      font-weight: 800;
+      color: var(--primary);
+      font-variant-numeric: tabular-nums;
+      min-width: 92px;
+    }
+
+    /* Peer Check Toggle */
+    .peer-check {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 44px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1.5px solid #cbd5e1;
+      background: #ffffff;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .peer-check.done {
+      background: var(--primary-soft);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* Link Action Row */
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .url-preview {
+      font-size: 13px;
+      color: var(--text-muted);
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-bottom: 10px;
+      word-break: break-all;
+    }
+
+    /* FAQ Accordion */
+    details.faq-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 8px;
+    }
+
+    details.faq-item summary {
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    details.faq-item summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.faq-item summary::after {
+      content: "＋";
+      flex-shrink: 0;
+      color: var(--primary);
+      font-weight: 900;
+    }
+
+    details.faq-item[open] summary::after {
+      content: "－";
+    }
+
+    details.faq-item p {
+      margin: 10px 0 2px;
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    /* Floating Bottom Bar */
+    .floating-bar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 60;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+      padding: 10px 14px;
+    }
+
+    .floating-bar-inner {
+      max-width: 760px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 8px;
+    }
+
+    .floating-bar .btn {
+      min-height: 44px;
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 76px;
+      transform: translateX(-50%) translateY(20px);
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 18px;
+      border-radius: 999px;
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.22s ease;
+      z-index: 80;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 28px;
+      padding: 18px 16px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+
+    .footer a {
+      color: var(--primary);
+      font-weight: 800;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sticky Navigation -->
+  <header class="top-bar">
+    <div class="top-bar-inner">
+      <div class="brand-row">
+        <div class="brand-title">Puti-AI｜1124 社群召集人實戰任務單</div>
+        <div class="progress-pill" id="progressPill">OK 進度 0 / 5</div>
+      </div>
+      <nav class="nav-pills" aria-label="研習章節導覽">
+        <a class="nav-pill active" href="#sec-01">🚀 01 進場</a>
+        <a class="nav-pill" href="#sec-02">💪 02 九塊肌</a>
+        <a class="nav-pill" href="#sec-03">📸 03 拍照＆減壓</a>
+        <a class="nav-pill" href="#sec-04">🎙️ 04 Podcast</a>
+        <a class="nav-pill" href="#sec-05">💡 05 共創牆</a>
+        <a class="nav-pill" href="#sec-06">❓ 06 FAQ</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Hero Banner -->
+    <section class="hero">
+      <div class="hero-badge">115/11/24 屏東縣社群召集人研習｜09:10–10:50</div>
+      <h1>手機玩轉 NotebookLM<br />你的 24H AI 社群副召</h1>
+      <p>免帶筆電・免打長字・點擊一鍵複製！用 80/20 減法備課術，把時間與溫度留給孩子。</p>
+      <div class="hero-actions">
+        <a class="btn btn-white" id="heroNotebookBtn" href="https://notebooklm.google.com/" target="_blank" rel="noopener">
+          🔗 開啟 NotebookLM
+        </a>
+        <a class="btn btn-outline-light" id="heroRescueBtn" href="#rescue-card">
+          🛟 帳號卡關救生圈
+        </a>
+      </div>
+    </section>
+
+    <!-- 01 進場必看 -->
+    <section class="section" id="sec-01">
+      <div class="section-header">
+        <h2 class="section-title">🚀 01｜進場必看與工具入口</h2>
+        <span class="section-time">09:10–09:25</span>
+      </div>
+
+      <div class="card card-warm">
+        <h3 class="card-title">📱 手機操作「三不原則」＆ 鄰座互助公約</h3>
+        <ul class="clean-list">
+          <li><strong>優先用個人 Gmail 登入</strong>：避免學校教育版（edu.tw）權限受限；若畫面折疊，點瀏覽器右上角切換「<strong>電腦版網站</strong>」。</li>
+          <li><strong>① 不打字</strong>：點下方綠色「一鍵複製」貼上，或按鍵盤<strong>麥克風</strong>語音提問。</li>
+          <li><strong>② 不找檔</strong>：直接貼上網頁網址，或開手機相機拍手邊資料。</li>
+          <li><strong>③ 只開兩分頁</strong>：全程只開「<strong>本任務單網頁</strong>」＋「<strong>NotebookLM</strong>」。</li>
+          <li><strong>🤝 鄰座互助制</strong>：每完成一步，確認左右夥伴畫面都跑出來，一起比個 <strong>OK</strong>！</li>
+        </ul>
+        <button type="button" class="peer-check" data-step="step1">⬜ 步驟 1：已登入 NotebookLM 並與鄰座比 OK</button>
+      </div>
+
+      <div class="card card-soft" id="rescue-card">
+        <h3 class="card-title">🛟 帳號卡關救生圈（公開體驗筆記本）</h3>
+        <p class="card-sub">如果教育版帳號登不進去、忘記密碼或卡在雙重驗證，完全別慌！直接點開講師預建的公開筆記本，一樣可以提問、點來源核對原文。</p>
+        <div id="publicNotebookMount"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">⏱️ 今日 100 分鐘精準節奏</h3>
+        <div class="schedule-list">
+          <div class="schedule-item"><span class="schedule-time">09:10–09:25</span><span>破冰進場：80/20 減法備課術＆鄰座互助</span></div>
+          <div class="schedule-item"><span class="schedule-time">09:25–09:55</span><span>第一節：免打字「九塊肌」備課與社群共備</span></div>
+          <div class="schedule-item"><span class="schedule-time">09:55–10:25</span><span>第二節：手機拍照出題 ＆ 召集人行政減壓</span></div>
+          <div class="schedule-item"><span class="schedule-time">10:25–10:40</span><span>全場共創：召集人點子牆 ＋ 舊簡報翻新彩蛋</span></div>
+          <div class="schedule-item"><span class="schedule-time">10:40–10:50</span><span>茶敘前魔法：10:42 生成雙人 Podcast ＋ 溫暖收尾</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 02 第一節：九塊肌備課 -->
+    <section class="section" id="sec-02">
+      <div class="section-header">
+        <h2 class="section-title">💪 02｜免打字「九塊肌」備課實戰</h2>
+        <span class="section-time">09:25–09:55</span>
+      </div>
+
+      <div class="card card-blue">
+        <h3 class="card-title">📄 測試素材 A｜課文／教育文章連結</h3>
+        <p class="card-sub">點下方「一鍵複製網址」，切換到 NotebookLM 點「＋新增來源」→「網站」貼上即可。</p>
+        <div id="materialAMount"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">✨ 任務一｜秒懂核心，變身白話文</h3>
+
+        <div class="prompt-block">
+          <span class="prompt-label">指令 1｜降維解釋（學生聽得懂）</span>
+          <div class="prompt-box" id="p-task1-a">請根據這份資料，用國小五年級學生聽得懂的語言，舉一個生活中的例子，向他們解釋這篇文章最核心的 3 個觀念。</div>
+          <button type="button" class="btn btn-copy" data-copy-target="p-task1-a">📋 一鍵複製指令 1</button>
+        </div>
+
+        <div class="prompt-block">
+          <span class="prompt-label">指令 2｜課堂 3 分鐘引起動機</span>
+          <div class="prompt-box" id="p-task1-b">如果我要用這份資料上一堂 40 分鐘的課，請幫我設計一個 3 分鐘的「開場引起動機」提問，要能讓全班學生有感。</div>
+          <button type="button" class="btn btn-copy" data-copy-target="p-task1-b">📋 一鍵複製指令 2</button>
+        </div>
+
+        <button type="button" class="peer-check" data-step="step2">⬜ 步驟 2：完成任務一並與鄰座比 OK</button>
+      </div>
+
+      <div class="card card-soft">
+        <h3 class="card-title">🧩 工作室「九塊肌」免打字 5 面向玩法</h3>
+        <p class="card-sub">完全免背提示詞！直接點擊右側工作室（Studio）預設按鈕：</p>
+        <div class="grid-5">
+          <div class="mini-tile"><strong>📖 讀（抓重點）</strong>報告 → 研讀指南（大綱＋生詞＋思考題）</div>
+          <div class="mini-tile"><strong>🎧 聽（播客）</strong>語音摘要（雙人中文 Podcast 寫作引導）</div>
+          <div class="mini-tile"><strong>💬 說（互動）</strong>學習卡（人物卡）＆ 角色扮演對話</div>
+          <div class="mini-tile"><strong>✍️ 寫（結構）</strong>心智圖（點任一節點可繼續延伸文本）</div>
+          <div class="mini-tile"><strong>✅ 評（測驗）</strong>測驗／學習卡 ＋ 三層次閱讀提問</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">🎭 大螢幕示範指令參考</h3>
+        <div class="prompt-block">
+          <span class="prompt-label">角色扮演對話</span>
+          <div class="prompt-box" id="p-roleplay">請扮演孫悟空，用他的口吻跟四年級學生對話。</div>
+          <button type="button" class="btn btn-copy" data-copy-target="p-roleplay">📋 一鍵複製角色扮演指令</button>
+        </div>
+        <div class="prompt-block">
+          <span class="prompt-label">三層次閱讀提問（提取／統整／省思）</span>
+          <div class="prompt-box" id="p-3level">請根據這份資料，依據「提取訊息、統整解釋、省思評鑑」三個維度各出 1 題提問，並附上解答與原文出處。</div>
+          <button type="button" class="btn btn-copy" data-copy-target="p-3level">📋 一鍵複製三層次提問</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 第二節：拍照出題 ＆ 召集人行政減壓 -->
+    <section class="section" id="sec-03">
+      <div class="section-header">
+        <h2 class="section-title">📸 03｜拍照出題 ＆ 召集人行政減壓</h2>
+        <span class="section-time">09:55–10:25</span>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">📸 任務二｜手機拍照秒出素養題</h3>
+        <p class="card-sub"><strong>操作步驟</strong>：在 NotebookLM 點「＋新增來源」→「相機／照片」，直接拍下研習手冊或課本其中一頁！</p>
+
+        <div class="prompt-block">
+          <span class="prompt-label">指令 1｜自動產出素養單選題＋詳解</span>
+          <div class="prompt-box" id="p-task2-a">請完全根據我上傳的這張圖片內容，設計 2 題素養導向單選題，必須包含「生活情境題幹」、四個選項、正確答案，以及每個選項為何對或錯的詳細解析。</div>
+          <button type="button" class="btn btn-copy" data-copy-target="p-task2-a">📋 一鍵複製出題指令</button>
+        </div>
+
+        <div class="prompt-block">
+          <span class="prompt-label">指令 2｜抓出學生易混淆迷思</span>
+          <div class="prompt-box" id="p-task2-b">以這頁內容來說，學生在學習或考試時最容易搞混的概念是什麼？請用條列式幫我整理出來。</div>
+          <button type="button" class="btn btn-copy" data-copy-target="p-task2-b">📋 一鍵複製迷思分析指令</button>
+        </div>
+
+        <button type="button" class="peer-check" data-step="step3">⬜ 步驟 3：完成拍照出題並與鄰座比 OK</button>
+      </div>
+
+      <div class="card card-blue">
+        <h3 class="card-title">📄 測試素材 B｜社群計畫／學校公文範例</h3>
+        <p class="card-sub">複製下方連結貼進 NotebookLM，體驗「一秒變身 AI 社群副召」。</p>
+        <div id="materialBMount"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">🗓️ 任務三｜社群召集人 AI 副召指令</h3>
+        <div class="prompt-block">
+          <span class="prompt-label">社群召集人專屬（時間表＋LINE 通知）</span>
+          <div class="prompt-box" id="p-task3">我是一位學校教師專業學習社群的召集人，請根據這份計畫／公文，幫我整理出本學期召集人需要執行的關鍵任務與時間點表格，並寫一則 150 字以內、語氣溫暖有活力的 LINE 群組通知，邀請社群夥伴參加第一次共備會議。</div>
+          <button type="button" class="btn btn-copy" data-copy-target="p-task3">📋 一鍵複製召集人專屬指令</button>
+        </div>
+        <p class="card-sub" style="margin-top: 12px; margin-bottom: 0;">
+          ✨ <strong>加碼驚喜</strong>：接著點選工作室「<strong>資訊圖表</strong>」，一鍵把枯燥公文變成夥伴與家長一眼看懂的視覺宣導圖卡！
+        </p>
+        <button type="button" class="peer-check" data-step="step4">⬜ 步驟 4：完成召集人減壓任務並比 OK</button>
+      </div>
+    </section>
+
+    <!-- 04 茶敘前魔法：Podcast ＆ 進階彩蛋 -->
+    <section class="section" id="sec-04">
+      <div class="section-header">
+        <h2 class="section-title">🎙️ 04｜雙人 Podcast ＆ 進階彩蛋</h2>
+        <span class="section-time">10:40–10:50</span>
+      </div>
+
+      <div class="card card-warm">
+        <h3 class="card-title">🎧 10:42 同步任務｜自訂台灣味 AI 雙人播客</h3>
+        <p class="card-sub">點「<strong>語音摘要</strong>」→ 語言選「<strong>中文（繁體）</strong>」→ 貼入下方自訂焦點按下生成，10:50 剛好帶去茶敘邊喝茶邊聽！</p>
+
+        <div class="prompt-block">
+          <span class="prompt-label">自訂焦點｜台灣老師辦公室聊天口吻</span>
+          <div class="prompt-box" id="p-podcast-a">請兩位主持人用輕鬆、像台灣老師在辦公室聊天的口吻，討論這份資料最值得帶進課堂的 3 個亮點，並給老師一個明天就能執行的教學小建議。</div>
+          <button type="button" class="btn btn-copy" data-copy-target="p-podcast-a">📋 一鍵複製 Podcast 焦點指令</button>
+        </div>
+
+        <div class="prompt-block">
+          <span class="prompt-label">教學延伸｜給學生的閱讀心得引導</span>
+          <div class="prompt-box" id="p-podcast-b">受眾為國小中年級學生，請兩位主持人用活潑生動的故事口吻，引導他們思考這篇文章的重點並寫出自己的閱讀心得。</div>
+          <button type="button" class="btn btn-copy" data-copy-target="p-podcast-b">📋 一鍵複製學生引導版指令</button>
+        </div>
+
+        <button type="button" class="peer-check" data-step="step5">⬜ 步驟 5：按下語音摘要生成，準備去茶敘！</button>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title">🎨 彩蛋：歷年舊簡報翻新 ＆ 筆記本命名法</h3>
+        <ul class="clean-list">
+          <li><strong>筆記本命名規範</strong>：<code>【備課】115上五年級國語</code>、<code>【班級】115五忠</code>、<code>【行政】115學校會議</code>。</li>
+          <li><strong>期末成果報告／舊簡報翻新 3 步驟</strong>：
+            <ol style="margin: 6px 0 0; padding-left: 18px;">
+              <li>勾選歷年舊簡報與本學期計畫，請 AI 更新並整理大綱</li>
+              <li>點「<strong>儲存至記事</strong>」→「<strong>轉換為來源</strong>」</li>
+              <li>點選工作室「<strong>簡報</strong>」一鍵生成新版投影片！</li>
+            </ol>
+          </li>
+          <li><strong>差異化學習單＆學期知識庫</strong>：同一份課文同時產出「基礎扶弱版」與「情境挑戰版」；把校外教學簡章、行前通知全丟同一本，家長問細節 3 秒查來源秒回。</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 05 全場共創：召集人點子牆 -->
+    <section class="section" id="sec-05">
+      <div class="section-header">
+        <h2 class="section-title">💡 05｜全場共創：召集人點子牆</h2>
+        <span class="section-time">10:25–10:40</span>
+      </div>
+
+      <div class="card card-blue">
+        <h3 class="card-title">👇 換你分享！這學期社群共備最想怎麼用？</h3>
+        <p class="card-sub">10:25 全場共創交流時間！點下方按鈕進入共創牆，按 <strong>＋</strong> 貼出你的點子（大螢幕即時點名分享，大家一起抄作業）。</p>
+        <div class="prompt-box" id="p-wall-template">【學校／社群名稱】：
+【下週一最想用的場景／今天試出的神指令】：</div>
+        <div class="btn-row" style="margin-bottom: 10px;">
+          <button type="button" class="btn btn-soft" data-copy-target="p-wall-template">📋 複製回覆格式</button>
+          <a class="btn btn-blue" id="padletWallBtn" href="https://padlet.com/clongwh/1124" target="_blank" rel="noopener">🚀 前往共創牆</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 FAQ 與課後回饋 -->
+    <section class="section" id="sec-06">
+      <div class="section-header">
+        <h2 class="section-title">❓ 06｜6 大 FAQ ＆ 課後回饋</h2>
+        <span class="section-time">帶得走</span>
+      </div>
+
+      <details class="faq-item">
+        <summary>Q1：學校教育版帳號（@edu.tw）登不進去怎麼辦？</summary>
+        <p>各縣市教育局處對教育版安全控管政策不同，部分功能尚未全面開放。最快解法是直接切換成自己的「<strong>個人 Gmail</strong>」帳號，功能最完整、限制最少。</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Q2：上傳考卷、會議紀錄會外流或被拿去訓練 AI 嗎？</summary>
+        <p>依 Google 官方隱私政策，使用者上傳到 NotebookLM 的個人資料與對話不會用來訓練公開模型。但基於資安原則，含學生姓名、身分證字號、成績等個資仍務必先「去識別化」再上傳。</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Q3：這是免費的嗎？有沒有檔案或次數限制？</summary>
+        <p>一般個人 Gmail 即可免費使用！免費版最多可建 <strong>100 個筆記本</strong>，每個筆記本可放 <strong>50 個資料來源</strong>（單一來源最高 50 萬字），整理整學期教材綽綽有餘。</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Q4：支援哪些檔案類型？YouTube 或錄音可以嗎？</summary>
+        <p>支援 PDF、Google 文件／簡報、純文字、網頁網址、<strong>YouTube 影片連結</strong>（自動抓字幕）、<strong>音訊檔（MP3/WAV）</strong>，手機版還可直接拍照或選相簿圖片當來源。</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Q5：語音摘要（Audio Overview）可以講繁體中文嗎？</summary>
+        <p>可以！生成前將輸出語言設為「<strong>中文（繁體）</strong>」，兩位 AI 主持人就會用自然生動的台灣 Podcast 語氣一搭一唱聊你的教材。</p>
+      </details>
+
+      <details class="faq-item">
+        <summary>Q6：它會像一般 AI 一樣一本正經胡說八道嗎？</summary>
+        <p>NotebookLM 採用 Grounding 機制，<strong>只根據你給的資料回答</strong>；資料沒寫會老實說找不到，且每段回答皆附數字標註，點擊直接跳回原文核對。</p>
+      </details>
+
+      <div class="card card-soft" style="margin-top: 14px;">
+        <h3 class="card-title">📝 研習回饋表單（5 題 1 分鐘）</h3>
+        <p class="card-sub">感謝參與！花 1 分鐘留下你的回饋與「下週一行動」，讓未來的研習更貼近現場。</p>
+        <div id="feedbackFormMount"></div>
+      </div>
+    </section>
+
+    <!-- Footer Copyright -->
+    <footer class="footer">
+      <div>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為</div>
+      <div>更多 Puti-AI 教學工具：<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener">點此前往</a></div>
+    </footer>
+  </main>
+
+  <!-- Floating Quick Action Bar -->
+  <div class="floating-bar">
+    <div class="floating-bar-inner">
+      <a class="btn btn-primary" id="floatNotebookBtn" href="https://notebooklm.google.com/" target="_blank" rel="noopener">
+        🔗 切換到 NotebookLM
+      </a>
+      <a class="btn btn-soft" id="floatWallBtn" href="https://padlet.com/clongwh/1124" target="_blank" rel="noopener">
+        💡 開共創牆
+      </a>
+    </div>
+  </div>
+
+  <!-- Copy Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite">✅ 已複製！切換到 NotebookLM 貼上即可</div>
+
+  <script>
+    /* ============================================================
+     * 【講師集中設定區】把待補網址貼進引號裡，存檔推上 GitHub 立即生效
+     * ============================================================ */
+    const WORKSHOP_LINKS = {
+      notebooklmUrl: "https://notebooklm.google.com/",
+      publicNotebookUrl: "", // ← 貼上：公開體驗筆記本連結（權限設「知道連結皆可檢視」）
+      materialAUrl: "",      // ← 貼上：素材 A 公開網頁連結（如 108 課綱素養說明／教育新聞／課文）
+      materialALabel: "108 課綱素養導向／教育文章（素材 A）",
+      materialBUrl: "",      // ← 貼上：素材 B 公開網頁／PDF 連結（如社群實施計畫／學校公文）
+      materialBLabel: "教師專業學習社群實施計畫／公文（素材 B）",
+      padletWallUrl: "https://padlet.com/clongwh/1124",
+      feedbackFormUrl: ""    // ← 貼上：Google 研習回饋表單連結
+    };
+
+    /* 1. 動態渲染可設定的連結區塊 */
+    function renderConfigurableLinks() {
+      document.getElementById("heroNotebookBtn").href = WORKSHOP_LINKS.notebooklmUrl;
+      document.getElementById("floatNotebookBtn").href = WORKSHOP_LINKS.notebooklmUrl;
+      document.getElementById("padletWallBtn").href = WORKSHOP_LINKS.padletWallUrl;
+      document.getElementById("floatWallBtn").href = WORKSHOP_LINKS.padletWallUrl;
+
+      // 公開體驗筆記本（救生圈）
+      const publicMount = document.getElementById("publicNotebookMount");
+      if (WORKSHOP_LINKS.publicNotebookUrl) {
+        publicMount.innerHTML = `<a class="btn btn-primary" href="${WORKSHOP_LINKS.publicNotebookUrl}" target="_blank" rel="noopener">🛟 開啟講師公開體驗筆記本</a>`;
+      } else {
+        publicMount.innerHTML = `<button type="button" class="btn btn-disabled" disabled>🛟 講師現場開啟提供（待補公開筆記本連結）</button>`;
+      }
+
+      // 素材 A
+      renderMaterialBlock("materialAMount", WORKSHOP_LINKS.materialAUrl, WORKSHOP_LINKS.materialALabel, "matA");
+      // 素材 B
+      renderMaterialBlock("materialBMount", WORKSHOP_LINKS.materialBUrl, WORKSHOP_LINKS.materialBLabel, "matB");
+
+      // 回饋表單
+      const fbMount = document.getElementById("feedbackFormMount");
+      if (WORKSHOP_LINKS.feedbackFormUrl) {
+        fbMount.innerHTML = `<a class="btn btn-primary" href="${WORKSHOP_LINKS.feedbackFormUrl}" target="_blank" rel="noopener">📝 前往填寫研習回饋表單</a>`;
+      } else {
+        fbMount.innerHTML = `<button type="button" class="btn btn-disabled" disabled>📝 研習結束前開放（待補表單連結）</button>`;
+      }
+    }
+
+    function renderMaterialBlock(mountId, url, label, key) {
+      const el = document.getElementById(mountId);
+      if (url) {
+        el.innerHTML = `
+          <div class="url-preview"><strong>${label}</strong><br /><span id="url-${key}">${url}</span></div>
+          <div class="btn-row">
+            <button type="button" class="btn btn-copy" data-copy-target="url-${key}">📋 一鍵複製網址</button>
+            <a class="btn btn-soft" href="${url}" target="_blank" rel="noopener">🌐 預覽文章</a>
+          </div>
+        `;
+      } else {
+        el.innerHTML = `<button type="button" class="btn btn-disabled" disabled>📄 ${label}（待講師補上連結）</button>`;
+      }
+    }
+
+    /* 2. 手機全相容一鍵複製（含 LINE / 舊瀏覽器 Fallback） */
+    let toastTimer = null;
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      toast.textContent = msg;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (_) {}
+      }
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      let ok = false;
+      try {
+        ok = document.execCommand("copy");
+      } catch (_) {}
+      document.body.removeChild(ta);
+      return ok;
+    }
+
+    document.addEventListener("click", async (e) => {
+      const btn = e.target.closest("[data-copy-target]");
+      if (!btn) return;
+      const targetEl = document.getElementById(btn.dataset.copyTarget);
+      if (!targetEl) return;
+      const text = targetEl.textContent.trim();
+      const ok = await copyText(text);
+      if (ok) {
+        const originalText = btn.dataset.origText || btn.textContent;
+        btn.dataset.origText = originalText;
+        btn.classList.add("copied");
+        btn.textContent = "✅ 已複製！去 NotebookLM 貼上";
+        showToast("✅ 已複製！切到 NotebookLM 貼上即可");
+        setTimeout(() => {
+          btn.classList.remove("copied");
+          btn.textContent = originalText;
+        }, 1800);
+      } else {
+        showToast("⚠️ 請長按上方框內文字手動複製");
+      }
+    });
+
+    /* 3. 鄰座互助 OK 進度記憶（localStorage） */
+    const STORAGE_KEY = "puti_1124_convener_checks";
+    const checks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    const checkButtons = Array.from(document.querySelectorAll(".peer-check"));
+
+    function updateProgress() {
+      let doneCount = 0;
+      checkButtons.forEach((btn) => {
+        const key = btn.dataset.step;
+        const isDone = Boolean(checks[key]);
+        if (isDone) doneCount++;
+        btn.classList.toggle("done", isDone);
+        const rawLabel = btn.textContent.replace(/^[⬜✅]\s*/, "");
+        btn.textContent = `${isDone ? "✅" : "⬜"} ${rawLabel}`;
+      });
+      document.getElementById("progressPill").textContent = `OK 進度 ${doneCount} / ${checkButtons.length}`;
+    }
+
+    checkButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const key = btn.dataset.step;
+        checks[key] = !checks[key];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(checks));
+        updateProgress();
+        if (checks[key]) showToast("🎉 太棒了！跟左右夥伴一起比個 OK！");
+      });
+    });
+
+    /* 4. 滾動高亮上方導覽膠囊 */
+    const navLinks = Array.from(document.querySelectorAll(".nav-pill"));
+    const sections = navLinks.map((a) => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const id = "#" + entry.target.id;
+            navLinks.forEach((a) => {
+              const match = a.getAttribute("href") === id;
+              a.classList.toggle("active", match);
+              if (match) a.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+            });
+          }
+        });
+      },
+      { rootMargin: "-25% 0px -65% 0px", threshold: 0 }
+    );
+    sections.forEach((sec) => observer.observe(sec));
+
+    renderConfigurableLinks();
+    updateProgress();
+  </script>
+</body>
+</html>
