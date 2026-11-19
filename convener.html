@@ -36,8 +36,7 @@
     }
 
     html {
-      scroll-behavior: smooth;
-      scroll-padding-top: 124px;
+      scroll-padding-top: 112px;
     }
 
     body {
@@ -1031,26 +1030,88 @@
       });
     });
 
-    /* 4. 滾動高亮上方導覽膠囊 */
+    /* 4. 零干擾導覽列：點按鈕精準跳轉 + 滾動同步高亮（只水平捲動導覽列，絕不搶頁面垂直捲動） */
+    const topBar = document.querySelector(".top-bar");
+    const navContainer = document.querySelector(".nav-pills");
     const navLinks = Array.from(document.querySelectorAll(".nav-pill"));
-    const sections = navLinks.map((a) => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+    const sections = navLinks
+      .map((a) => document.querySelector(a.getAttribute("href")))
+      .filter(Boolean);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const id = "#" + entry.target.id;
-            navLinks.forEach((a) => {
-              const match = a.getAttribute("href") === id;
-              a.classList.toggle("active", match);
-              if (match) a.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-            });
-          }
-        });
+    let activeId = "#sec-01";
+    let lockUntil = 0;
+
+    function centerNavPill(link) {
+      if (!link || !navContainer) return;
+      const targetLeft =
+        link.offsetLeft - (navContainer.clientWidth - link.offsetWidth) / 2;
+      navContainer.scrollTo({
+        left: Math.max(0, targetLeft),
+        behavior: "smooth"
+      });
+    }
+
+    function setActivePill(id) {
+      if (id === activeId) return;
+      activeId = id;
+      navLinks.forEach((a) => {
+        const match = a.getAttribute("href") === id;
+        a.classList.toggle("active", match);
+        if (match) centerNavPill(a);
+      });
+    }
+
+    // 點擊上方 01~06 按鈕：精準計算高度捲動，並短暫鎖定高亮避免中途亂跳
+    navLinks.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        const id = link.getAttribute("href");
+        const target = document.querySelector(id);
+        if (!target) return;
+        e.preventDefault();
+        lockUntil = Date.now() + 700;
+        setActivePill(id);
+        const headerOffset = (topBar ? topBar.offsetHeight : 100) + 12;
+        const top = target.getBoundingClientRect().top + window.scrollY - headerOffset;
+        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      });
+    });
+
+    // 手指滾動時：用 rAF 節流比對目前位置（滑到底直接亮最後一章）
+    let ticking = false;
+    function syncActiveOnScroll() {
+      ticking = false;
+      if (Date.now() < lockUntil) return;
+
+      const scrollBottom = window.scrollY + window.innerHeight;
+      const docHeight = document.documentElement.scrollHeight;
+      if (docHeight - scrollBottom <= 24) {
+        setActivePill("#" + sections[sections.length - 1].id);
+        return;
+      }
+
+      const headerOffset = (topBar ? topBar.offsetHeight : 100) + 32;
+      const probeY = window.scrollY + headerOffset;
+      let current = sections[0];
+      for (const sec of sections) {
+        if (sec.offsetTop <= probeY) {
+          current = sec;
+        } else {
+          break;
+        }
+      }
+      if (current) setActivePill("#" + current.id);
+    }
+
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(syncActiveOnScroll);
+        }
       },
-      { rootMargin: "-25% 0px -65% 0px", threshold: 0 }
+      { passive: true }
     );
-    sections.forEach((sec) => observer.observe(sec));
 
     renderConfigurableLinks();
     updateProgress();
