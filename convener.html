@@ -3,40 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-  <title>Puti-AI | 社群召集人 Gemini NotebookLM 教師研習任務單</title>
+  <title>Puti-AI | 1124 社群召集人 NotebookLM 研習控台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
   <style>
     :root {
-      --bg: #faf8f4;
+      --bg: #f6f7f4;
       --surface: #ffffff;
-      --surface-soft: #f3f7f4;
-      --surface-warm: #fff8eb;
-      --surface-blue: #eef6ff;
-      --surface-rose: #fff2f2;
+      --surface-soft: #f0fdf4;
+      --surface-warm: #fffbeb;
+      --surface-blue: #eff6ff;
       --text: #1e293b;
       --text-muted: #475569;
       --primary: #15803d;
-      --primary-hover: #166534;
+      --primary-dark: #14532d;
       --primary-soft: #dcfce7;
       --accent: #d97706;
       --accent-soft: #fef3c7;
       --blue: #2563eb;
-      --blue-soft: #dbeafe;
       --border: #e2e8f0;
-      --radius: 18px;
+      --radius: 20px;
       --radius-sm: 12px;
-      --shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+      --shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
     }
 
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-    }
-
-    html {
-      scroll-padding-top: 112px;
     }
 
     body {
@@ -45,137 +40,12 @@
       background: var(--bg);
       color: var(--text);
       font-size: 16px;
-      line-height: 1.7;
-      padding-bottom: 92px;
+      line-height: 1.65;
+      min-height: 100vh;
     }
 
-    /* Sticky Header & Progress */
-    .top-bar {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(250, 248, 244, 0.94);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--border);
-    }
-
-    .top-bar-inner {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 10px 14px 8px;
-    }
-
-    .brand-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-
-    .brand-title {
-      font-size: 15px;
-      font-weight: 800;
-      color: var(--primary);
-      letter-spacing: 0.02em;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .progress-pill {
-      flex-shrink: 0;
-      font-size: 12px;
-      font-weight: 700;
-      background: var(--primary-soft);
-      color: var(--primary);
-      padding: 4px 10px;
-      border-radius: 999px;
-    }
-
-    .nav-pills {
-      display: flex;
-      gap: 6px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      padding-bottom: 2px;
-    }
-
-    .nav-pills::-webkit-scrollbar {
-      display: none;
-    }
-
-    .nav-pill {
-      flex-shrink: 0;
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-muted);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 6px 12px;
-      border-radius: 999px;
-      transition: all 0.15s ease;
-    }
-
-    .nav-pill.active,
-    .nav-pill:active {
-      background: var(--primary);
-      color: #ffffff;
-      border-color: var(--primary);
-    }
-
-    /* Main Container */
-    .container {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 16px 14px 24px;
-    }
-
-    /* Hero */
-    .hero {
-      background: linear-gradient(135deg, #14532d 0%, #15803d 60%, #0f766e 100%);
-      color: #ffffff;
-      border-radius: 22px;
-      padding: 22px 20px;
-      margin-bottom: 18px;
-      box-shadow: 0 10px 26px rgba(21, 128, 61, 0.22);
-    }
-
-    .hero-badge {
-      display: inline-block;
-      background: rgba(255, 255, 255, 0.18);
-      font-size: 12px;
-      font-weight: 700;
-      padding: 4px 11px;
-      border-radius: 999px;
-      margin-bottom: 10px;
-    }
-
-    .hero h1 {
-      margin: 0 0 8px;
-      font-size: 24px;
-      line-height: 1.3;
-      font-weight: 900;
-    }
-
-    .hero p {
-      margin: 0 0 16px;
-      font-size: 14px;
-      opacity: 0.94;
-      line-height: 1.6;
-    }
-
-    .hero-actions {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-    }
-
-    @media (min-width: 520px) {
-      .hero-actions {
-        grid-template-columns: 1fr 1fr;
-      }
+    .hidden {
+      display: none !important;
     }
 
     /* Buttons */
@@ -183,113 +53,560 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      min-height: 48px;
-      padding: 10px 16px;
+      gap: 7px;
+      min-height: 44px;
+      padding: 9px 15px;
       border-radius: var(--radius-sm);
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
       font-family: inherit;
       text-decoration: none;
-      border: none;
+      border: 1px solid transparent;
       cursor: pointer;
-      transition: transform 0.1s ease, background 0.15s ease, box-shadow 0.15s ease;
+      transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
     }
 
     .btn:active {
       transform: scale(0.98);
     }
 
-    .btn-white {
-      background: #ffffff;
-      color: #14532d;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-    }
-
-    .btn-outline-light {
-      background: rgba(255, 255, 255, 0.16);
-      color: #ffffff;
-      border: 1.5px solid rgba(255, 255, 255, 0.55);
-    }
-
     .btn-primary {
       background: var(--primary);
       color: #ffffff;
-      width: 100%;
     }
 
     .btn-primary:hover {
-      background: var(--primary-hover);
-    }
-
-    .btn-copy {
-      background: var(--primary);
-      color: #ffffff;
-      width: 100%;
-      box-shadow: 0 3px 10px rgba(21, 128, 61, 0.18);
-    }
-
-    .btn-copy.copied {
-      background: #0f766e;
+      background: var(--primary-dark);
     }
 
     .btn-blue {
       background: var(--blue);
       color: #ffffff;
-      width: 100%;
+    }
+
+    .btn-amber {
+      background: var(--accent);
+      color: #ffffff;
     }
 
     .btn-soft {
       background: var(--surface-soft);
       color: var(--primary);
-      border: 1.5px solid #bbf7d0;
+      border-color: #bbf7d0;
+    }
+
+    .btn-ghost {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-block {
       width: 100%;
     }
 
-    .btn-disabled {
-      background: #e2e8f0;
-      color: #64748b;
-      cursor: not-allowed;
+    .btn-lg {
+      min-height: 52px;
+      font-size: 16px;
+      padding: 12px 18px;
+    }
+
+    .btn-copy.copied {
+      background: #0f766e !important;
+      color: #ffffff !important;
+    }
+
+    /* ============================================================
+     * 1. 講師鎖定畫面
+     * ============================================================ */
+    .lock-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: linear-gradient(145deg, #14532d 0%, #15803d 55%, #0f766e 100%);
+    }
+
+    .lock-card {
       width: 100%;
+      max-width: 400px;
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 28px 24px;
+      text-align: center;
+      box-shadow: 0 24px 50px rgba(0, 0, 0, 0.25);
     }
 
-    /* Section */
-    .section {
-      margin-bottom: 24px;
+    .lock-icon {
+      font-size: 42px;
+      margin-bottom: 8px;
     }
 
-    .section-header {
+    .lock-card h1 {
+      margin: 0 0 6px;
+      font-size: 21px;
+      font-weight: 900;
+      color: var(--primary-dark);
+    }
+
+    .lock-card p {
+      margin: 0 0 18px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .pin-input {
+      width: 100%;
+      min-height: 50px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 20px;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: 0.25em;
+      font-family: inherit;
+      margin-bottom: 12px;
+      outline: none;
+    }
+
+    .pin-input:focus {
+      border-color: var(--primary);
+    }
+
+    .pin-error {
+      color: #dc2626;
+      font-size: 13px;
+      font-weight: 700;
+      min-height: 20px;
+      margin-bottom: 8px;
+    }
+
+    /* ============================================================
+     * 2. 講師控台頂部列
+     * ============================================================ */
+    .console-bar {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .console-bar-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 10px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .console-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .console-badge {
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .console-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .console-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .console-actions .btn {
+      min-height: 38px;
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    /* Main Workspace */
+    .workspace {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px 16px 40px;
+    }
+
+    /* ============================================================
+     * 3. 3D 翻轉卡片（網格模式 & 舞台模式共用）
+     * ============================================================ */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 18px;
+    }
+
+    .flip-card {
+      perspective: 1400px;
+      cursor: pointer;
+    }
+
+    .flip-inner {
+      position: relative;
+      width: 100%;
+      min-height: 340px;
+      transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+      transform-style: preserve-3d;
+    }
+
+    .flip-card.flipped .flip-inner {
+      transform: rotateY(180deg);
+    }
+
+    .flip-face {
+      width: 100%;
+      min-height: 340px;
+      border-radius: var(--radius);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Front Face (投影大字主題面) */
+    .flip-front {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(145deg, #ffffff 0%, #f0fdf4 100%);
+      padding: 24px 22px;
+      justify-content: space-between;
+    }
+
+    .flip-card.flipped .flip-front {
+      pointer-events: none;
+    }
+
+    .front-meta {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      margin-bottom: 12px;
-      padding: 0 4px;
     }
 
-    .section-title {
-      margin: 0;
-      font-size: 19px;
+    .card-num {
+      font-size: 13px;
       font-weight: 900;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .section-time {
-      flex-shrink: 0;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--accent);
-      background: var(--accent-soft);
-      padding: 3px 9px;
+      color: #ffffff;
+      background: var(--primary);
+      padding: 4px 12px;
       border-radius: 999px;
     }
 
-    /* Cards */
-    .card {
-      background: var(--surface);
+    .card-time {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+
+    .front-center {
+      text-align: center;
+      padding: 16px 6px;
+    }
+
+    .front-emoji {
+      font-size: 44px;
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+
+    .front-title {
+      margin: 0 0 10px;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.3;
+      color: var(--primary-dark);
+    }
+
+    .front-tagline {
+      margin: 0;
+      font-size: 15px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .front-hint {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      background: rgba(220, 252, 231, 0.7);
+      padding: 8px 12px;
+      border-radius: 10px;
+    }
+
+    /* Back Face (提示詞與控場資料面) */
+    .flip-back {
+      position: relative;
+      transform: rotateY(180deg);
+      background: #ffffff;
+      padding: 18px 18px 16px;
+      cursor: default;
+    }
+
+    .flip-card:not(.flipped) .flip-back {
+      pointer-events: none;
+    }
+
+    .back-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .back-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--primary-dark);
+    }
+
+    .back-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .note-box {
+      background: var(--surface-warm);
+      border: 1px solid #fde68a;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13.5px;
+      color: #78350f;
+    }
+
+    .prompt-item {
+      background: #f8fafc;
+      border: 1.5px dashed #94a3b8;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .prompt-tag {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--primary);
+      background: var(--primary-soft);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+
+    .prompt-text {
+      font-size: 14.5px;
+      color: #0f172a;
+      white-space: pre-wrap;
+      margin-bottom: 10px;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    .back-footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* ============================================================
+     * 4. 大螢幕簡報舞台模式 (Stage View)
+     * ============================================================ */
+    .stage-wrap {
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .stage-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .stage-counter {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--text-muted);
+    }
+
+    .stage-wrap .flip-inner,
+    .stage-wrap .flip-face {
+      min-height: 460px;
+    }
+
+    .stage-wrap .front-emoji {
+      font-size: 64px;
+    }
+
+    .stage-wrap .front-title {
+      font-size: 36px;
+    }
+
+    .stage-wrap .front-tagline {
+      font-size: 20px;
+    }
+
+    .stage-shortcuts {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* ============================================================
+     * 5. QR Code 投影彈窗 (Modal)
+     * ============================================================ */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 480px;
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 24px 22px;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    .modal-badge {
+      display: inline-block;
+      background: var(--primary-soft);
+      color: var(--primary-dark);
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    .modal-title {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--text);
+    }
+
+    .modal-sub {
+      margin: 0 0 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .qr-box {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: #ffffff;
+      border: 2px solid var(--border);
+      border-radius: 18px;
+      margin-bottom: 14px;
+      min-width: 272px;
+      min-height: 272px;
+    }
+
+    .qr-url {
+      font-size: 12px;
+      color: var(--text-muted);
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      word-break: break-all;
+      margin-bottom: 14px;
+    }
+
+    .modal-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* ============================================================
+     * 6. 學員「單卡中介複製頁」 & 「課後懶人包」模式
+     * ============================================================ */
+    .student-wrap {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 16px 14px 96px;
+    }
+
+    .student-hero {
+      background: linear-gradient(135deg, #14532d 0%, #15803d 65%, #0f766e 100%);
+      color: #ffffff;
+      border-radius: 22px;
+      padding: 20px 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 10px 24px rgba(21, 128, 61, 0.22);
+    }
+
+    .student-hero-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
+
+    .student-hero h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.3;
+    }
+
+    .student-hero p {
+      margin: 0;
+      font-size: 14px;
+      opacity: 0.94;
+    }
+
+    .student-card {
+      background: #ffffff;
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 18px 16px;
@@ -297,247 +614,49 @@
       box-shadow: var(--shadow);
     }
 
-    .card-warm {
-      background: var(--surface-warm);
-      border-color: #fde68a;
-    }
-
-    .card-soft {
-      background: var(--surface-soft);
-      border-color: #bbf7d0;
-    }
-
-    .card-blue {
-      background: var(--surface-blue);
-      border-color: #bfdbfe;
-    }
-
-    .card-title {
+    .student-card h2 {
       margin: 0 0 10px;
-      font-size: 17px;
-      font-weight: 800;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .card-sub {
-      margin: 0 0 12px;
-      font-size: 14px;
-      color: var(--text-muted);
-    }
-
-    /* Prompt Box */
-    .prompt-box {
-      background: #f8fafc;
-      border: 1.5px dashed #94a3b8;
-      border-radius: var(--radius-sm);
-      padding: 14px;
-      margin-bottom: 10px;
-      font-size: 15px;
-      line-height: 1.65;
-      color: #0f172a;
-      user-select: text;
-      -webkit-user-select: text;
-      white-space: pre-wrap;
-    }
-
-    .prompt-label {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--primary);
-      background: var(--primary-soft);
-      padding: 2px 9px;
-      border-radius: 6px;
-      margin-bottom: 8px;
-    }
-
-    .prompt-block + .prompt-block {
-      margin-top: 16px;
-      padding-top: 16px;
-      border-top: 1px solid var(--border);
-    }
-
-    /* Lists */
-    .clean-list {
-      margin: 0;
-      padding-left: 20px;
-    }
-
-    .clean-list li {
-      margin-bottom: 8px;
-    }
-
-    .clean-list li:last-child {
-      margin-bottom: 0;
-    }
-
-    /* Nine-pack Grid */
-    .grid-5 {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-    }
-
-    @media (min-width: 520px) {
-      .grid-5 {
-        grid-template-columns: 1fr 1fr;
-      }
-    }
-
-    .mini-tile {
-      background: #ffffff;
-      border: 1px solid #d1fae5;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-size: 14px;
-    }
-
-    .mini-tile strong {
-      color: var(--primary);
-      display: block;
-      margin-bottom: 2px;
-    }
-
-    /* Schedule Table */
-    .schedule-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .schedule-item {
-      display: flex;
-      gap: 10px;
-      align-items: baseline;
-      font-size: 14px;
-      padding: 8px 10px;
-      background: #f8fafc;
-      border-radius: 10px;
-    }
-
-    .schedule-time {
-      flex-shrink: 0;
-      font-weight: 800;
-      color: var(--primary);
-      font-variant-numeric: tabular-nums;
-      min-width: 92px;
-    }
-
-    /* Peer Check Toggle */
-    .peer-check {
-      margin-top: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      min-height: 44px;
-      padding: 8px 12px;
-      border-radius: 12px;
-      border: 1.5px solid #cbd5e1;
-      background: #ffffff;
-      color: var(--text-muted);
-      font-size: 14px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .peer-check.done {
-      background: var(--primary-soft);
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    /* Link Action Row */
-    .btn-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .url-preview {
-      font-size: 13px;
-      color: var(--text-muted);
-      background: #f8fafc;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 8px 10px;
-      margin-bottom: 10px;
-      word-break: break-all;
-    }
-
-    /* FAQ Accordion */
-    details.faq-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 12px 14px;
-      margin-bottom: 8px;
-    }
-
-    details.faq-item summary {
-      font-weight: 800;
-      font-size: 15px;
-      cursor: pointer;
-      list-style: none;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    details.faq-item summary::-webkit-details-marker {
-      display: none;
-    }
-
-    details.faq-item summary::after {
-      content: "＋";
-      flex-shrink: 0;
-      color: var(--primary);
+      font-size: 18px;
       font-weight: 900;
+      color: var(--primary-dark);
     }
 
-    details.faq-item[open] summary::after {
-      content: "－";
-    }
-
-    details.faq-item p {
-      margin: 10px 0 2px;
-      font-size: 14px;
-      color: var(--text-muted);
-      line-height: 1.65;
-    }
-
-    /* Floating Bottom Bar */
-    .floating-bar {
+    .student-floating {
       position: fixed;
       left: 0;
       right: 0;
       bottom: 0;
-      z-index: 60;
+      z-index: 50;
       background: rgba(255, 255, 255, 0.96);
       backdrop-filter: blur(10px);
       border-top: 1px solid var(--border);
       padding: 10px 14px;
     }
 
-    .floating-bar-inner {
-      max-width: 760px;
+    .student-floating-inner {
+      max-width: 640px;
       margin: 0 auto;
-      display: grid;
-      grid-template-columns: 1.4fr 1fr;
-      gap: 8px;
     }
 
-    .floating-bar .btn {
-      min-height: 44px;
+    /* FAQ Accordion */
+    details.faq-item {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    details.faq-item summary {
+      font-weight: 800;
+      font-size: 14.5px;
+      cursor: pointer;
+    }
+
+    details.faq-item p {
+      margin: 8px 0 2px;
       font-size: 14px;
-      padding: 8px 12px;
+      color: var(--text-muted);
     }
 
     /* Toast */
@@ -552,11 +671,11 @@
       font-weight: 700;
       padding: 10px 18px;
       border-radius: 999px;
-      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.28);
       opacity: 0;
       pointer-events: none;
-      transition: all 0.22s ease;
-      z-index: 80;
+      transition: all 0.2s ease;
+      z-index: 120;
       white-space: nowrap;
     }
 
@@ -567,8 +686,9 @@
 
     /* Footer */
     .footer {
-      margin-top: 28px;
-      padding: 18px 16px;
+      max-width: 1200px;
+      margin: 26px auto 0;
+      padding: 16px;
       background: #ffffff;
       border: 1px solid var(--border);
       border-radius: var(--radius);
@@ -586,375 +706,306 @@
   </style>
 </head>
 <body>
-  <!-- Sticky Navigation -->
-  <header class="top-bar">
-    <div class="top-bar-inner">
-      <div class="brand-row">
-        <div class="brand-title">Puti-AI｜1124 社群召集人實戰任務單</div>
-        <div class="progress-pill" id="progressPill">OK 進度 0 / 5</div>
-      </div>
-      <nav class="nav-pills" aria-label="研習章節導覽">
-        <a class="nav-pill active" href="#sec-01">🚀 01 進場</a>
-        <a class="nav-pill" href="#sec-02">💪 02 九塊肌</a>
-        <a class="nav-pill" href="#sec-03">📸 03 拍照＆減壓</a>
-        <a class="nav-pill" href="#sec-04">🎙️ 04 Podcast</a>
-        <a class="nav-pill" href="#sec-05">💡 05 共創牆</a>
-        <a class="nav-pill" href="#sec-06">❓ 06 FAQ</a>
-      </nav>
+
+  <!-- ============================================================
+       A. 講師密碼鎖畫面（未解鎖時顯示）
+       ============================================================ -->
+  <section class="lock-screen hidden" id="lockScreen">
+    <div class="lock-card">
+      <div class="lock-icon">🔒</div>
+      <h1>Puti-AI 講師專用控台</h1>
+      <p>1124 屏東縣社群召集人 NotebookLM 研習<br />請輸入講師解鎖碼進入翻轉卡簡報</p>
+      <form id="pinForm">
+        <input type="password" inputmode="numeric" id="pinInput" class="pin-input" placeholder="請輸入解鎖碼" autocomplete="off" />
+        <div class="pin-error" id="pinError"></div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg">🔓 解鎖進入控台</button>
+      </form>
     </div>
-  </header>
+  </section>
 
-  <main class="container">
-    <!-- Hero Banner -->
-    <section class="hero">
-      <div class="hero-badge">115/11/24 屏東縣社群召集人研習｜09:10–10:50</div>
-      <h1>手機玩轉 NotebookLM<br />你的 24H AI 社群副召</h1>
-      <p>免帶筆電・免打長字・點擊一鍵複製！用 80/20 減法備課術，把時間與溫度留給孩子。</p>
-      <div class="hero-actions">
-        <a class="btn btn-white" id="heroNotebookBtn" href="https://notebooklm.google.com/" target="_blank" rel="noopener">
-          🔗 開啟 NotebookLM
+  <!-- ============================================================
+       B. 講師專用翻轉卡控台
+       ============================================================ -->
+  <div id="instructorApp" class="hidden">
+    <header class="console-bar">
+      <div class="console-bar-inner">
+        <div class="console-brand">
+          <span class="console-badge">🔒 講師控台</span>
+          <span class="console-title">1124 社群召集人 NotebookLM 實戰</span>
+        </div>
+        <div class="console-actions">
+          <button type="button" class="btn btn-soft" id="toggleViewBtn">🎬 切換簡報舞台</button>
+          <button type="button" class="btn btn-amber" id="packQrBtn">🎁 課後懶人包 QR</button>
+          <button type="button" class="btn btn-blue" id="wallQrBtn">💡 共創牆 QR</button>
+          <button type="button" class="btn btn-ghost" id="lockNowBtn">🔒 鎖定</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <!-- 網格模式 -->
+      <div id="gridView" class="cards-grid"></div>
+
+      <!-- 大螢幕舞台模式 -->
+      <div id="stageView" class="stage-wrap hidden">
+        <div class="stage-nav">
+          <button type="button" class="btn btn-ghost" id="prevCardBtn">⬅ 上一張</button>
+          <div class="stage-counter" id="stageCounter">1 / 9</div>
+          <button type="button" class="btn btn-ghost" id="nextCardBtn">下一張 ➡</button>
+        </div>
+        <div id="stageCardMount"></div>
+        <div class="stage-shortcuts">
+          快捷鍵：<code>←</code> <code>→</code> 切換卡片｜<code>空白鍵</code> 翻面｜<code>Q</code> 投影本卡 QR Code
+        </div>
+      </div>
+
+      <footer class="footer">
+        <div>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為</div>
+        <div>更多 Puti-AI 教學工具：<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener">點此前往</a></div>
+      </footer>
+    </main>
+  </div>
+
+  <!-- ============================================================
+       C. 學員「單卡中介複製頁」與「課後懶人包」畫面
+       ============================================================ -->
+  <div id="studentApp" class="hidden">
+    <main class="student-wrap" id="studentContent"></main>
+    <div class="student-floating">
+      <div class="student-floating-inner">
+        <a class="btn btn-primary btn-block btn-lg" id="studentNotebookBtn" href="https://notebooklm.google.com/" target="_blank" rel="noopener">
+          🔗 開啟 NotebookLM（建議用個人 Gmail）
         </a>
-        <a class="btn btn-outline-light" id="heroRescueBtn" href="#rescue-card">
-          🛟 帳號卡關救生圈
-        </a>
       </div>
-    </section>
-
-    <!-- 01 進場必看 -->
-    <section class="section" id="sec-01">
-      <div class="section-header">
-        <h2 class="section-title">🚀 01｜進場必看與工具入口</h2>
-        <span class="section-time">09:10–09:25</span>
-      </div>
-
-      <div class="card card-warm">
-        <h3 class="card-title">📱 手機操作「三不原則」＆ 鄰座互助公約</h3>
-        <ul class="clean-list">
-          <li><strong>優先用個人 Gmail 登入</strong>：避免學校教育版（edu.tw）權限受限；若畫面折疊，點瀏覽器右上角切換「<strong>電腦版網站</strong>」。</li>
-          <li><strong>① 不打字</strong>：點下方綠色「一鍵複製」貼上，或按鍵盤<strong>麥克風</strong>語音提問。</li>
-          <li><strong>② 不找檔</strong>：直接貼上網頁網址，或開手機相機拍手邊資料。</li>
-          <li><strong>③ 只開兩分頁</strong>：全程只開「<strong>本任務單網頁</strong>」＋「<strong>NotebookLM</strong>」。</li>
-          <li><strong>🤝 鄰座互助制</strong>：每完成一步，確認左右夥伴畫面都跑出來，一起比個 <strong>OK</strong>！</li>
-        </ul>
-        <button type="button" class="peer-check" data-step="step1">⬜ 步驟 1：已登入 NotebookLM 並與鄰座比 OK</button>
-      </div>
-
-      <div class="card card-soft" id="rescue-card">
-        <h3 class="card-title">🛟 帳號卡關救生圈（公開體驗筆記本）</h3>
-        <p class="card-sub">如果教育版帳號登不進去、忘記密碼或卡在雙重驗證，完全別慌！直接點開講師預建的公開筆記本，一樣可以提問、點來源核對原文。</p>
-        <div id="publicNotebookMount"></div>
-      </div>
-
-      <div class="card">
-        <h3 class="card-title">⏱️ 今日 100 分鐘精準節奏</h3>
-        <div class="schedule-list">
-          <div class="schedule-item"><span class="schedule-time">09:10–09:25</span><span>破冰進場：80/20 減法備課術＆鄰座互助</span></div>
-          <div class="schedule-item"><span class="schedule-time">09:25–09:55</span><span>第一節：免打字「九塊肌」備課與社群共備</span></div>
-          <div class="schedule-item"><span class="schedule-time">09:55–10:25</span><span>第二節：手機拍照出題 ＆ 召集人行政減壓</span></div>
-          <div class="schedule-item"><span class="schedule-time">10:25–10:40</span><span>全場共創：召集人點子牆 ＋ 舊簡報翻新彩蛋</span></div>
-          <div class="schedule-item"><span class="schedule-time">10:40–10:50</span><span>茶敘前魔法：10:42 生成雙人 Podcast ＋ 溫暖收尾</span></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 02 第一節：九塊肌備課 -->
-    <section class="section" id="sec-02">
-      <div class="section-header">
-        <h2 class="section-title">💪 02｜免打字「九塊肌」備課實戰</h2>
-        <span class="section-time">09:25–09:55</span>
-      </div>
-
-      <div class="card card-blue">
-        <h3 class="card-title">📄 測試素材 A｜課文／教育文章連結</h3>
-        <p class="card-sub">點下方「一鍵複製網址」，切換到 NotebookLM 點「＋新增來源」→「網站」貼上即可。</p>
-        <div id="materialAMount"></div>
-      </div>
-
-      <div class="card">
-        <h3 class="card-title">✨ 任務一｜秒懂核心，變身白話文</h3>
-
-        <div class="prompt-block">
-          <span class="prompt-label">指令 1｜降維解釋（學生聽得懂）</span>
-          <div class="prompt-box" id="p-task1-a">請根據這份資料，用國小五年級學生聽得懂的語言，舉一個生活中的例子，向他們解釋這篇文章最核心的 3 個觀念。</div>
-          <button type="button" class="btn btn-copy" data-copy-target="p-task1-a">📋 一鍵複製指令 1</button>
-        </div>
-
-        <div class="prompt-block">
-          <span class="prompt-label">指令 2｜課堂 3 分鐘引起動機</span>
-          <div class="prompt-box" id="p-task1-b">如果我要用這份資料上一堂 40 分鐘的課，請幫我設計一個 3 分鐘的「開場引起動機」提問，要能讓全班學生有感。</div>
-          <button type="button" class="btn btn-copy" data-copy-target="p-task1-b">📋 一鍵複製指令 2</button>
-        </div>
-
-        <button type="button" class="peer-check" data-step="step2">⬜ 步驟 2：完成任務一並與鄰座比 OK</button>
-      </div>
-
-      <div class="card card-soft">
-        <h3 class="card-title">🧩 工作室「九塊肌」免打字 5 面向玩法</h3>
-        <p class="card-sub">完全免背提示詞！直接點擊右側工作室（Studio）預設按鈕：</p>
-        <div class="grid-5">
-          <div class="mini-tile"><strong>📖 讀（抓重點）</strong>報告 → 研讀指南（大綱＋生詞＋思考題）</div>
-          <div class="mini-tile"><strong>🎧 聽（播客）</strong>語音摘要（雙人中文 Podcast 寫作引導）</div>
-          <div class="mini-tile"><strong>💬 說（互動）</strong>學習卡（人物卡）＆ 角色扮演對話</div>
-          <div class="mini-tile"><strong>✍️ 寫（結構）</strong>心智圖（點任一節點可繼續延伸文本）</div>
-          <div class="mini-tile"><strong>✅ 評（測驗）</strong>測驗／學習卡 ＋ 三層次閱讀提問</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 class="card-title">🎭 大螢幕示範指令參考</h3>
-        <div class="prompt-block">
-          <span class="prompt-label">角色扮演對話</span>
-          <div class="prompt-box" id="p-roleplay">請扮演孫悟空，用他的口吻跟四年級學生對話。</div>
-          <button type="button" class="btn btn-copy" data-copy-target="p-roleplay">📋 一鍵複製角色扮演指令</button>
-        </div>
-        <div class="prompt-block">
-          <span class="prompt-label">三層次閱讀提問（提取／統整／省思）</span>
-          <div class="prompt-box" id="p-3level">請根據這份資料，依據「提取訊息、統整解釋、省思評鑑」三個維度各出 1 題提問，並附上解答與原文出處。</div>
-          <button type="button" class="btn btn-copy" data-copy-target="p-3level">📋 一鍵複製三層次提問</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- 03 第二節：拍照出題 ＆ 召集人行政減壓 -->
-    <section class="section" id="sec-03">
-      <div class="section-header">
-        <h2 class="section-title">📸 03｜拍照出題 ＆ 召集人行政減壓</h2>
-        <span class="section-time">09:55–10:25</span>
-      </div>
-
-      <div class="card">
-        <h3 class="card-title">📸 任務二｜手機拍照秒出素養題</h3>
-        <p class="card-sub"><strong>操作步驟</strong>：在 NotebookLM 點「＋新增來源」→「相機／照片」，直接拍下研習手冊或課本其中一頁！</p>
-
-        <div class="prompt-block">
-          <span class="prompt-label">指令 1｜自動產出素養單選題＋詳解</span>
-          <div class="prompt-box" id="p-task2-a">請完全根據我上傳的這張圖片內容，設計 2 題素養導向單選題，必須包含「生活情境題幹」、四個選項、正確答案，以及每個選項為何對或錯的詳細解析。</div>
-          <button type="button" class="btn btn-copy" data-copy-target="p-task2-a">📋 一鍵複製出題指令</button>
-        </div>
-
-        <div class="prompt-block">
-          <span class="prompt-label">指令 2｜抓出學生易混淆迷思</span>
-          <div class="prompt-box" id="p-task2-b">以這頁內容來說，學生在學習或考試時最容易搞混的概念是什麼？請用條列式幫我整理出來。</div>
-          <button type="button" class="btn btn-copy" data-copy-target="p-task2-b">📋 一鍵複製迷思分析指令</button>
-        </div>
-
-        <button type="button" class="peer-check" data-step="step3">⬜ 步驟 3：完成拍照出題並與鄰座比 OK</button>
-      </div>
-
-      <div class="card card-blue">
-        <h3 class="card-title">📄 測試素材 B｜社群計畫／學校公文範例</h3>
-        <p class="card-sub">複製下方連結貼進 NotebookLM，體驗「一秒變身 AI 社群副召」。</p>
-        <div id="materialBMount"></div>
-      </div>
-
-      <div class="card">
-        <h3 class="card-title">🗓️ 任務三｜社群召集人 AI 副召指令</h3>
-        <div class="prompt-block">
-          <span class="prompt-label">社群召集人專屬（時間表＋LINE 通知）</span>
-          <div class="prompt-box" id="p-task3">我是一位學校教師專業學習社群的召集人，請根據這份計畫／公文，幫我整理出本學期召集人需要執行的關鍵任務與時間點表格，並寫一則 150 字以內、語氣溫暖有活力的 LINE 群組通知，邀請社群夥伴參加第一次共備會議。</div>
-          <button type="button" class="btn btn-copy" data-copy-target="p-task3">📋 一鍵複製召集人專屬指令</button>
-        </div>
-        <p class="card-sub" style="margin-top: 12px; margin-bottom: 0;">
-          ✨ <strong>加碼驚喜</strong>：接著點選工作室「<strong>資訊圖表</strong>」，一鍵把枯燥公文變成夥伴與家長一眼看懂的視覺宣導圖卡！
-        </p>
-        <button type="button" class="peer-check" data-step="step4">⬜ 步驟 4：完成召集人減壓任務並比 OK</button>
-      </div>
-    </section>
-
-    <!-- 04 茶敘前魔法：Podcast ＆ 進階彩蛋 -->
-    <section class="section" id="sec-04">
-      <div class="section-header">
-        <h2 class="section-title">🎙️ 04｜雙人 Podcast ＆ 進階彩蛋</h2>
-        <span class="section-time">10:40–10:50</span>
-      </div>
-
-      <div class="card card-warm">
-        <h3 class="card-title">🎧 10:42 同步任務｜自訂台灣味 AI 雙人播客</h3>
-        <p class="card-sub">點「<strong>語音摘要</strong>」→ 語言選「<strong>中文（繁體）</strong>」→ 貼入下方自訂焦點按下生成，10:50 剛好帶去茶敘邊喝茶邊聽！</p>
-
-        <div class="prompt-block">
-          <span class="prompt-label">自訂焦點｜台灣老師辦公室聊天口吻</span>
-          <div class="prompt-box" id="p-podcast-a">請兩位主持人用輕鬆、像台灣老師在辦公室聊天的口吻，討論這份資料最值得帶進課堂的 3 個亮點，並給老師一個明天就能執行的教學小建議。</div>
-          <button type="button" class="btn btn-copy" data-copy-target="p-podcast-a">📋 一鍵複製 Podcast 焦點指令</button>
-        </div>
-
-        <div class="prompt-block">
-          <span class="prompt-label">教學延伸｜給學生的閱讀心得引導</span>
-          <div class="prompt-box" id="p-podcast-b">受眾為國小中年級學生，請兩位主持人用活潑生動的故事口吻，引導他們思考這篇文章的重點並寫出自己的閱讀心得。</div>
-          <button type="button" class="btn btn-copy" data-copy-target="p-podcast-b">📋 一鍵複製學生引導版指令</button>
-        </div>
-
-        <button type="button" class="peer-check" data-step="step5">⬜ 步驟 5：按下語音摘要生成，準備去茶敘！</button>
-      </div>
-
-      <div class="card">
-        <h3 class="card-title">🎨 彩蛋：歷年舊簡報翻新 ＆ 筆記本命名法</h3>
-        <ul class="clean-list">
-          <li><strong>筆記本命名規範</strong>：<code>【備課】115上五年級國語</code>、<code>【班級】115五忠</code>、<code>【行政】115學校會議</code>。</li>
-          <li><strong>期末成果報告／舊簡報翻新 3 步驟</strong>：
-            <ol style="margin: 6px 0 0; padding-left: 18px;">
-              <li>勾選歷年舊簡報與本學期計畫，請 AI 更新並整理大綱</li>
-              <li>點「<strong>儲存至記事</strong>」→「<strong>轉換為來源</strong>」</li>
-              <li>點選工作室「<strong>簡報</strong>」一鍵生成新版投影片！</li>
-            </ol>
-          </li>
-          <li><strong>差異化學習單＆學期知識庫</strong>：同一份課文同時產出「基礎扶弱版」與「情境挑戰版」；把校外教學簡章、行前通知全丟同一本，家長問細節 3 秒查來源秒回。</li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- 05 全場共創：召集人點子牆 -->
-    <section class="section" id="sec-05">
-      <div class="section-header">
-        <h2 class="section-title">💡 05｜全場共創：召集人點子牆</h2>
-        <span class="section-time">10:25–10:40</span>
-      </div>
-
-      <div class="card card-blue">
-        <h3 class="card-title">👇 換你分享！這學期社群共備最想怎麼用？</h3>
-        <p class="card-sub">10:25 全場共創交流時間！點下方按鈕進入共創牆，按 <strong>＋</strong> 貼出你的點子（大螢幕即時點名分享，大家一起抄作業）。</p>
-        <div class="prompt-box" id="p-wall-template">【學校／社群名稱】：
-【下週一最想用的場景／今天試出的神指令】：</div>
-        <div class="btn-row" style="margin-bottom: 10px;">
-          <button type="button" class="btn btn-soft" data-copy-target="p-wall-template">📋 複製回覆格式</button>
-          <a class="btn btn-blue" id="padletWallBtn" href="https://padlet.com/clongwh/1124" target="_blank" rel="noopener">🚀 前往共創牆</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- 06 FAQ 與課後回饋 -->
-    <section class="section" id="sec-06">
-      <div class="section-header">
-        <h2 class="section-title">❓ 06｜6 大 FAQ ＆ 課後回饋</h2>
-        <span class="section-time">帶得走</span>
-      </div>
-
-      <details class="faq-item">
-        <summary>Q1：學校教育版帳號（@edu.tw）登不進去怎麼辦？</summary>
-        <p>各縣市教育局處對教育版安全控管政策不同，部分功能尚未全面開放。最快解法是直接切換成自己的「<strong>個人 Gmail</strong>」帳號，功能最完整、限制最少。</p>
-      </details>
-
-      <details class="faq-item">
-        <summary>Q2：上傳考卷、會議紀錄會外流或被拿去訓練 AI 嗎？</summary>
-        <p>依 Google 官方隱私政策，使用者上傳到 NotebookLM 的個人資料與對話不會用來訓練公開模型。但基於資安原則，含學生姓名、身分證字號、成績等個資仍務必先「去識別化」再上傳。</p>
-      </details>
-
-      <details class="faq-item">
-        <summary>Q3：這是免費的嗎？有沒有檔案或次數限制？</summary>
-        <p>一般個人 Gmail 即可免費使用！免費版最多可建 <strong>100 個筆記本</strong>，每個筆記本可放 <strong>50 個資料來源</strong>（單一來源最高 50 萬字），整理整學期教材綽綽有餘。</p>
-      </details>
-
-      <details class="faq-item">
-        <summary>Q4：支援哪些檔案類型？YouTube 或錄音可以嗎？</summary>
-        <p>支援 PDF、Google 文件／簡報、純文字、網頁網址、<strong>YouTube 影片連結</strong>（自動抓字幕）、<strong>音訊檔（MP3/WAV）</strong>，手機版還可直接拍照或選相簿圖片當來源。</p>
-      </details>
-
-      <details class="faq-item">
-        <summary>Q5：語音摘要（Audio Overview）可以講繁體中文嗎？</summary>
-        <p>可以！生成前將輸出語言設為「<strong>中文（繁體）</strong>」，兩位 AI 主持人就會用自然生動的台灣 Podcast 語氣一搭一唱聊你的教材。</p>
-      </details>
-
-      <details class="faq-item">
-        <summary>Q6：它會像一般 AI 一樣一本正經胡說八道嗎？</summary>
-        <p>NotebookLM 採用 Grounding 機制，<strong>只根據你給的資料回答</strong>；資料沒寫會老實說找不到，且每段回答皆附數字標註，點擊直接跳回原文核對。</p>
-      </details>
-
-      <div class="card card-soft" style="margin-top: 14px;">
-        <h3 class="card-title">📝 研習回饋表單（5 題 1 分鐘）</h3>
-        <p class="card-sub">感謝參與！花 1 分鐘留下你的回饋與「下週一行動」，讓未來的研習更貼近現場。</p>
-        <div id="feedbackFormMount"></div>
-      </div>
-    </section>
-
-    <!-- Footer Copyright -->
-    <footer class="footer">
-      <div>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為</div>
-      <div>更多 Puti-AI 教學工具：<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener">點此前往</a></div>
-    </footer>
-  </main>
-
-  <!-- Floating Quick Action Bar -->
-  <div class="floating-bar">
-    <div class="floating-bar-inner">
-      <a class="btn btn-primary" id="floatNotebookBtn" href="https://notebooklm.google.com/" target="_blank" rel="noopener">
-        🔗 切換到 NotebookLM
-      </a>
-      <a class="btn btn-soft" id="floatWallBtn" href="https://padlet.com/clongwh/1124" target="_blank" rel="noopener">
-        💡 開共創牆
-      </a>
     </div>
   </div>
 
-  <!-- Copy Toast -->
-  <div class="toast" id="toast" role="status" aria-live="polite">✅ 已複製！切換到 NotebookLM 貼上即可</div>
+  <!-- ============================================================
+       D. 投影用超大 QR Code 彈窗
+       ============================================================ -->
+  <div class="modal-backdrop hidden" id="qrModal">
+    <div class="modal-card">
+      <div class="modal-badge" id="qrModalBadge">📱 學員掃碼即時領取</div>
+      <h2 class="modal-title" id="qrModalTitle">標題</h2>
+      <p class="modal-sub" id="qrModalSub">掃描後只會看到這張卡片的提示詞，點擊即可一鍵複製！</p>
+      <div class="qr-box" id="qrCodeMount"></div>
+      <div class="qr-url" id="qrUrlText"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-soft" id="copyQrUrlBtn">📋 複製連結</button>
+        <button type="button" class="btn btn-primary" id="closeQrModalBtn">關閉視窗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
     /* ============================================================
-     * 【講師集中設定區】把待補網址貼進引號裡，存檔推上 GitHub 立即生效
+     * 【講師集中設定區】改密碼或補連結只要改這裡！
      * ============================================================ */
-    const WORKSHOP_LINKS = {
+    const CONFIG = {
+      instructorPin: "1124", // 講師解鎖碼
       notebooklmUrl: "https://notebooklm.google.com/",
-      publicNotebookUrl: "", // ← 貼上：公開體驗筆記本連結（權限設「知道連結皆可檢視」）
-      materialAUrl: "",      // ← 貼上：素材 A 公開網頁連結（如 108 課綱素養說明／教育新聞／課文）
-      materialALabel: "108 課綱素養導向／教育文章（素材 A）",
-      materialBUrl: "",      // ← 貼上：素材 B 公開網頁／PDF 連結（如社群實施計畫／學校公文）
-      materialBLabel: "教師專業學習社群實施計畫／公文（素材 B）",
+      publicNotebookUrl: "", // ← 待補：公開體驗筆記本連結（權限設「知道連結皆可檢視」）
+      materialAUrl: "",      // ← 待補：素材 A 公開網頁連結（如 108 課綱／教育文章）
+      materialALabel: "測試素材 A（108 課綱／教育文章）",
+      materialBUrl: "",      // ← 待補：素材 B 公開網頁連結（如社群計畫／學校公文）
+      materialBLabel: "測試素材 B（社群計畫／學校公文）",
       padletWallUrl: "https://padlet.com/clongwh/1124",
-      feedbackFormUrl: ""    // ← 貼上：Google 研習回饋表單連結
+      feedbackFormUrl: ""    // ← 待補：Google 研習回饋表單連結
     };
 
-    /* 1. 動態渲染可設定的連結區塊 */
-    function renderConfigurableLinks() {
-      document.getElementById("heroNotebookBtn").href = WORKSHOP_LINKS.notebooklmUrl;
-      document.getElementById("floatNotebookBtn").href = WORKSHOP_LINKS.notebooklmUrl;
-      document.getElementById("padletWallBtn").href = WORKSHOP_LINKS.padletWallUrl;
-      document.getElementById("floatWallBtn").href = WORKSHOP_LINKS.padletWallUrl;
-
-      // 公開體驗筆記本（救生圈）
-      const publicMount = document.getElementById("publicNotebookMount");
-      if (WORKSHOP_LINKS.publicNotebookUrl) {
-        publicMount.innerHTML = `<a class="btn btn-primary" href="${WORKSHOP_LINKS.publicNotebookUrl}" target="_blank" rel="noopener">🛟 開啟講師公開體驗筆記本</a>`;
-      } else {
-        publicMount.innerHTML = `<button type="button" class="btn btn-disabled" disabled>🛟 講師現場開啟提供（待補公開筆記本連結）</button>`;
+    /* ============================================================
+     * 【卡片資料庫】講師控台 ╳ 學員單卡中介頁 ╳ 課後包 共用同一份資料
+     * ============================================================ */
+    const CARDS = [
+      {
+        id: "intro",
+        num: "01",
+        time: "09:10–09:25",
+        emoji: "🚀",
+        title: "破冰進場＆手機三不原則",
+        tagline: "80/20 減法備課術・今天送你一位 24H AI 社群副召",
+        speakerNote: "破冰金句：『很多召集人課務行政太忙，當一年就想辭職。今天送你一位不支薪、不瞎掰的 AI 副召！』提醒優先用個人 Gmail、建立鄰座互助比 OK。",
+        studentGuide: "1. 優先用「個人 Gmail」登入 NotebookLM（避免學校教育版受限）。\n2. 瀏覽器右上角可切換「電腦版網站」。\n3. 手機三不原則：不打字（點複製／語音）、不找檔（貼網址／拍照）、只開兩分頁！\n4. 完成登入後，幫左右夥伴確認畫面，一起比個 OK！",
+        links: [
+          { label: "🔗 開啟 NotebookLM 官方入口", key: "notebooklmUrl", primary: true },
+          { label: "🛟 帳號卡關救生圈（公開體驗筆記本）", key: "publicNotebookUrl", fallbackText: "講師現場提供公開體驗連結" }
+        ],
+        prompts: [],
+        shareable: true
+      },
+      {
+        id: "task1",
+        num: "02",
+        time: "09:25–09:40",
+        emoji: "✨",
+        title: "任務一：長文秒變學生白話文",
+        tagline: "示範 3 分鐘 → 手機實作 5 分鐘 → 鄰座比 OK",
+        speakerNote: "帶老師貼入測試素材 A（或現場貼任意教育文章網址），讓大家實際體會把艱深文章瞬間降維成學生聽得懂的例子。",
+        studentGuide: "步驟：複製下方素材網址 → 切到 NotebookLM 點「＋新增來源」→「網站」貼上 → 再回來複製下方指令貼進對話框！",
+        materialKey: "materialA",
+        prompts: [
+          {
+            label: "指令 1｜降維解釋（學生聽得懂）",
+            text: "請根據這份資料，用國小五年級學生聽得懂的語言，舉一個生活中的例子，向他們解釋這篇文章最核心的 3 個觀念。"
+          },
+          {
+            label: "指令 2｜課堂 3 分鐘引起動機",
+            text: "如果我要用這份資料上一堂 40 分鐘的課，請幫我設計一個 3 分鐘的「開場引起動機」提問，要能讓全班學生有感。"
+          }
+        ],
+        shareable: true
+      },
+      {
+        id: "ninepack",
+        num: "03",
+        time: "09:40–09:55",
+        emoji: "💪",
+        title: "工作室「九塊肌」五面向備課",
+        tagline: "免背指令！一鍵玩轉 聽・說・讀・寫・評",
+        speakerNote: "大螢幕演示《悟空三借芭蕉扇》角色扮演對話＋點擊心智圖任一節點延伸文本，展現課堂高互動衝擊力。",
+        studentGuide: "免背提示詞！直接點右側工作室（Studio）：\n• 讀：報告 → 研讀指南\n• 聽：語音摘要（中文 Podcast）\n• 說：學習卡 ＆ 角色扮演對話\n• 寫：心智圖（點擊節點可延伸文本）\n• 評：測驗 ＋ 三層次提問",
+        prompts: [
+          {
+            label: "示範指令｜角色扮演互動",
+            text: "請扮演孫悟空，用他的口吻跟四年級學生對話。"
+          },
+          {
+            label: "示範指令｜三層次閱讀提問",
+            text: "請根據這份資料，依據「提取訊息、統整解釋、省思評鑑」三個維度各出 1 題提問，並附上解答與原文出處。"
+          }
+        ],
+        shareable: true
+      },
+      {
+        id: "task2",
+        num: "04",
+        time: "09:55–10:10",
+        emoji: "📸",
+        title: "任務二：手機拍照秒出素養題",
+        tagline: "手機相機就是你的隨身掃描命題機",
+        speakerNote: "請老師直接拍手邊的研習手冊或課本一頁！提醒他們檢查 AI 產出的誘答選項夠不夠水準。",
+        studentGuide: "步驟：在 NotebookLM 點「＋新增來源」→「相機／照片」，拍下手邊研習手冊或課本一頁，再複製下方指令！",
+        prompts: [
+          {
+            label: "指令 1｜2 題素養單選題＋詳細解析",
+            text: "請完全根據我上傳的這張圖片內容，設計 2 題素養導向單選題，必須包含「生活情境題幹」、四個選項、正確答案，以及每個選項為何對或錯的詳細解析。"
+          },
+          {
+            label: "指令 2｜抓出學生最容易搞混的迷思",
+            text: "以這頁內容來說，學生在學習或考試時最容易搞混的概念是什麼？請用條列式幫我整理出來。"
+          }
+        ],
+        shareable: true
+      },
+      {
+        id: "task3",
+        num: "05",
+        time: "10:10–10:25",
+        emoji: "🗓️",
+        title: "任務三：社群召集人 AI 副召",
+        tagline: "落落長公文一秒變待辦表＋LINE 通知＋資訊圖表",
+        speakerNote: "本場最高共鳴環節！實作完文字指令後，一定要帶大家點工作室「資訊圖表」，一鍵變出視覺宣導圖卡，全場必驚呼。",
+        studentGuide: "步驟：貼入社群計畫或學校公文網址（或拍計畫書一頁）→ 複製下方指令 → 完成後點擊工作室「資訊圖表」一鍵生成視覺圖卡！",
+        materialKey: "materialB",
+        prompts: [
+          {
+            label: "社群召集人專屬指令（時間表＋LINE 通知）",
+            text: "我是一位學校教師專業學習社群的召集人，請根據這份計畫／公文，幫我整理出本學期召集人需要執行的關鍵任務與時間點表格，並寫一則 150 字以內、語氣溫暖有活力的 LINE 群組通知，邀請社群夥伴參加第一次共備會議。"
+          }
+        ],
+        shareable: true
+      },
+      {
+        id: "wall",
+        num: "06",
+        time: "10:25–10:35",
+        emoji: "💡",
+        title: "全場共創：召集人點子牆",
+        tagline: "200 位召集人彼此抄作業，點子帶回學校用",
+        speakerNote: "投影 Padlet 共創牆，大螢幕即時點名 3～5 則分享，強化全場共學氛圍。",
+        studentGuide: "請複製下方格式，點按鈕前往共創牆按「＋」張貼你的點子！",
+        links: [
+          { label: "🚀 前往 Padlet 召集人點子牆", key: "padletWallUrl", primary: true }
+        ],
+        prompts: [
+          {
+            label: "共創牆回覆格式（一鍵複製）",
+            text: "【學校／社群名稱】：\n【這學期最想用的場景／今天試出的神指令】："
+          }
+        ],
+        shareable: true
+      },
+      {
+        id: "bonus",
+        num: "07",
+        time: "10:35–10:42",
+        emoji: "🎨",
+        title: "講師彩蛋：舊簡報翻新＆知識庫",
+        tagline: "期末成果報告神器（大螢幕演示・免同步操作）",
+        speakerNote: "此關步驟較多易塞車，由講師大螢幕演示即可！重點展示：① 命名法（【備課】/【班級】/【行政】）② 儲存至記事→轉換為來源→工作室生成簡報 ③ 國小／國中差異化學習單。",
+        studentGuide: "📁 筆記本命名規範：【備課】115上五年級國語、【班級】115五忠、【行政】115學校會議\n\n✨ 歷年舊簡報翻新 3 步驟：\n1. 勾選舊簡報與本學期計畫，請 AI 更新並整理大綱\n2. 點「儲存至記事」→「轉換為來源」\n3. 點選工作室「簡報」一鍵生成新版投影片！",
+        prompts: [],
+        shareable: false
+      },
+      {
+        id: "podcast",
+        num: "08",
+        time: "10:42–10:50",
+        emoji: "🎙️",
+        title: "茶敘前魔法：10:42 雙人 Podcast",
+        tagline: "按下生成，帶著 AI 主播去 10:50 茶敘邊走邊聽！",
+        speakerNote: "10:42 準時帶全場一起按「語音摘要」生成！若現場還在轉圈，就先放講師預錄版當背景，10:50 準時下課讓大家帶著剛出爐的播客去喝茶。",
+        studentGuide: "步驟：點「語音摘要（Audio Overview）」→ 語言選「中文（繁體）」→ 貼入下方自訂焦點按下生成！",
+        prompts: [
+          {
+            label: "焦點指令｜台灣老師辦公室聊天口吻",
+            text: "請兩位主持人用輕鬆、像台灣老師在辦公室聊天的口吻，討論這份資料最值得帶進課堂的 3 個亮點，並給老師一個明天就能執行的教學小建議。"
+          },
+          {
+            label: "教學延伸｜國小中年級閱讀心得引導",
+            text: "受眾為國小中年級學生，請兩位主持人用活潑生動的故事口吻，引導他們思考這篇文章的重點並寫出自己的閱讀心得。"
+          }
+        ],
+        shareable: true
+      },
+      {
+        id: "faq",
+        num: "09",
+        time: "10:47–10:50",
+        emoji: "🛡️",
+        title: "6 大實務 FAQ ＆ 溫暖收尾",
+        tagline: "不用全記，下週一只要帶走「一個小行動」",
+        speakerNote: "結尾口白：AI 不會取代老師在講台上的溫度、眼神與陪伴，但能先完成 70% 雜事。下週一挑一份最頭痛的公文丟進去，省下 10 分鐘就值了！最後投影右上角「🎁 課後懶人包 QR」。",
+        studentGuide: "常見問題快速解答與課後回饋表單：",
+        links: [
+          { label: "📝 填寫 1 分鐘研習回饋表單", key: "feedbackFormUrl", fallbackText: "講師研習結束前提供回饋表單連結" }
+        ],
+        faqs: [
+          { q: "Q1：學校教育版（@edu.tw）登不進去怎麼辦？", a: "各縣市控管政策不同，最快解法是改用「個人 Gmail」帳號，功能最完整、限制最少。" },
+          { q: "Q2：上傳考卷或會議紀錄會外流／訓練 AI 嗎？", a: "依 Google 官方隱私政策，個人資料與對話不會用來訓練公開模型；但含學生姓名、成績等個資務必先去識別化再上傳。" },
+          { q: "Q3：免費版有次數或檔案限制嗎？", a: "個人 Gmail 免費版最多可建 100 本筆記本、每本 50 個來源（單檔最高 50 萬字），非常夠用。" },
+          { q: "Q4：支援哪些檔案類型？", a: "PDF、Google 文件／簡報、純文字、網頁、YouTube 影片連結（自動抓字幕）、MP3/WAV 音訊及手機拍照圖片。" },
+          { q: "Q5：語音摘要可以講繁體中文嗎？", a: "可以！生成前將語言設為「中文（繁體）」，兩位主持人會用自然生動的台灣 Podcast 語氣對談。" },
+          { q: "Q6：會像一般 AI 一本正經胡說八道嗎？", a: "採 Grounding 技術只看你給的資料，沒寫會老實說找不到，每段附數字編號可點回原文核對。" }
+        ],
+        prompts: [],
+        shareable: true
       }
+    ];
 
-      // 素材 A
-      renderMaterialBlock("materialAMount", WORKSHOP_LINKS.materialAUrl, WORKSHOP_LINKS.materialALabel, "matA");
-      // 素材 B
-      renderMaterialBlock("materialBMount", WORKSHOP_LINKS.materialBUrl, WORKSHOP_LINKS.materialBLabel, "matB");
-
-      // 回饋表單
-      const fbMount = document.getElementById("feedbackFormMount");
-      if (WORKSHOP_LINKS.feedbackFormUrl) {
-        fbMount.innerHTML = `<a class="btn btn-primary" href="${WORKSHOP_LINKS.feedbackFormUrl}" target="_blank" rel="noopener">📝 前往填寫研習回饋表單</a>`;
-      } else {
-        fbMount.innerHTML = `<button type="button" class="btn btn-disabled" disabled>📝 研習結束前開放（待補表單連結）</button>`;
-      }
-    }
-
-    function renderMaterialBlock(mountId, url, label, key) {
-      const el = document.getElementById(mountId);
-      if (url) {
-        el.innerHTML = `
-          <div class="url-preview"><strong>${label}</strong><br /><span id="url-${key}">${url}</span></div>
-          <div class="btn-row">
-            <button type="button" class="btn btn-copy" data-copy-target="url-${key}">📋 一鍵複製網址</button>
-            <a class="btn btn-soft" href="${url}" target="_blank" rel="noopener">🌐 預覽文章</a>
-          </div>
-        `;
-      } else {
-        el.innerHTML = `<button type="button" class="btn btn-disabled" disabled>📄 ${label}（待講師補上連結）</button>`;
-      }
-    }
-
-    /* 2. 手機全相容一鍵複製（含 LINE / 舊瀏覽器 Fallback） */
+    /* ============================================================
+     * 共用工具：複製剪貼簿（含手機／LINE 瀏覽器 fallback）＆ Toast
+     * ============================================================ */
     let toastTimer = null;
     function showToast(msg) {
-      const toast = document.getElementById("toast");
-      toast.textContent = msg;
-      toast.classList.add("show");
+      const el = document.getElementById("toast");
+      el.textContent = msg;
+      el.classList.add("show");
       clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+      toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
     }
 
     async function copyText(text) {
@@ -980,141 +1031,443 @@
       return ok;
     }
 
-    document.addEventListener("click", async (e) => {
-      const btn = e.target.closest("[data-copy-target]");
-      if (!btn) return;
-      const targetEl = document.getElementById(btn.dataset.copyTarget);
-      if (!targetEl) return;
-      const text = targetEl.textContent.trim();
-      const ok = await copyText(text);
-      if (ok) {
-        const originalText = btn.dataset.origText || btn.textContent;
-        btn.dataset.origText = originalText;
-        btn.classList.add("copied");
-        btn.textContent = "✅ 已複製！去 NotebookLM 貼上";
-        showToast("✅ 已複製！切到 NotebookLM 貼上即可");
-        setTimeout(() => {
-          btn.classList.remove("copied");
-          btn.textContent = originalText;
-        }, 1800);
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function getBaseUrl() {
+      return window.location.origin + window.location.pathname;
+    }
+
+    function renderMaterialHtml(materialKey) {
+      if (!materialKey) return "";
+      const url = CONFIG[materialKey + "Url"];
+      const label = CONFIG[materialKey + "Label"];
+      if (url) {
+        return `
+          <div class="prompt-item" style="background:#eff6ff;border-color:#93c5fd;">
+            <span class="prompt-tag" style="background:#dbeafe;color:#1d4ed8;">📄 ${escapeHtml(label)}</span>
+            <div class="prompt-text" style="word-break:break-all;font-size:13px;">${escapeHtml(url)}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <button type="button" class="btn btn-primary btn-copy" data-copy-raw="${escapeHtml(url)}">📋 複製素材網址</button>
+              <a class="btn btn-soft" href="${escapeHtml(url)}" target="_blank" rel="noopener">🌐 預覽文章</a>
+            </div>
+          </div>
+        `;
+      }
+      return `
+        <div class="note-box" style="background:#eff6ff;border-color:#bfdbfe;color:#1e40af;">
+          📄 <strong>${escapeHtml(label)}</strong>：尚待於 CONFIG 補上公開網址（現場亦可直接貼任意文章網址）
+        </div>
+      `;
+    }
+
+    function renderPromptsHtml(prompts, isLarge = false) {
+      return (prompts || [])
+        .map((p) => {
+          const btnClass = isLarge ? "btn btn-primary btn-block btn-lg btn-copy" : "btn btn-primary btn-block btn-copy";
+          return `
+            <div class="prompt-item">
+              <span class="prompt-tag">${escapeHtml(p.label)}</span>
+              <div class="prompt-text">${escapeHtml(p.text)}</div>
+              <button type="button" class="${btnClass}" data-copy-raw="${escapeHtml(p.text)}">📋 一鍵複製這段指令</button>
+            </div>
+          `;
+        })
+        .join("");
+    }
+
+    function renderLinksHtml(links) {
+      return (links || [])
+        .map((lk) => {
+          const url = CONFIG[lk.key];
+          if (url) {
+            const cls = lk.primary ? "btn btn-primary btn-block btn-lg" : "btn btn-soft btn-block";
+            return `<a class="${cls}" href="${escapeHtml(url)}" target="_blank" rel="noopener">${escapeHtml(lk.label)}</a>`;
+          }
+          return `<div class="note-box">ℹ️ ${escapeHtml(lk.fallbackText || "待講師補上連結")}</div>`;
+        })
+        .join("");
+    }
+
+    function renderFaqsHtml(faqs) {
+      if (!faqs || !faqs.length) return "";
+      return faqs
+        .map(
+          (f) => `
+          <details class="faq-item">
+            <summary>${escapeHtml(f.q)}</summary>
+            <p>${escapeHtml(f.a)}</p>
+          </details>
+        `
+        )
+        .join("");
+    }
+
+    /* ============================================================
+     * QR Code 彈窗控制
+     * ============================================================ */
+    let currentQrUrl = "";
+    function openQrModal({ badge, title, sub, url }) {
+      currentQrUrl = url;
+      document.getElementById("qrModalBadge").textContent = badge;
+      document.getElementById("qrModalTitle").textContent = title;
+      document.getElementById("qrModalSub").textContent = sub;
+      document.getElementById("qrUrlText").textContent = url;
+
+      const mount = document.getElementById("qrCodeMount");
+      mount.innerHTML = "";
+      if (typeof QRCode !== "undefined") {
+        new QRCode(mount, {
+          text: url,
+          width: 240,
+          height: 240,
+          colorDark: "#0f172a",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M
+        });
       } else {
-        showToast("⚠️ 請長按上方框內文字手動複製");
+        const img = document.createElement("img");
+        img.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}`;
+        img.alt = "QR Code";
+        img.width = 240;
+        img.height = 240;
+        mount.appendChild(img);
+      }
+
+      document.getElementById("qrModal").classList.remove("hidden");
+    }
+
+    function closeQrModal() {
+      document.getElementById("qrModal").classList.add("hidden");
+    }
+
+    document.getElementById("closeQrModalBtn").addEventListener("click", closeQrModal);
+    document.getElementById("qrModal").addEventListener("click", (e) => {
+      if (e.target.id === "qrModal") closeQrModal();
+    });
+    document.getElementById("copyQrUrlBtn").addEventListener("click", async () => {
+      if (await copyText(currentQrUrl)) {
+        showToast("✅ 已複製學員連結！");
       }
     });
 
-    /* 3. 鄰座互助 OK 進度記憶（localStorage） */
-    const STORAGE_KEY = "puti_1124_convener_checks";
-    const checks = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    const checkButtons = Array.from(document.querySelectorAll(".peer-check"));
-
-    function updateProgress() {
-      let doneCount = 0;
-      checkButtons.forEach((btn) => {
-        const key = btn.dataset.step;
-        const isDone = Boolean(checks[key]);
-        if (isDone) doneCount++;
-        btn.classList.toggle("done", isDone);
-        const rawLabel = btn.textContent.replace(/^[⬜✅]\s*/, "");
-        btn.textContent = `${isDone ? "✅" : "⬜"} ${rawLabel}`;
-      });
-      document.getElementById("progressPill").textContent = `OK 進度 ${doneCount} / ${checkButtons.length}`;
-    }
-
-    checkButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const key = btn.dataset.step;
-        checks[key] = !checks[key];
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(checks));
-        updateProgress();
-        if (checks[key]) showToast("🎉 太棒了！跟左右夥伴一起比個 OK！");
-      });
-    });
-
-    /* 4. 零干擾導覽列：點按鈕精準跳轉 + 滾動同步高亮（只水平捲動導覽列，絕不搶頁面垂直捲動） */
-    const topBar = document.querySelector(".top-bar");
-    const navContainer = document.querySelector(".nav-pills");
-    const navLinks = Array.from(document.querySelectorAll(".nav-pill"));
-    const sections = navLinks
-      .map((a) => document.querySelector(a.getAttribute("href")))
-      .filter(Boolean);
-
-    let activeId = "#sec-01";
-    let lockUntil = 0;
-
-    function centerNavPill(link) {
-      if (!link || !navContainer) return;
-      const targetLeft =
-        link.offsetLeft - (navContainer.clientWidth - link.offsetWidth) / 2;
-      navContainer.scrollTo({
-        left: Math.max(0, targetLeft),
-        behavior: "smooth"
-      });
-    }
-
-    function setActivePill(id) {
-      if (id === activeId) return;
-      activeId = id;
-      navLinks.forEach((a) => {
-        const match = a.getAttribute("href") === id;
-        a.classList.toggle("active", match);
-        if (match) centerNavPill(a);
-      });
-    }
-
-    // 點擊上方 01~06 按鈕：精準計算高度捲動，並短暫鎖定高亮避免中途亂跳
-    navLinks.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        const id = link.getAttribute("href");
-        const target = document.querySelector(id);
-        if (!target) return;
-        e.preventDefault();
-        lockUntil = Date.now() + 700;
-        setActivePill(id);
-        const headerOffset = (topBar ? topBar.offsetHeight : 100) + 12;
-        const top = target.getBoundingClientRect().top + window.scrollY - headerOffset;
-        window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-      });
-    });
-
-    // 手指滾動時：用 rAF 節流比對目前位置（滑到底直接亮最後一章）
-    let ticking = false;
-    function syncActiveOnScroll() {
-      ticking = false;
-      if (Date.now() < lockUntil) return;
-
-      const scrollBottom = window.scrollY + window.innerHeight;
-      const docHeight = document.documentElement.scrollHeight;
-      if (docHeight - scrollBottom <= 24) {
-        setActivePill("#" + sections[sections.length - 1].id);
+    /* 全域一鍵複製監聽 */
+    document.addEventListener("click", async (e) => {
+      const copyBtn = e.target.closest("[data-copy-raw]");
+      if (copyBtn) {
+        e.stopPropagation();
+        const text = copyBtn.dataset.copyRaw;
+        const ok = await copyText(text);
+        if (ok) {
+          const orig = copyBtn.dataset.origText || copyBtn.textContent;
+          copyBtn.dataset.origText = orig;
+          copyBtn.classList.add("copied");
+          copyBtn.textContent = "✅ 已複製！去貼上即可";
+          showToast("✅ 已複製進剪貼簿！");
+          setTimeout(() => {
+            copyBtn.classList.remove("copied");
+            copyBtn.textContent = orig;
+          }, 1800);
+        } else {
+          showToast("⚠️ 請長按框內文字手動複製");
+        }
         return;
       }
 
-      const headerOffset = (topBar ? topBar.offsetHeight : 100) + 32;
-      const probeY = window.scrollY + headerOffset;
-      let current = sections[0];
-      for (const sec of sections) {
-        if (sec.offsetTop <= probeY) {
-          current = sec;
-        } else {
-          break;
-        }
+      const qrBtn = e.target.closest("[data-share-card]");
+      if (qrBtn) {
+        e.stopPropagation();
+        const card = CARDS.find((c) => c.id === qrBtn.dataset.shareCard);
+        if (!card) return;
+        const url = `${getBaseUrl()}?card=${encodeURIComponent(card.id)}`;
+        openQrModal({
+          badge: `📱 單卡中介頁｜第 ${card.num} 關`,
+          title: `${card.emoji} ${card.title}`,
+          sub: "學員掃碼後只會看到這張卡片的提示詞與一鍵複製按鈕，看不到其他關卡！",
+          url
+        });
+        return;
       }
-      if (current) setActivePill("#" + current.id);
+
+      const flipBackBtn = e.target.closest("[data-flip-back]");
+      if (flipBackBtn) {
+        e.stopPropagation();
+        const cardEl = flipBackBtn.closest(".flip-card");
+        if (cardEl) cardEl.classList.remove("flipped");
+        return;
+      }
+
+      const flipCard = e.target.closest(".flip-card");
+      if (flipCard && !flipCard.classList.contains("flipped")) {
+        flipCard.classList.add("flipped");
+      }
+    });
+
+    /* ============================================================
+     * 建構講師翻轉卡 HTML
+     * ============================================================ */
+    function buildFlipCardHtml(card) {
+      const shareBtnHtml = card.shareable
+        ? `<button type="button" class="btn btn-amber" style="flex:1;" data-share-card="${card.id}">📱 投影本卡 QR Code（給學員掃）</button>`
+        : `<span style="font-size:13px;color:#64748b;align-self:center;">🎬 本卡為講師大螢幕演示，課後包會收錄</span>`;
+
+      return `
+        <article class="flip-card" data-card-id="${card.id}">
+          <div class="flip-inner">
+            <!-- 正面：乾淨大字主題 -->
+            <div class="flip-face flip-front">
+              <div class="front-meta">
+                <span class="card-num">CARD ${card.num}</span>
+                <span class="card-time">${escapeHtml(card.time)}</span>
+              </div>
+              <div class="front-center">
+                <div class="front-emoji">${card.emoji}</div>
+                <h2 class="front-title">${escapeHtml(card.title)}</h2>
+                <p class="front-tagline">${escapeHtml(card.tagline)}</p>
+              </div>
+              <div class="front-hint">👆 點擊卡片翻面看提示詞與控場資料</div>
+            </div>
+
+            <!-- 背面：提示詞與資料 -->
+            <div class="flip-face flip-back">
+              <div class="back-header">
+                <span class="back-title">${card.emoji} ${card.num}｜${escapeHtml(card.title)}</span>
+                <button type="button" class="btn btn-ghost" style="min-height:34px;padding:4px 10px;font-size:12px;" data-flip-back="1">↩ 翻回正面</button>
+              </div>
+              <div class="back-body">
+                ${card.speakerNote ? `<div class="note-box">🎤 <strong>講師提醒</strong>：${escapeHtml(card.speakerNote)}</div>` : ""}
+                ${renderLinksHtml(card.links)}
+                ${renderMaterialHtml(card.materialKey)}
+                ${renderPromptsHtml(card.prompts, false)}
+                ${renderFaqsHtml(card.faqs)}
+              </div>
+              <div class="back-footer">
+                ${shareBtnHtml}
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
     }
 
-    window.addEventListener(
-      "scroll",
-      () => {
-        if (!ticking) {
-          ticking = true;
-          requestAnimationFrame(syncActiveOnScroll);
-        }
-      },
-      { passive: true }
-    );
+    /* ============================================================
+     * 模式 1：學員單卡中介頁 (?card=xxx)
+     * ============================================================ */
+    function renderStudentSingleCard(cardId) {
+      const card = CARDS.find((c) => c.id === cardId);
+      const app = document.getElementById("studentApp");
+      const content = document.getElementById("studentContent");
+      document.getElementById("studentNotebookBtn").href = CONFIG.notebooklmUrl;
+      app.classList.remove("hidden");
 
-    renderConfigurableLinks();
-    updateProgress();
+      if (!card) {
+        content.innerHTML = `
+          <div class="student-card" style="text-align:center;">
+            <h2>找不到這張任務卡</h2>
+            <p>請重新掃描講師大螢幕上的 QR Code。</p>
+          </div>
+        `;
+        return;
+      }
+
+      document.title = `Puti-AI | ${card.title}`;
+      content.innerHTML = `
+        <section class="student-hero">
+          <div class="student-hero-badge">1124 社群召集人研習｜現場實作卡 ${card.num}</div>
+          <h1>${card.emoji} ${escapeHtml(card.title)}</h1>
+          <p>${escapeHtml(card.tagline)}</p>
+        </section>
+
+        <section class="student-card">
+          ${card.studentGuide ? `<div class="note-box" style="margin-bottom:14px;white-space:pre-wrap;">📌 <strong>操作指引</strong>\n${escapeHtml(card.studentGuide)}</div>` : ""}
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            ${renderLinksHtml(card.links)}
+            ${renderMaterialHtml(card.materialKey)}
+            ${renderPromptsHtml(card.prompts, true)}
+            ${renderFaqsHtml(card.faqs)}
+          </div>
+        </section>
+
+        <footer class="footer">
+          <div>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為</div>
+          <div>更多 Puti-AI 教學工具：<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener">點此前往</a></div>
+        </footer>
+      `;
+    }
+
+    /* ============================================================
+     * 模式 2：課後全套懶人包 (?mode=pack)
+     * ============================================================ */
+    function renderStudentFullPack() {
+      const app = document.getElementById("studentApp");
+      const content = document.getElementById("studentContent");
+      document.getElementById("studentNotebookBtn").href = CONFIG.notebooklmUrl;
+      app.classList.remove("hidden");
+      document.title = "Puti-AI | 1124 社群召集人 NotebookLM 課後懶人包";
+
+      const cardsHtml = CARDS.map(
+        (card) => `
+          <section class="student-card">
+            <h2>${card.emoji} ${card.num}｜${escapeHtml(card.title)}</h2>
+            ${card.studentGuide ? `<div class="note-box" style="margin-bottom:12px;white-space:pre-wrap;">${escapeHtml(card.studentGuide)}</div>` : ""}
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              ${renderLinksHtml(card.links)}
+              ${renderMaterialHtml(card.materialKey)}
+              ${renderPromptsHtml(card.prompts, true)}
+              ${renderFaqsHtml(card.faqs)}
+            </div>
+          </section>
+        `
+      ).join("");
+
+      content.innerHTML = `
+        <section class="student-hero">
+          <div class="student-hero-badge">🎁 1124 屏東縣社群召集人研習｜永久保存版</div>
+          <h1>NotebookLM 課後全套懶人包</h1>
+          <p>收錄今日所有一鍵複製指令、九塊肌五面向玩法與 6 大實務 FAQ，歡迎加入手機書籤！</p>
+        </section>
+        ${cardsHtml}
+        <footer class="footer">
+          <div>屏東縣後庄國小黃朝榮老師作品，免費分享，歡迎擴散推廣，嚴禁商用與任何侵權、不尊重著作權的行為</div>
+          <div>更多 Puti-AI 教學工具：<a href="https://padlet.com/clongwh/puti_ai_tools" target="_blank" rel="noopener">點此前往</a></div>
+        </footer>
+      `;
+    }
+
+    /* ============================================================
+     * 模式 3：講師專用控台（網格 ╳ 舞台 ╳ 密碼鎖）
+     * ============================================================ */
+    const AUTH_KEY = "puti_1124_instructor_unlocked";
+    let isStageMode = false;
+    let stageIndex = 0;
+
+    function renderInstructorConsole() {
+      document.getElementById("lockScreen").classList.add("hidden");
+      document.getElementById("instructorApp").classList.remove("hidden");
+
+      const gridView = document.getElementById("gridView");
+      gridView.innerHTML = CARDS.map(buildFlipCardHtml).join("");
+      renderStageCard();
+    }
+
+    function renderStageCard() {
+      const card = CARDS[stageIndex];
+      document.getElementById("stageCounter").textContent = `${stageIndex + 1} / ${CARDS.length}（${card.time}）`;
+      document.getElementById("stageCardMount").innerHTML = buildFlipCardHtml(card);
+    }
+
+    document.getElementById("toggleViewBtn").addEventListener("click", () => {
+      isStageMode = !isStageMode;
+      document.getElementById("gridView").classList.toggle("hidden", isStageMode);
+      document.getElementById("stageView").classList.toggle("hidden", !isStageMode);
+      document.getElementById("toggleViewBtn").textContent = isStageMode ? "🃏 切換全覽網格" : "🎬 切換簡報舞台";
+      if (isStageMode) renderStageCard();
+    });
+
+    document.getElementById("prevCardBtn").addEventListener("click", () => {
+      stageIndex = (stageIndex - 1 + CARDS.length) % CARDS.length;
+      renderStageCard();
+    });
+
+    document.getElementById("nextCardBtn").addEventListener("click", () => {
+      stageIndex = (stageIndex + 1) % CARDS.length;
+      renderStageCard();
+    });
+
+    document.getElementById("packQrBtn").addEventListener("click", () => {
+      openQrModal({
+        badge: "🎁 課後完整大禮包",
+        title: "帶走全部指令＋6 大 FAQ",
+        sub: "10:50 下課前投影！掃描一次即可收藏今日全部提示詞與資源。",
+        url: `${getBaseUrl()}?mode=pack`
+      });
+    });
+
+    document.getElementById("wallQrBtn").addEventListener("click", () => {
+      openQrModal({
+        badge: "💡 全場共創點子牆",
+        title: "Padlet 召集人點子牆",
+        sub: "10:25 共創時間！請老師掃碼按「＋」貼出下週一最想用的場景。",
+        url: CONFIG.padletWallUrl
+      });
+    });
+
+    document.getElementById("lockNowBtn").addEventListener("click", () => {
+      localStorage.removeItem(AUTH_KEY);
+      document.getElementById("instructorApp").classList.add("hidden");
+      document.getElementById("lockScreen").classList.remove("hidden");
+      document.getElementById("pinInput").value = "";
+      document.getElementById("pinError").textContent = "";
+    });
+
+    document.getElementById("pinForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const val = document.getElementById("pinInput").value.trim();
+      if (val === CONFIG.instructorPin) {
+        localStorage.setItem(AUTH_KEY, "1");
+        renderInstructorConsole();
+      } else {
+        document.getElementById("pinError").textContent = "❌ 解鎖碼錯誤，請再試一次";
+      }
+    });
+
+    // 舞台模式鍵盤快捷鍵
+    document.addEventListener("keydown", (e) => {
+      if (document.getElementById("instructorApp").classList.contains("hidden")) return;
+      if (!document.getElementById("qrModal").classList.contains("hidden")) {
+        if (e.key === "Escape") closeQrModal();
+        return;
+      }
+      if (!isStageMode) return;
+      if (e.key === "ArrowRight") {
+        stageIndex = (stageIndex + 1) % CARDS.length;
+        renderStageCard();
+      } else if (e.key === "ArrowLeft") {
+        stageIndex = (stageIndex - 1 + CARDS.length) % CARDS.length;
+        renderStageCard();
+      } else if (e.key === " ") {
+        e.preventDefault();
+        const cardEl = document.querySelector("#stageCardMount .flip-card");
+        if (cardEl) cardEl.classList.toggle("flipped");
+      } else if (e.key.toLowerCase() === "q") {
+        const card = CARDS[stageIndex];
+        if (card.shareable) {
+          openQrModal({
+            badge: `📱 單卡中介頁｜第 ${card.num} 關`,
+            title: `${card.emoji} ${card.title}`,
+            sub: "學員掃碼後只會看到這張卡片的提示詞與一鍵複製按鈕，看不到其他關卡！",
+            url: `${getBaseUrl()}?card=${encodeURIComponent(card.id)}`
+          });
+        }
+      }
+    });
+
+    /* ============================================================
+     * 啟動路由判斷
+     * ============================================================ */
+    (function init() {
+      const params = new URLSearchParams(window.location.search);
+      const cardParam = params.get("card");
+      const modeParam = params.get("mode");
+
+      if (cardParam) {
+        renderStudentSingleCard(cardParam);
+      } else if (modeParam === "pack") {
+        renderStudentFullPack();
+      } else {
+        if (localStorage.getItem(AUTH_KEY) === "1") {
+          renderInstructorConsole();
+        } else {
+          document.getElementById("lockScreen").classList.remove("hidden");
+          setTimeout(() => document.getElementById("pinInput").focus(), 100);
+        }
+      }
+    })();
   </script>
 </body>
 </html>
